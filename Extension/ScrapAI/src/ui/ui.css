@@ -234,12 +234,12 @@ textarea { width: 100%; resize: vertical; }
 .meta-src { display: inline-flex; align-items: center; gap: 5px; flex: none; width: calc(var(--dom-w, 14ch) + 21px); min-width: 0; }
 .meta-src .domain { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .meta-flags { display: inline-flex; align-items: center; gap: 8px; flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
-.meta-cats { display: inline-flex; gap: 4px; flex: none; max-width: 45%; overflow: hidden; justify-content: flex-end; }
-.meta-cats .tag { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 12ch; }
+.meta-cats { display: inline-flex; gap: 4px; flex: none; width: var(--cat-w, 0); max-width: 45%; overflow: hidden; justify-content: flex-end; }
+.meta-cats .tag { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 12ch; flex: none; }
 .row.card .row-title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .row.card .row-excerpt { white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-.row.large .row-title { white-space: normal; font-size: 15px; }
-.row.large .row-excerpt { white-space: normal; display: -webkit-box; -webkit-line-clamp: 10; -webkit-box-orient: vertical; line-height: 1.7; margin-top: 2px; }
+.row.large .row-title { white-space: normal; }
+.row.large .row-excerpt { white-space: normal; display: -webkit-box; -webkit-line-clamp: 12; -webkit-box-orient: vertical; line-height: 1.65; margin-top: 2px; }
 .rows.grid .row.large .row-main { padding: 14px 16px; }
 
 /* カード表示（管理タブ）: 白い面を並べる */
@@ -559,3 +559,31 @@ button.danger.solid { background: var(--err); border-color: var(--err); color: #
   .manager { height: auto; overflow: visible; }
   .m-side, .m-main, .m-detail { height: auto; max-height: none; overflow: visible; }
 }
+
+/* ---- AIで置き換えたタイトルの印（「AI要約」と同じ蛍光ペン風） ---- */
+.ai-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 3px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: linear-gradient(transparent 45%, var(--mark) 45%);
+  vertical-align: 1px;
+}
+.title-row { display: flex; align-items: flex-start; gap: 4px; }
+.title-row .ai-badge { margin-top: 8px; flex: none; }
+
+/* ---- 詳細ペインの出現（右からスライド） ---- */
+@keyframes detail-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.m-detail { animation: detail-in 0.2s ease-out; }
+@media (prefers-reduced-motion: reduce) { .m-detail { animation: none; } }
+
+/* ---- 詳細の「AI要約」枠 ---- */
+.ai-summary-box { border-radius: var(--radius-m); padding: 10px 12px; background: color-mix(in srgb, var(--mark) 22%, var(--surface)); border: 1px solid color-mix(in srgb, var(--mark) 60%, var(--line)); margin-bottom: 12px; }
+.ai-summary-box h4 { margin: 0 0 4px; font-size: 12px; color: var(--ink-2); display: flex; gap: 8px; align-items: center; }
+.ai-summary-box .answer-headline { margin: 2px 0 6px; }
+.ai-summary-box pre { margin: 0; }
+.ai-again > summary { cursor: pointer; font-weight: 600; padding: 4px 0; color: var(--ink-2); }
+.ai-again[open] > summary { margin-bottom: 10px; }

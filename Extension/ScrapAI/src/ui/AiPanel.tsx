@@ -129,6 +129,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
   const [lastService, setLastService] = useState<AiServiceId | null>(null);
 
   const [applyHeadline, setApplyHeadline] = useState(true);
+  const [askOpen, setAskOpen] = useState(false);
   useEffect(() => {
     void getSettings().then((s) => {
       setTemplateId((cur) => cur ?? s.aiTemplateId); // 読み込み前に選んだものは上書きしない
@@ -173,11 +174,13 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
       applyToScrap: applyHeadline,
     });
     setRaw('');
+    setAskOpen(false); // 保存したら回答を主役にする
     setNote(saved.applied?.titleChanged ? t('aiAnswerSavedTitled') : t('aiAnswerSaved'));
   }
 
-  return (
-    <section class="ai-panel" aria-label={t('aiSection')}>
+  // 手順（聞く→貼る）。回答がまだないときは先頭に大きく、回答があるときは回答の下に折りたたむ
+  const steps = (
+    <>
       <div class="ai-step">
         <h4><span class="step-no">1</span>{t('aiStepAsk')}</h4>
         <div class="ai-ask">
@@ -287,15 +290,28 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
         </div>
       </div>
 
-      {answers.length > 0 && (
-        <div class="ai-step">
-          <h4>{t('aiAnswers', answers.length)}</h4>
-          <ul class="answers">
-            {answers.map((a) => (
-              <AnswerCard key={a.id} a={a} scrap={scrap} />
-            ))}
-          </ul>
-        </div>
+    </>
+  );
+
+  return (
+    <section class="ai-panel" aria-label={t('aiSection')}>
+      {answers.length === 0 ? (
+        steps
+      ) : (
+        <>
+          <div class="ai-step">
+            <h4>{t('aiAnswers', answers.length)}</h4>
+            <ul class="answers">
+              {answers.map((a) => (
+                <AnswerCard key={a.id} a={a} scrap={scrap} />
+              ))}
+            </ul>
+          </div>
+          <details class="ai-again" open={askOpen} onToggle={(e) => setAskOpen((e.target as HTMLDetailsElement).open)}>
+            <summary>{t('aiAskAgain')}</summary>
+            {steps}
+          </details>
+        </>
       )}
     </section>
   );

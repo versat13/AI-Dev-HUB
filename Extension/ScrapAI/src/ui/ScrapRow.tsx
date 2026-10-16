@@ -18,7 +18,7 @@ export interface ScrapRowProps {
   onOpen: (id: string) => void;
 }
 
-const MAX_CATS = 2;
+export const MAX_CATS = 2;
 
 /** 星の欄。未評価でも5つ分の幅を取り、評価した分だけ★を出す（カードごとに位置をそろえる） */
 export function Stars({ value }: { value: number | null }) {
@@ -36,13 +36,13 @@ export function rowText(
   s: Scrap,
   face: Settings['listFace'] = 'ai',
   preview?: string,
-): { title: string; excerpt: string; ai: boolean; translated: boolean } {
+): { title: string; excerpt: string; ai: boolean; aiTitle: boolean; translated: boolean } {
   const tr = s.translation?.on && s.translation.lang === targetLang() ? s.translation : undefined;
   if (face === 'ai' && s.aiExcerpt) {
-    return { title: s.aiHeadline || s.title, excerpt: s.aiExcerpt, ai: true, translated: false };
+    return { title: s.aiHeadline || s.title, excerpt: s.aiExcerpt, ai: true, aiTitle: !!s.aiHeadline, translated: false };
   }
   const title = tr?.title || (face === 'original' ? s.originalTitle ?? s.title : s.title);
-  return { title, excerpt: tr?.excerpt || preview || s.excerpt, ai: false, translated: !!tr };
+  return { title, excerpt: tr?.excerpt || preview || s.excerpt, ai: false, aiTitle: false, translated: !!tr };
 }
 
 /**
@@ -77,10 +77,15 @@ export function ScrapRow(p: ScrapRowProps) {
               📌
             </span>
           )}
+          {view.aiTitle && (
+            <span class="ai-badge" title={t('aiTitleBadge')}>
+              AI
+            </span>
+          )}
           {view.title}
         </span>
         {view.excerpt && <span class={`row-excerpt${view.ai ? ' is-ai' : ''}`}>{view.excerpt}</span>}
-        {/* 下段: 左に出典（幅をそろえる）と状態、右にカテゴリと星。保存日時は詳細だけに出す */}
+        {/* 下段: 左に出典（幅をそろえる）と状態、右に星、右端にカテゴリ（幅をそろえる）。保存日時は詳細だけに出す */}
         <span class="row-meta">
           <span class="meta-src" title={`${s.domain} · ${formatDateTime(s.createdAt)}`}>
             <SourceMark domain={s.domain} />
@@ -93,13 +98,13 @@ export function ScrapRow(p: ScrapRowProps) {
             {s.archivedAt != null && <span class="badge">{t('archivedBadge')}</span>}
             {note && <span class="warn">{note}</span>}
           </span>
+          <Stars value={s.stars} />
           <span class="meta-cats">
             {cats.slice(0, MAX_CATS).map((c) => (
               <span key={c.id} class="tag">{c.name}</span>
             ))}
             {cats.length > MAX_CATS && <span class="tag">{t('moreCats', cats.length - MAX_CATS)}</span>}
           </span>
-          <Stars value={s.stars} />
         </span>
       </button>
       {showTranslate && (

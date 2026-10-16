@@ -117,6 +117,12 @@ await mg.setViewportSize({ width: 1280, height: 1000 });
 await mg.goto(`chrome-extension://${extId}/manager.html#scrap=${scrapId}`);
 await mg.waitForTimeout(800);
 const det = mg.locator('.m-detail');
+// 回答があると手順は「もう一度AIに聞く」に折りたたまれるので、開いてから操作する
+const openAsk = async () => {
+  await mg.locator('.m-detail .ai-again').waitFor({ timeout: 3000 }).catch(() => {});
+  const d = mg.locator('.m-detail .ai-again');
+  if ((await d.count()) && !(await d.evaluate((e) => e.open))) await d.locator(':scope > summary').click();
+};
 await det.getByRole('tab', { name: /AI/ }).click();
 check('詳細にAI欄がある', await det.locator('.ai-panel').isVisible());
 
@@ -198,6 +204,9 @@ await mg.waitForTimeout(400);
 check('見出し: 元のタイトルに戻せる', (await det.locator('.title-input').inputValue()) === 'テスト記事');
 
 // 形式が違う回答 → 原文のみ
+check('回答後: 回答が先頭、手順は折りたたみ', (await det.locator('.ai-panel > .ai-step').first().innerText()).includes('AIの回答') && (await det.locator('.ai-again').evaluate((e) => !e.open)));
+check('詳細: タブの上にAI要約の枠', (await det.locator('.ai-summary-box').innerText()).includes('段落が12回繰り返される'));
+await openAsk();
 await det.getByLabel('AIの回答').fill('見出しのない自由な回答です。\n<script>alert(1)</script>');
 await det.getByRole('button', { name: '回答を保存' }).click();
 await mg.waitForTimeout(600);
@@ -238,6 +247,7 @@ await mg.goto(`chrome-extension://${extId}/manager.html#scrap=${scrapId}`);
 await mg.reload();
 await mg.waitForTimeout(800);
 await mg.locator('.m-detail').getByRole('tab', { name: /AI/ }).click();
+await openAsk();
 await mg.locator('.m-detail .ai-ask select').selectOption({ label: '私の検証' });
 await mg.waitForTimeout(400);
 await mg.locator('.m-detail').getByRole('button', { name: 'プロンプトをコピー' }).click();
@@ -257,6 +267,7 @@ await mg.waitForTimeout(400);
 let rowText = await mg.locator('.m-main .row', { hasText: 'テスト記事' }).first().innerText();
 check('一覧: AI要約を主役に表示', rowText.includes('段落が12回繰り返される') && !rowText.includes('OGの概要文です'), rowText.replace(/\n/g, ' / '));
 check('一覧: AI要約表示では見出しもAIのものに', rowText.includes('テスト記事を整理した見出し'), rowText.replace(/\n/g, ' / '));
+check('一覧: AIの見出しには「AI」の印', (await mg.locator('.m-main .row', { hasText: '整理した見出し' }).first().locator('.ai-badge').count()) === 1 && (await mg.locator('.m-main .row', { hasText: '別の記事' }).first().locator('.ai-badge').count()) === 0);
 await mg.screenshot({ path: path.join(OUT, 'p11-ai-face.png') });
 await mg.locator('.face-toggle').getByRole('button', { name: '原文' }).click();
 await mg.waitForTimeout(400);

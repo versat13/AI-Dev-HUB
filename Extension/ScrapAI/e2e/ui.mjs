@@ -405,15 +405,19 @@ check('コンパクト時は列ボタンが出ない', (await cm.getByRole('butt
 await cm.getByRole('button', { name: 'カード（大）', exact: true }).click();
 await cm.waitForTimeout(400);
 check('カード（大）: 切り替えられる', (await cm.locator('.rows .row.large').count()) > 0);
+const bigText = await cm.locator('.rows .row.large', { hasText: 'テスト記事' }).first().locator('.row-excerpt').innerText();
+check('カード（大）: 本文が長く出る（200字以上）', bigText.length >= 200, String(bigText.length));
 await cm.screenshot({ path: path.join(OUT, 'p11-large.png') });
 await cm.getByRole('button', { name: 'コンパクト', exact: true }).click();
 await cm.waitForTimeout(300);
 const pos = await cm.locator('.rows .row').evaluateAll((rows) => rows.map((r) => ({
   flags: Math.round(r.querySelector('.meta-flags').getBoundingClientRect().left),
   stars: Math.round(r.querySelector('.stars').getBoundingClientRect().right),
+  cats: Math.round(r.querySelector('.meta-cats').getBoundingClientRect().left),
+  starsBeforeCats: r.querySelector('.stars').getBoundingClientRect().right <= r.querySelector('.meta-cats').getBoundingClientRect().left + 1,
   time: !!r.querySelector('.row-meta time'),
 })));
-check('下段: 状態の欄と星の位置がどのカードでもそろう', new Set(pos.map((p) => p.flags)).size === 1 && new Set(pos.map((p) => p.stars)).size === 1, JSON.stringify(pos));
+check('下段: 状態・星・カテゴリの位置がどのカードでもそろい、星はカテゴリの左', new Set(pos.map((p) => p.flags)).size === 1 && new Set(pos.map((p) => p.stars)).size === 1 && new Set(pos.map((p) => p.cats)).size === 1 && pos.every((p) => p.starsBeforeCats), JSON.stringify(pos));
 check('下段: 保存日時は一覧に出さない', pos.every((p) => !p.time));
 await cm.screenshot({ path: path.join(OUT, 'p11-compact.png') });
 

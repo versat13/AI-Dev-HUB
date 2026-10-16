@@ -16,7 +16,8 @@ import { AiPanel } from './AiPanel';
 import { ConfirmDelete } from './ConfirmDelete';
 import { Snapshots } from './Snapshots';
 import { canTranslate, looksForeign, translateTexts } from './translate';
-import { revertTitle } from '@/lib/ai-db';
+import { answerExcerpt, answerHeadline } from '@/lib/ai';
+import { listAiAnswers, revertTitle } from '@/lib/ai-db';
 import { fragLabel, formatDateTime } from './format';
 import { Icon, SourceMark } from './icons';
 import { useCategories, useLive } from './hooks';
@@ -35,6 +36,8 @@ export function DetailView(props: {
   const scrap = useLive(async () => (await db.scraps.get(scrapId)) ?? null, [scrapId]);
   const frags = useLive(() => listFragments(scrapId), [scrapId]) ?? [];
   const categories = useCategories();
+  const answers = useLive(() => listAiAnswers(scrapId), [scrapId]) ?? [];
+  const latest = answers[0];
 
   const [title, setTitle] = useState('');
   const [memo, setMemo] = useState('');
@@ -187,6 +190,10 @@ export function DetailView(props: {
       </div>
 
       <header class="detail-head">
+        <div class="title-row">
+        {scrap.originalTitle && latest && answerHeadline(latest) === scrap.title && (
+          <span class="ai-badge" title={t('aiTitleBadge')}>AI</span>
+        )}
         <textarea
           class="title-input"
           rows={1}
@@ -201,6 +208,7 @@ export function DetailView(props: {
             }
           }}
         />
+        </div>
         {scrap.originalTitle && (
           <p class="original-title">
             {t('originalTitle', scrap.originalTitle)}{' '}
@@ -283,6 +291,20 @@ export function DetailView(props: {
           onBlur={flushMemo}
         />
       </header>
+
+      {latest && latest.parseStatus !== 'failed' && (
+        <section class="ai-summary-box" aria-label={t('aiSummaryBox')}>
+          <h4>
+            <span class="ai-mark">✦ {t('aiSummaryBox')}</span>
+            <span class="spacer" />
+            <button class="link" onClick={() => chooseTab('ai')}>{t('aiSeeAll')}</button>
+          </h4>
+          {/* 見出しがタイトルと同じなら重ねて出さない */}
+          {answerHeadline(latest) && answerHeadline(latest) !== scrap.title && <p class="answer-headline">{answerHeadline(latest)}</p>}
+          {/* AIの回答はプレーンテキストとして表示する */}
+          <pre class="frag-text">{latest.sections.find((x) => x.key === 'summary')?.body ?? answerExcerpt(latest)}</pre>
+        </section>
+      )}
 
       <div class="tabs" role="tablist" aria-label={t('detailTabs')}>
         <button role="tab" aria-selected={tab === 'body'} onClick={() => chooseTab('body')}>

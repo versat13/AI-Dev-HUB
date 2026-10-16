@@ -9,7 +9,7 @@ import { ActiveFilters, FilterPanel, SearchBox } from './Filters';
 import { Icon } from './icons';
 import { setSettings } from '@/lib/settings';
 import { useCategories, useListData, useLive } from './hooks';
-import { ScrapRow } from './ScrapRow';
+import { MAX_CATS, ScrapRow } from './ScrapRow';
 
 /** 一覧の本体（件数・空表示・行）。選択UIが要る管理タブでも使う */
 export function ScrapList(props: {
@@ -27,8 +27,8 @@ export function ScrapList(props: {
   onOpen: (id: string) => void;
 }) {
   const { data, params } = props;
-  // カード（大）の「原文」表示では、最初の断片の冒頭を長めに出す
-  const wantPreview = props.density === 'large' && props.face === 'original';
+  // カード（大）では、AI要約を出さないカードに最初の断片の冒頭を長めに出す（表示の切り替えに関係なく）
+  const wantPreview = props.density === 'large';
   const ids = data?.items.map((s) => s.id).join(',') ?? '';
   const previews = useLive(async () => {
     if (!wantPreview || !ids) return null;
@@ -43,6 +43,20 @@ export function ScrapList(props: {
   if (!data) return <p class="empty" role="status">…</p>;
   // ドメインの欄は、表示中で最も長いドメインに幅を合わせる（カードごとに位置がずれないように）
   const domW = Math.min(24, Math.max(6, ...data.items.map((s) => s.domain.length)));
+  // カテゴリの欄も、表示中で最も長いものに幅を合わせる（星の位置をそろえるため）。全角は2文字分で数える
+  const catMap0 = new Map(props.categories.map((c) => [c.id, c.name]));
+  const wide = (x: string) => [...x].reduce((n, ch) => n + (ch.charCodeAt(0) > 0xff ? 2 : 1), 0);
+  const catW = Math.min(
+    30,
+    Math.max(
+      0,
+      ...data.items.map((s) => {
+        const names = s.categoryIds.map((id) => catMap0.get(id)).filter((x): x is string => !!x);
+        const shown = names.slice(0, MAX_CATS).map((n) => Math.min(12, wide(n)) + 3);
+        return shown.reduce((a, b) => a + b, 0) + (names.length > MAX_CATS ? 5 : 0);
+      }),
+    ),
+  );
 
   const catMap = new Map(props.categories.map((c) => [c.id, c]));
   let empty: string | null = null;
@@ -63,6 +77,7 @@ export function ScrapList(props: {
           class={`rows${props.density !== 'compact' && props.columns != null ? ' grid' : ''}`}
           style={{
             '--dom-w': `${domW}ch`,
+            '--cat-w': `${catW}ch`,
             ...(props.density !== 'compact' && props.columns != null
               ? {
                   gridTemplateColumns:

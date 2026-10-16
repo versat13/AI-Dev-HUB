@@ -909,7 +909,7 @@
     "message": "Reads an exported JSON file. Invalid files are rejected without changing anything."
   },
   "importButton": {
-    "message": "Choose a file to import"
+    "message": "Import"
   },
   "templateHeads": {
     "message": "Answer headings"
@@ -943,5 +943,17 @@
   },
   "densityLabel": {
     "message": "List layout"
+  },
+  "aiTitleBadge": {
+    "message": "Showing the headline from the AI answer"
+  },
+  "aiAskAgain": {
+    "message": "Ask the AI again"
+  },
+  "aiSummaryBox": {
+    "message": "AI summary"
+  },
+  "aiSeeAll": {
+    "message": "See all sections"
   }
 }

@@ -909,7 +909,7 @@
     "message": "エクスポートしたJSONファイルを読み込みます。不正なファイルは何も変更せずに拒否します。"
   },
   "importButton": {
-    "message": "ファイルを選んで取り込む"
+    "message": "インポート"
   },
   "templateHeads": {
     "message": "回答の見出し"
@@ -943,5 +943,17 @@
   },
   "densityLabel": {
     "message": "一覧の表示"
+  },
+  "aiTitleBadge": {
+    "message": "AIの回答の見出しを表示しています"
+  },
+  "aiAskAgain": {
+    "message": "もう一度AIに聞く"
+  },
+  "aiSummaryBox": {
+    "message": "AI要約"
+  },
+  "aiSeeAll": {
+    "message": "すべての項目を見る"
   }
 }
