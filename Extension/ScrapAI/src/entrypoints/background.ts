@@ -5,6 +5,7 @@ import type { ExtractResult } from '@/lib/extract-page';
 import { resolveLocale, setLocale, t } from '@/lib/i18n';
 import { SNAP_ATTR } from '@/lib/profile-extract';
 import { pickProfile } from '@/lib/profile-match';
+import { seedSamples } from '@/lib/samples';
 import { saveFromPage } from '@/lib/save';
 import { getSettings } from '@/lib/settings';
 import { addSnapshot, cropScreenshot, type SnapRect } from '@/lib/snapshot';
@@ -246,7 +247,15 @@ export default defineBackground(() => {
   });
 
   void setupContextMenu().catch(() => undefined);
-  browser.runtime.onInstalled.addListener(() => void setupContextMenu().catch(() => undefined));
+  browser.runtime.onInstalled.addListener((details) => {
+    void setupContextMenu().catch(() => undefined);
+    // 初めて入れたときだけ、一覧にサンプルを置く（表示言語に合わせる）
+    if (details.reason === 'install') {
+      void getSettings()
+        .then((s) => seedSamples(resolveLocale(s.locale, browser.i18n.getUILanguage())))
+        .catch(() => undefined);
+    }
+  });
   browser.permissions.onAdded.addListener(() => void setupContextMenu().catch(() => undefined));
   browser.permissions.onRemoved.addListener(() => void setupContextMenu().catch(() => undefined));
   browser.storage.onChanged.addListener((changes, area) => {

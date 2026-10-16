@@ -65,6 +65,39 @@ const ext = await ctx.newPage();
 await ext.goto(`chrome-extension://${extId}/popup.html`);
 await ext.waitForTimeout(500);
 
+// 初回サンプル（インストール時に3件作られる）を確認してから消し、テストを空の状態から始める
+const seeded = await ext.evaluate(async () => {
+  const read = () => new Promise((resolve) => {
+    const open = indexedDB.open('scrapai');
+    open.onsuccess = () => {
+      const db = open.result;
+      if (!db.objectStoreNames.contains('meta')) return resolve(null);
+      const tx = db.transaction(['meta', 'scraps', 'categories'], 'readonly');
+      const out = {};
+      tx.objectStore('meta').get('samplesSeeded').onsuccess = (e) => (out.flag = e.target.result?.value);
+      tx.objectStore('scraps').getAll().onsuccess = (e) => (out.scraps = e.target.result);
+      tx.objectStore('categories').getAll().onsuccess = (e) => (out.cats = e.target.result);
+      tx.oncomplete = () => resolve(out);
+    };
+  });
+  for (let i = 0; i < 40; i++) {
+    const r = await read();
+    if (r?.flag && r.scraps.length >= 3) return { n: r.scraps.length, cats: r.cats.map((c) => c.name), ai: r.scraps.filter((s) => s.aiHeadline).length };
+    await new Promise((res) => setTimeout(res, 150));
+  }
+  return null;
+});
+await ext.evaluate(() => new Promise((resolve) => {
+  const open = indexedDB.open('scrapai');
+  open.onsuccess = () => {
+    const names = ['scraps', 'fragments', 'aiAnswers', 'categories', 'snapshots'];
+    const tx = open.result.transaction(names, 'readwrite');
+    for (const n of names) tx.objectStore(n).clear();
+    tx.oncomplete = () => resolve(true);
+  };
+}));
+check('初回サンプル: 3件・「サンプル」カテゴリ・AI要約つき1件', seeded?.n === 3 && (seeded.cats.includes('サンプル') || seeded.cats.includes('Sample')) && seeded.ai === 1, JSON.stringify(seeded));
+
 const tabIdOf = (pageUrl) =>
   ext.evaluate(async (u) => (await chrome.tabs.query({ url: u }))[0]?.id ?? null, pageUrl);
 const save = (tabId, mode) =>
@@ -108,7 +141,7 @@ const sources = db.fragments.map((f) => f.source).sort().join(',');
 check('記事: 断片=本文+概要', sources === 'meta,readability', sources);
 check('記事: 本文は上限3000字以内', db.fragments.find((f) => f.source === 'readability')?.text.length <= 3000);
 check('記事: 概要(excerpt)がOG概要', scrap?.excerpt === 'OGの概要文です', scrap?.excerpt);
-check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 4));
+check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 5));
 
 // 2) 同じURLを再度（選択なし）
 out = await save(aTab, 'auto');
@@ -420,6 +453,22 @@ const pos = await cm.locator('.rows .row').evaluateAll((rows) => rows.map((r) =>
 check('下段: 状態・星・カテゴリの位置がどのカードでもそろい、星はカテゴリの左', new Set(pos.map((p) => p.flags)).size === 1 && new Set(pos.map((p) => p.stars)).size === 1 && new Set(pos.map((p) => p.cats)).size === 1 && pos.every((p) => p.starsBeforeCats), JSON.stringify(pos));
 check('下段: 保存日時は一覧に出さない', pos.every((p) => !p.time));
 await cm.screenshot({ path: path.join(OUT, 'p11-compact.png') });
+
+// テーマ: 既定はライト、設定でダーク
+check('テーマ: 既定はライト', (await cm.evaluate(() => document.documentElement.dataset.theme)) === 'light');
+await ext.evaluate(async () => {
+  const cur = (await chrome.storage.local.get('settings')).settings ?? {};
+  await chrome.storage.local.set({ settings: { ...cur, theme: 'dark' } });
+});
+await cm.waitForTimeout(400);
+const bg = await cm.evaluate(() => getComputedStyle(document.body).backgroundColor);
+check('テーマ: ダークに切り替わる（開いている画面にも反映）', (await cm.evaluate(() => document.documentElement.dataset.theme)) === 'dark' && bg !== 'rgb(255, 255, 255)', bg);
+await cm.screenshot({ path: path.join(OUT, 'p13-dark.png') });
+await ext.evaluate(async () => {
+  const cur = (await chrome.storage.local.get('settings')).settings ?? {};
+  await chrome.storage.local.set({ settings: { ...cur, theme: 'light' } });
+});
+await cm.waitForTimeout(300);
 
 // 並び順: ドメイン順
 await cm.getByLabel('並び順').selectOption('domain-asc');

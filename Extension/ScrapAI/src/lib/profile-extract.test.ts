@@ -2,7 +2,7 @@
 import futaba from './__fixtures__/futaba-thread.html?raw';
 import xStatus from './__fixtures__/x-status.html?raw';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { BUILTIN_PROFILES } from './builtin-profiles';
+import { BUILTIN_PROFILES, futabaUnit } from './builtin-profiles';
 import { evalField, markSnapshotTarget, runProfile, SNAP_ATTR, textOf } from './profile-extract';
 import { generateSelector } from './selector-gen';
 import type { FieldRule, SiteProfile } from './types';
@@ -54,7 +54,7 @@ describe('evalField', () => {
 
 describe('ふたば（実ページ由来の見本）', () => {
   beforeEach(() => load('futaba-thread.html', '/b/res/1478296132.htm'));
-  const p = () => profile('builtin-futaba');
+  const p = (): SiteProfile => ({ id: 'user-futaba', name: 'ふたば', builtIn: false, enabled: true, urlPatterns: ['*.2chan.net/*/res/*'], priority: 100, fields: [], unit: futabaUnit, createdAt: 1, updatedAt: 1 });
 
   it('選択なし: スレ主の投稿を1断片で取る（番号・日時つき）', () => {
     const r = runProfile(p(), document, window);

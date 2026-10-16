@@ -40,7 +40,7 @@ describe('pickProfile', () => {
     expect(id('https://github.com/anthropics/claude-code')).toBe('builtin-github-repo');
     expect(id('https://github.com/anthropics/claude-code/issues/12')).toBe('builtin-github-issue');
     expect(id('https://github.com/anthropics/claude-code/pull/3')).toBe('builtin-github-issue');
-    expect(id('https://img.2chan.net/b/res/1478296132.htm')).toBe('builtin-futaba');
+    expect(id('https://img.2chan.net/b/res/1478296132.htm')).toBeUndefined(); // v1.0.13 で組み込みから外した
     expect(id('https://example.com/post')).toBeUndefined();
     expect(id('https://x.com/home')).toBeUndefined();
   });

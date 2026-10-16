@@ -11,7 +11,7 @@ import type {
   Snapshot,
 } from './types';
 
-export const SCHEMA_VERSION = 4; // 2: snapshots / 3: scraps.aiExcerpt / 4: aiHeadline と長い aiExcerpt
+export const SCHEMA_VERSION = 5; // 2: snapshots / 3: aiExcerpt / 4: aiHeadline / 5: 概要の選び方を直して作り直す
 
 class ScrapDB extends Dexie {
   scraps!: Table<Scrap, string>;
@@ -68,6 +68,16 @@ class ScrapDB extends Dexie {
           await tx.table('scraps').update(scrapId, { aiExcerpt: answerExcerpt(a), aiHeadline: answerHeadline(a) || undefined });
         }
         await tx.table('meta').put({ key: 'schemaVersion', value: 4 });
+      });
+    // 5: タイトルだけの断片が概要になっていたもの（Zenn など）を作り直す
+    this.version(5)
+      .stores({})
+      .upgrade(async (tx) => {
+        const frags = (await tx.table('fragments').toArray()) as Fragment[];
+        const by = new Map<string, Fragment[]>();
+        for (const f of frags.sort((a, b) => a.order - b.order)) by.set(f.scrapId, [...(by.get(f.scrapId) ?? []), f]);
+        for (const [scrapId, list] of by) await tx.table('scraps').update(scrapId, { excerpt: excerptOf(list) });
+        await tx.table('meta').put({ key: 'schemaVersion', value: 5 });
       });
     this.on('populate', (tx) => {
       tx.table('meta').add({ key: 'schemaVersion', value: SCHEMA_VERSION });

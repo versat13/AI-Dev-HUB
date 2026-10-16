@@ -153,6 +153,7 @@ export type Density = 'compact' | 'card' | 'large';
 
 export interface Settings {
   locale: 'auto' | 'ja' | 'en';
+  theme: 'light' | 'dark' | 'auto'; // 既定はライト
   articleMaxChars: number | null; // 汎用本文の文字数上限（null = 無制限）
   pinnedFirst: boolean; // ピン留めを一覧の先頭に表示する
   listStyle: Density; // 管理タブの一覧表示
@@ -169,6 +170,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   locale: 'auto',
+  theme: 'light',
   articleMaxChars: 3000,
   pinnedFirst: true,
   listStyle: 'compact',

@@ -4,6 +4,7 @@ import { t } from '@/lib/i18n';
 import type { ListData } from '@/lib/list';
 import { DEFAULT_PARAMS, isFiltered, type ListParams } from '@/lib/query';
 import { db } from '@/lib/db';
+import { bodyFragment } from '@/lib/text';
 import type { Category, Density, Settings } from '@/lib/types';
 import { ActiveFilters, FilterPanel, SearchBox } from './Filters';
 import { Icon } from './icons';
@@ -32,13 +33,11 @@ export function ScrapList(props: {
   const ids = data?.items.map((s) => s.id).join(',') ?? '';
   const previews = useLive(async () => {
     if (!wantPreview || !ids) return null;
-    const frags = await db.fragments.where('scrapId').anyOf(ids.split(',')).toArray();
-    const first = new Map<string, { order: number; text: string }>();
-    for (const f of frags) {
-      const cur = first.get(f.scrapId);
-      if (!cur || f.order < cur.order) first.set(f.scrapId, { order: f.order, text: f.text });
-    }
-    return new Map([...first].map(([k, v]) => [k, v.text.replace(/\s+/g, ' ').slice(0, 600)]));
+    const frags = (await db.fragments.where('scrapId').anyOf(ids.split(',')).toArray()).sort((a, b) => a.order - b.order);
+    const by = new Map<string, typeof frags>();
+    for (const f of frags) by.set(f.scrapId, [...(by.get(f.scrapId) ?? []), f]);
+    // 本文にあたる断片（タイトルだけの断片は飛ばす）の冒頭
+    return new Map([...by].map(([k, list]) => [k, (bodyFragment(list, true)?.text ?? '').replace(/\s+/g, ' ').slice(0, 600)]));
   }, [wantPreview, ids]);
   if (!data) return <p class="empty" role="status">…</p>;
   // ドメインの欄は、表示中で最も長いドメインに幅を合わせる（カードごとに位置がずれないように）
@@ -127,8 +126,12 @@ export function ListBrowser(props: {
 
   return (
     <section class="browser">
+      {/* 検索・絞り込み・表示の切り替えを1行に。件数は検索欄の右端に小さく出す */}
       <div class="browser-bar">
-        <SearchBox value={params.q} onInput={(q) => setParams({ ...params, q })} />
+        <div class="search-wrap">
+          <SearchBox value={params.q} onInput={(q) => setParams({ ...params, q })} />
+          {data && <span class="search-count" aria-live="polite">{t('itemCount', data.items.length)}</span>}
+        </div>
         <button
           class={`toggle icon-btn${isFiltered(params) ? ' on' : ''}`}
           aria-expanded={showFilters}
@@ -138,19 +141,17 @@ export function ListBrowser(props: {
         >
           <Icon name="filter" />
         </button>
-        {props.barExtra}
-      </div>
-      <div class="list-head">
-        <ActiveFilters params={params} onChange={setParams} categories={categories} />
-        <span class="spacer" />
         <FaceToggle
+          compact
           value={face}
           onChange={(v) => {
             setFace(v);
             void setSettings({ listFace: v });
           }}
         />
+        {props.barExtra}
       </div>
+      <ActiveFilters params={params} onChange={setParams} categories={categories} />
       {showFilters && (
         <FilterPanel
           params={params}
@@ -166,6 +167,7 @@ export function ListBrowser(props: {
           categories={categories}
           density="compact"
           face={face}
+          hideCount
           activeId={props.activeId}
           onOpen={props.onOpen}
         />
@@ -175,10 +177,10 @@ export function ListBrowser(props: {
 }
 
 /** 一覧全体の表示切り替え: AI要約を主役にするか、元の内容（切り抜いたもの）か */
-export function FaceToggle({ value, onChange }: { value: Settings['listFace']; onChange: (v: Settings['listFace']) => void }) {
+export function FaceToggle({ value, onChange, compact }: { value: Settings['listFace']; onChange: (v: Settings['listFace']) => void; compact?: boolean }) {
   return (
     <div class="seg face-toggle" role="group" aria-label={t('listFace')}>
-      <button aria-pressed={value === 'ai'} onClick={() => onChange('ai')}>✦ {t('faceAi')}</button>
+      <button aria-pressed={value === 'ai'} aria-label={t('faceAi')} onClick={() => onChange('ai')}>✦ {compact ? 'AI' : t('faceAi')}</button>
       <button aria-pressed={value === 'original'} onClick={() => onChange('original')}>{t('faceOriginal')}</button>
     </div>
   );

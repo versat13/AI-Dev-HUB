@@ -6,7 +6,7 @@ import type { FieldRule, SiteProfile, UnitRule } from './types';
 // 何も取れなかった場合は汎用抽出（Readability）に自動で切り替わるため、保存は失敗しない。
 // 内容を変えたら BUILTIN_VERSION を上げる（ユーザーが編集していないものだけ更新される）。
 
-export const BUILTIN_VERSION = 2; // 2: Xのスナップショット、Zenn・Qiita・note などを追加
+export const BUILTIN_VERSION = 3; // 2: Xのスナップショット、Zenn等を追加 / 3: ふたばを外す、YouTubeのスナップショット
 
 const f = (
   id: string,
@@ -26,7 +26,8 @@ const xUnit: UnitRule = {
   ],
 };
 
-const futabaUnit: UnitRule = {
+/** 掲示板のレス単位の抽出例（組み込みからは外した。テストと、自作プロファイルの見本に使う） */
+export const futabaUnit: UnitRule = {
   selector: '#master, td.rtd',
   anchorSelector: '.cno',
   fields: [
@@ -95,20 +96,9 @@ export const BUILTIN_PROFILES: Omit<SiteProfile, 'createdAt' | 'updatedAt'>[] = 
     priority: 90,
     fields: githubRepoFields,
   },
-  {
-    id: 'builtin-futaba',
-    name: 'ふたば☆ちゃんねる',
-    builtIn: true,
-    builtInVersion: BUILTIN_VERSION,
-    enabled: true,
-    urlPatterns: ['*.2chan.net/*/res/*'],
-    priority: 100,
-    fields: [],
-    unit: futabaUnit,
-  },
   // ---- v2 で追加（実ページでのセレクタは未確認。合わなければ汎用抽出に切り替わる） ----
   article('builtin-zenn', 'Zenn', ['zenn.dev/*/articles/*', 'zenn.dev/*/scraps/*', 'zenn.dev/*/books/*/viewer/*'], {
-    body: '.znc',
+    body: '.znc, [class*="BodyContent"] .znc, [class*="ArticleBody"], article [class*="markdown"]',
     author: 'a[href^="/"][class*="userName"], [class*="ArticleHeader"] a[href^="/"]',
     tags: 'a[href^="/topics/"]',
   }),
@@ -229,6 +219,8 @@ export const BUILTIN_PROFILES: Omit<SiteProfile, 'createdAt' | 'updatedAt'>[] = 
       f('author', 'author', 'author', '#owner #channel-name a, ytd-channel-name a'),
       f('description', 'description', 'body', '#description-inline-expander, ytd-text-inline-expander, #description', { maxChars: 4000 }),
     ],
+    // 動画プレーヤーと題名の部分を、保存のたびにたずねて撮る
+    snapshot: { mode: 'ask', selector: '#player, ytd-watch-metadata #title, #movie_player' },
   },
 ];
 
@@ -267,6 +259,13 @@ export async function ensureBuiltInProfiles(now: number = Date.now()): Promise<v
       } else if (!cur.modified && (cur.builtInVersion ?? 0) < BUILTIN_VERSION) {
         await db.siteProfiles.put({ ...stamp(def, now), createdAt: cur.createdAt, enabled: cur.enabled });
       }
+    }
+    // 組み込みから外したもの: 未編集なら消し、編集済みなら自作として残す（作ったルールを失わない）
+    const ids = new Set(BUILTIN_PROFILES.map((p) => p.id));
+    for (const cur of await db.siteProfiles.toArray()) {
+      if (!cur.builtIn || ids.has(cur.id)) continue;
+      if (cur.modified) await db.siteProfiles.update(cur.id, { builtIn: false, modified: false, updatedAt: now });
+      else await db.siteProfiles.delete(cur.id);
     }
   });
 }

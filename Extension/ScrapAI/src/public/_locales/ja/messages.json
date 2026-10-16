@@ -955,5 +955,17 @@
   },
   "aiSeeAll": {
     "message": "すべての項目を見る"
+  },
+  "setTheme": {
+    "message": "テーマ"
+  },
+  "themeLight": {
+    "message": "ライト"
+  },
+  "themeDark": {
+    "message": "ダーク"
+  },
+  "themeAuto": {
+    "message": "システムに合わせる"
   }
 }

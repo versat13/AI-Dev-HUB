@@ -955,5 +955,17 @@
   },
   "aiSeeAll": {
     "message": "See all sections"
+  },
+  "setTheme": {
+    "message": "Theme"
+  },
+  "themeLight": {
+    "message": "Light"
+  },
+  "themeDark": {
+    "message": "Dark"
+  },
+  "themeAuto": {
+    "message": "Match system"
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { domainOf, normalizeUrl } from './url';
-import { cleanPageTitle } from './text';
+import { cleanPageTitle, excerptOf } from './text';
 
 describe('normalizeUrl: 汎用', () => {
   it('# 以降と追跡パラメータを除去する', () => {
@@ -107,5 +107,14 @@ describe('cleanPageTitle', () => {
     expect(cleanPageTitle('動画のタイトル - YouTube', { domain: 'www.youtube.com' })).toBe('動画のタイトル');
     expect(cleanPageTitle('記事の題 | Qiita', { siteName: 'Qiita', domain: 'qiita.com', body: '全く別の本文がここに続きます。' })).toBe('記事の題');
     expect(cleanPageTitle('A - B - C', { domain: 'example.com' })).toBe('A - B - C');
+  });
+});
+
+describe('excerptOf', () => {
+  it('タイトルだけの断片は概要にしない（汎用の本文を使う）', () => {
+    expect(excerptOf([
+      { source: 'rule', role: 'title', text: '記事のタイトル' },
+      { source: 'readability', role: 'body', text: '本文の最初の段落です。' },
+    ])).toBe('本文の最初の段落です。');
   });
 });

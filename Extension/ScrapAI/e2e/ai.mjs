@@ -65,6 +65,38 @@ const ext = await ctx.newPage();
 await ext.goto(`chrome-extension://${extId}/popup.html`);
 await ext.waitForTimeout(500);
 
+// 初回サンプル（インストール時に3件作られる）を確認してから消し、テストを空の状態から始める
+const seeded = await ext.evaluate(async () => {
+  const read = () => new Promise((resolve) => {
+    const open = indexedDB.open('scrapai');
+    open.onsuccess = () => {
+      const db = open.result;
+      if (!db.objectStoreNames.contains('meta')) return resolve(null);
+      const tx = db.transaction(['meta', 'scraps', 'categories'], 'readonly');
+      const out = {};
+      tx.objectStore('meta').get('samplesSeeded').onsuccess = (e) => (out.flag = e.target.result?.value);
+      tx.objectStore('scraps').getAll().onsuccess = (e) => (out.scraps = e.target.result);
+      tx.objectStore('categories').getAll().onsuccess = (e) => (out.cats = e.target.result);
+      tx.oncomplete = () => resolve(out);
+    };
+  });
+  for (let i = 0; i < 40; i++) {
+    const r = await read();
+    if (r?.flag && r.scraps.length >= 3) return { n: r.scraps.length, cats: r.cats.map((c) => c.name), ai: r.scraps.filter((s) => s.aiHeadline).length };
+    await new Promise((res) => setTimeout(res, 150));
+  }
+  return null;
+});
+await ext.evaluate(() => new Promise((resolve) => {
+  const open = indexedDB.open('scrapai');
+  open.onsuccess = () => {
+    const names = ['scraps', 'fragments', 'aiAnswers', 'categories', 'snapshots'];
+    const tx = open.result.transaction(names, 'readwrite');
+    for (const n of names) tx.objectStore(n).clear();
+    tx.oncomplete = () => resolve(true);
+  };
+}));
+
 const tabIdOf = (pageUrl) =>
   ext.evaluate(async (u) => (await chrome.tabs.query({ url: u }))[0]?.id ?? null, pageUrl);
 const save = (tabId, mode) =>

@@ -15,7 +15,7 @@ import { t } from '@/lib/i18n';
 import { DEFAULT_PARAMS, type ListParams } from '@/lib/query';
 import { setSettings } from '@/lib/settings';
 import type { Category, Settings } from '@/lib/types';
-import { applyLocale } from '@/ui/boot';
+import { applyLocale, applyTheme } from '@/ui/boot';
 import { DataSettings } from '@/ui/DataSettings';
 import { DetailView } from '@/ui/DetailView';
 import { ActiveFilters, FilterPanel, SearchBox, SortSelect } from '@/ui/Filters';
@@ -92,6 +92,7 @@ export function App({ initial }: { initial: Settings }) {
   async function updateSettings(patch: Partial<Settings>) {
     const next = await setSettings(patch);
     applyLocale(next);
+    applyTheme(next);
     setSettingsState(next);
     if (patch.pinnedFirst !== undefined) setParams((p) => ({ ...p, pinnedFirst: next.pinnedFirst }));
   }
@@ -492,6 +493,14 @@ function SettingsPane({
             onChange={(e) => onChange({ pinnedFirst: (e.target as HTMLInputElement).checked })}
           />
           {t('settingsPinnedFirst')}
+        </label>
+        <label class="set-row">
+          <span>{t('setTheme')}</span>
+          <select value={settings.theme} onChange={(e) => onChange({ theme: (e.target as HTMLSelectElement).value as Settings['theme'] })}>
+            <option value="light">{t('themeLight')}</option>
+            <option value="dark">{t('themeDark')}</option>
+            <option value="auto">{t('themeAuto')}</option>
+          </select>
         </label>
         <label class="set-row check">
           <input

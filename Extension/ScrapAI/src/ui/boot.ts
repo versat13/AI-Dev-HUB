@@ -7,7 +7,17 @@ import type { Settings } from '@/lib/types';
 export async function bootUi(): Promise<Settings> {
   const settings = await getSettings();
   applyLocale(settings);
+  applyTheme(settings);
+  // 別の画面でテーマを変えたら、開いている画面にもすぐ反映する
+  browser.storage.onChanged.addListener((c, area) => {
+    const next = c.settings?.newValue as Settings | undefined;
+    if (area === 'local' && next) applyTheme(next);
+  });
   return settings;
+}
+
+export function applyTheme(settings: Pick<Settings, 'theme'>): void {
+  document.documentElement.dataset.theme = settings.theme ?? 'light';
 }
 
 export function applyLocale(settings: Settings): void {

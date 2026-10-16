@@ -23,15 +23,27 @@ export function makeExcerpt(text: string, max = 120): string {
   return truncate(flat, max).text;
 }
 
-/** 断片の集合から一覧用の概要を決める（選択テキスト > サイト別の本文 > OGP概要 > 本文 > 先頭） */
-export function excerptOf(frags: { source: string; text: string; role?: string }[]): string {
-  const pick =
+const NOT_BODY = new Set(['title', 'author', 'date']);
+
+/**
+ * 一覧に出す本文の断片を選ぶ: 選択テキスト > サイト別の本文 > OGP概要 > 汎用の本文 > その他。
+ * タイトル・投稿者・日付だけの断片は本文として使わない（カードにタイトルが二重に出るのを防ぐ）
+ */
+export function bodyFragment<T extends { source: string; text: string; role?: string }>(frags: T[], long = false): T | undefined {
+  // long: カード（大）用。短いOGP概要より、長い本文を優先する
+  const meta = frags.find((f) => f.source === 'meta');
+  const article = frags.find((f) => f.source === 'readability');
+  return (
     frags.find((f) => f.source === 'selection') ??
     frags.find((f) => f.source === 'rule' && f.role === 'body') ??
-    frags.find((f) => f.source === 'rule') ??
-    frags.find((f) => f.source === 'meta') ??
-    frags.find((f) => f.source === 'readability') ??
-    frags[0];
+    (long ? article ?? meta : meta ?? article) ??
+    frags.find((f) => !NOT_BODY.has(f.role ?? '')) ??
+    frags[0]
+  );
+}
+
+export function excerptOf(frags: { source: string; text: string; role?: string }[]): string {
+  const pick = bodyFragment(frags);
   return pick ? makeExcerpt(pick.text) : '';
 }
 
