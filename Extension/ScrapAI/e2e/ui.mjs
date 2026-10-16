@@ -200,8 +200,9 @@ const det = mg.locator('.m-detail');
 check('管理: 詳細ペインが開く', await det.isVisible());
 await det.getByRole('button', { name: '星5' }).click();
 await det.getByRole('button', { name: /ピン留め/ }).click();
-await det.locator('textarea').first().fill('管理画面メモ');
-await det.locator('textarea').first().blur();
+await det.getByLabel('メモ').fill('管理画面メモ');
+await det.getByLabel('メモ').blur();
+await det.locator('.cat-picker summary').click();
 await det.getByLabel('新しいカテゴリ').fill('AI活用');
 await det.getByLabel('新しいカテゴリ').press('Enter');
 await mg.waitForTimeout(700);
@@ -213,27 +214,38 @@ await mg.screenshot({ path: path.join(OUT, 'p2-manager-detail.png') });
 
 // フィルタ
 const side = mg.locator('.m-side');
-await side.locator('.filters select').nth(3).selectOption('5');
+const fsel = () => mg.locator('.filter-pop .filters select'); // 0=ドメイン 1=AI要約 2=評価
+const openFilters = async () => { if ((await mg.locator('.filter-pop').count()) === 0) await mg.getByRole('button', { name: '絞り込み' }).click(); };
+const clearFilters = async () => {
+  while ((await mg.locator('.active-filters .fchip button').count()) > 0) {
+    await mg.locator('.active-filters .fchip button').first().click();
+    await mg.waitForTimeout(150);
+  }
+};
+const showView = async (v) => { await side.getByRole('button', { name: v === 'archived' ? 'アーカイブ' : '一覧' }).click(); await mg.waitForTimeout(300); };
+await openFilters();
+await fsel().nth(2).selectOption('5');
 await mg.waitForTimeout(500);
 body = await mg.locator('.m-main').innerText();
 check('管理: 星5以上フィルタ', body.includes('テスト記事') && !body.includes('AIスレ'));
-await side.locator('.filters select').nth(3).selectOption('unrated');
+await fsel().nth(2).selectOption('unrated');
 await mg.waitForTimeout(500);
 body = await mg.locator('.m-main').innerText();
 check('管理: 未評価フィルタ', !body.includes('テスト記事') && body.includes('AIスレ'));
-await side.getByRole('button', { name: '条件をリセット' }).click();
-await side.locator('.filters select').nth(4).selectOption({ label: 'AI活用' });
+await clearFilters();
+await side.locator('.m-cats').getByRole('button', { name: 'AI活用' }).click();
 await mg.waitForTimeout(500);
 body = await mg.locator('.m-main').innerText();
 check('管理: カテゴリフィルタ', body.includes('テスト記事') && !body.includes('AIスレ'));
-await side.getByRole('button', { name: '条件をリセット' }).click();
-await side.locator('.filters select').nth(2).selectOption('none');
+await clearFilters();
+await fsel().nth(1).selectOption('none');
 await mg.waitForTimeout(500);
 check('管理: AI要約なしフィルタ(全件該当)', (await mg.locator('.m-main').innerText()).includes('AIスレ'));
-await side.getByRole('button', { name: '条件をリセット' }).click();
-await side.locator('.filters select').nth(1).selectOption({ index: 1 });
+await clearFilters();
+await fsel().nth(0).selectOption({ index: 1 });
 await mg.waitForTimeout(300);
-await side.getByRole('button', { name: '条件をリセット' }).click();
+check('管理: 有効な条件だけチップ表示', (await mg.locator('.active-filters .fchip').count()) === 1);
+await clearFilters();
 
 // 断片: 切り出し・削除
 await mg.locator('.m-main').getByText('AIスレ').first().click();
@@ -259,8 +271,7 @@ await mg.waitForTimeout(700);
 db = await dump();
 check('管理: 一括アーカイブ', db.scraps.every((x) => x.archivedAt != null), JSON.stringify(db.scraps.map((x) => x.archivedAt)));
 check('管理: 通常表示は空', /まだ何も|条件に合う/.test(await mg.locator('.m-main').innerText()));
-await side.locator('.filters select').nth(0).selectOption('archived');
-await mg.waitForTimeout(500);
+await showView('archived');
 check('管理: アーカイブ表示に出る', (await mg.locator('.m-main').innerText()).includes('テスト記事'));
 await mg.screenshot({ path: path.join(OUT, 'p2-manager-archive.png') });
 await mg.getByRole('button', { name: '表示中をすべて選択' }).click();
@@ -268,23 +279,24 @@ await mg.locator('.bulkbar').getByRole('button', { name: '復元' }).click();
 await mg.waitForTimeout(700);
 db = await dump();
 check('管理: 一括復元', db.scraps.every((x) => x.archivedAt == null));
-await side.locator('.filters select').nth(0).selectOption('active');
+await showView('active');
 
 // 完全削除（アーカイブしてから）
 const cnt = db.scraps.length;
 await mg.locator('.m-main').getByText('別の記事').first().click();
 await mg.waitForTimeout(500);
+await mg.locator('.m-detail .menu summary').click();
 await mg.locator('.m-detail').getByRole('button', { name: 'アーカイブ' }).click();
 await mg.waitForTimeout(500);
-await side.locator('.filters select').nth(0).selectOption('archived');
-await mg.waitForTimeout(400);
+await showView('archived');
 await mg.locator('.m-main').getByText('別の記事').first().click();
 await mg.waitForTimeout(500);
+await mg.locator('.m-detail .menu summary').click();
 await mg.locator('.m-detail').getByRole('button', { name: '完全に削除' }).click();
 await mg.waitForTimeout(700);
 db = await dump();
 check('管理: 完全削除', db.scraps.length === cnt - 1 && !db.scraps.some((x) => x.title === '別の記事'));
-await side.locator('.filters select').nth(0).selectOption('active');
+await showView('active');
 
 // カテゴリ管理
 await mg.locator('.m-nav').getByRole('button', { name: 'カテゴリ' }).click();

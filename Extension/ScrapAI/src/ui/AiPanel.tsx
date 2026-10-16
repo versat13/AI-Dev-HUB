@@ -9,19 +9,19 @@ import {
 } from '@/lib/ai';
 import {
   addAiAnswer,
-  applyTranslation,
+  answerParts,
+  applyAnswer,
   deleteAiAnswer,
   listAiAnswers,
   listCustomTemplates,
-  revertTitle,
-  translationParts,
 } from '@/lib/ai-db';
 import { getLocale, t } from '@/lib/i18n';
 import { getSettings, setSettings } from '@/lib/settings';
 import type { AiAnswer, Fragment, Scrap } from '@/lib/types';
 import { copyText } from './clipboard';
-import { formatDateTime, fragLabel } from './format';
+import { formatDateTime, formatRelative, fragLabel } from './format';
 import { useLive } from './hooks';
+import { Icon } from './icons';
 
 const SERVICE_NAMES: Record<string, string> = Object.fromEntries(AI_SERVICES.map((s) => [s.id, s.name]));
 
@@ -32,17 +32,27 @@ function AnswerCard({ a, scrap }: { a: AiAnswer; scrap: Scrap }) {
   const next = a.sections.find((s) => s.key === 'nextPrompt')?.body;
   const status =
     a.parseStatus === 'ok' ? t('aiParsedOk') : a.parseStatus === 'partial' ? t('aiParsedPartial') : t('aiParsedFailed');
-
-  const tr = translationParts(a);
-  const canApply = !!(tr.title || tr.body);
+  const parts = answerParts(a);
+  const canApply = !!parts.body || (!!parts.title && parts.title !== scrap.title);
+  // 見出しと要点を先に見せ、残りは折りたたむ
+  const isHead = (k: string) => k === 'headline' || k === 'jaTitle';
+  const lead = a.sections.filter((s) => s.key === 'summary' || s.key === 'intro');
+  const rest = a.sections.filter((s) => !isHead(s.key) && s.key !== 'summary' && s.key !== 'intro');
 
   const copy = async (text: string) => setNote((await copyText(text)) ? t('copied') : t('copyFailed'));
+  const Section = ({ k, body }: { k: string; body: string }) => (
+    <div class={`sec sec-${k}`}>
+      {k !== 'intro' && <dt>{sectionTitle(k, lang)}</dt>}
+      {/* AIの回答はプレーンテキストとして表示する（HTML・Markdownとして解釈しない） */}
+      <dd><pre class="frag-text">{body}</pre></dd>
+    </div>
+  );
 
   return (
     <li class="answer">
       <div class="answer-head">
-        <strong>{SERVICE_NAMES[a.service ?? ''] ?? t('aiServiceOther')}</strong>
-        <span class="muted">{formatDateTime(a.createdAt)}</span>
+        <span>{SERVICE_NAMES[a.service ?? ''] ?? t('aiServiceOther')}</span>
+        <time title={formatDateTime(a.createdAt)}>{formatRelative(a.createdAt)}</time>
         <span class={`badge parse-${a.parseStatus}`}>{status}</span>
         <span class="spacer" />
         <button class="link" onClick={() => setShowRaw(!showRaw)} aria-expanded={showRaw}>
@@ -50,15 +60,20 @@ function AnswerCard({ a, scrap }: { a: AiAnswer; scrap: Scrap }) {
         </button>
       </div>
       {!showRaw && (
-        <dl class="answer-sections">
-          {a.sections.map((s) => (
-            <div key={s.key} class={`sec sec-${s.key}`}>
-              {s.key !== 'intro' && <dt>{sectionTitle(s.key, lang)}</dt>}
-              {/* AIの回答はプレーンテキストとして表示する（HTML・Markdownとして解釈しない） */}
-              <dd><pre class="frag-text">{s.body}</pre></dd>
-            </div>
-          ))}
-        </dl>
+        <>
+          {parts.title && <p class="answer-headline">{parts.title}</p>}
+          <dl class="answer-sections">
+            {lead.map((s) => <Section key={s.key} k={s.key} body={s.body} />)}
+          </dl>
+          {rest.length > 0 && (
+            <details class="answer-more">
+              <summary>{t('aiMoreSections', rest.length)}</summary>
+              <dl class="answer-sections">
+                {rest.map((s) => <Section key={s.key} k={s.key} body={s.body} />)}
+              </dl>
+            </details>
+          )}
+        </>
       )}
       {showRaw && (
         <>
@@ -70,18 +85,15 @@ function AnswerCard({ a, scrap }: { a: AiAnswer; scrap: Scrap }) {
         {canApply && (
           <button
             onClick={async () => {
-              const r = await applyTranslation(scrap.id, tr);
+              const r = await applyAnswer(scrap.id, parts);
               setNote(r.titleChanged || r.fragmentAdded ? t('translationApplied') : t('translationAlready'));
             }}
           >
-            {t('translationApply')}
+            {parts.body ? t('translationApply') : t('applyHeadline')}
           </button>
         )}
-        {canApply && scrap.originalTitle && (
-          <button onClick={() => revertTitle(scrap.id)}>{t('translationRevert')}</button>
-        )}
         {next && <button onClick={() => copy(next)}>{t('aiCopyNextPrompt')}</button>}
-        <button onClick={() => copy(a.raw)}>{t('aiCopyRaw')}</button>
+        <button class="link" onClick={() => copy(a.raw)}>{t('aiCopyRaw')}</button>
         <button
           class="link"
           onClick={async () => {
@@ -110,8 +122,12 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
   const [service, setService] = useState<AiServiceId>('chatgpt');
   const [lastService, setLastService] = useState<AiServiceId | null>(null);
 
+  const [applyHeadline, setApplyHeadline] = useState(true);
   useEffect(() => {
-    void getSettings().then((s) => setTemplateId(s.aiTemplateId));
+    void getSettings().then((s) => {
+      setTemplateId(s.aiTemplateId);
+      setApplyHeadline(s.aiApplyHeadline);
+    });
   }, []);
   useEffect(() => setExcluded(new Set()), [scrap.id]);
 
@@ -136,104 +152,122 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
 
   async function saveAnswer() {
     if (!raw.trim()) return;
-    await addAiAnswer({
+    const saved = await addAiAnswer({
       scrapId: scrap.id,
       raw,
       service,
       templateId: tpl.id,
       fragmentIds: used.length === frags.length ? undefined : used.map((f) => f.id),
       expected: tpl.sections,
+      applyToScrap: applyHeadline,
     });
     setRaw('');
-    setNote(t('aiAnswerSaved'));
+    setNote(saved.applied?.titleChanged ? t('aiAnswerSavedTitled') : t('aiAnswerSaved'));
   }
 
   return (
     <section class="ai-panel" aria-label={t('aiSection')}>
-      <h3>{t('aiSection')}</h3>
+      <div class="ai-step">
+        <h4><span class="step-no">1</span>{t('aiStepAsk')}</h4>
+        <div class="ai-ask">
+          <label class="field">
+            <span>{t('aiTemplate')}</span>
+            <select value={tpl.id} onChange={(e) => chooseTemplate((e.target as HTMLSelectElement).value)}>
+              {templates.map((x) => (
+                <option key={x.id} value={x.id}>{x.name}</option>
+              ))}
+            </select>
+          </label>
 
-      <div class="ai-ask">
-        <label class="field">
-          <span>{t('aiTemplate')}</span>
-          <select value={tpl.id} onChange={(e) => chooseTemplate((e.target as HTMLSelectElement).value)}>
-            {templates.map((x) => (
-              <option key={x.id} value={x.id}>{x.name}</option>
+          {frags.length > 1 && (
+            <details class="ai-frags">
+              <summary>{t('aiFragsUsed', used.length, frags.length)}</summary>
+              {frags.map((f, i) => (
+                <label class="check" key={f.id}>
+                  <input
+                    type="checkbox"
+                    checked={!excluded.has(f.id)}
+                    onChange={(e) => {
+                      const next = new Set(excluded);
+                      if ((e.target as HTMLInputElement).checked) next.delete(f.id);
+                      else next.add(f.id);
+                      setExcluded(next);
+                    }}
+                  />
+                  {i + 1}. {fragLabel(f.fieldLabel)}
+                  {f.anchor ? ` ${f.anchor}` : ''} — {f.text.slice(0, 40)}
+                </label>
+              ))}
+            </details>
+          )}
+
+          <div class="ai-services">
+            {AI_SERVICES.map((s) => (
+              <button key={s.id} class="service" onClick={() => copyPrompt(s)} title={t('aiCopyAndOpenTitle', s.name)}>
+                {s.name} <Icon name="external" size={12} />
+              </button>
             ))}
-          </select>
-        </label>
-
-        {frags.length > 1 && (
-          <details class="ai-frags">
-            <summary>{t('aiFragsUsed', used.length, frags.length)}</summary>
-            {frags.map((f, i) => (
-              <label class="check" key={f.id}>
-                <input
-                  type="checkbox"
-                  checked={!excluded.has(f.id)}
-                  onChange={(e) => {
-                    const next = new Set(excluded);
-                    if ((e.target as HTMLInputElement).checked) next.delete(f.id);
-                    else next.add(f.id);
-                    setExcluded(next);
-                  }}
-                />
-                {i + 1}. {fragLabel(f.fieldLabel)}
-                {f.anchor ? ` ${f.anchor}` : ''} — {f.text.slice(0, 40)}
-              </label>
-            ))}
-          </details>
-        )}
-
-        <div class="ai-buttons">
-          <button class="primary" onClick={() => copyPrompt()}>{t('aiCopyPrompt')}</button>
-          {AI_SERVICES.map((s) => (
-            <button key={s.id} onClick={() => copyPrompt(s)} title={t('aiCopyAndOpenTitle', s.name)}>
-              {s.name} ↗
-            </button>
-          ))}
+          </div>
+          <div class="ai-sub">
+            <button class="link" onClick={() => copyPrompt()}>{t('aiCopyPrompt')}</button>
+            <details class="ai-preview">
+              <summary>{t('aiPreview', prompt.length)}</summary>
+              <pre class="frag-text">{prompt}</pre>
+            </details>
+          </div>
+          {note && <p class="note-line" role="status">{note}</p>}
         </div>
-        {note && <p class="muted" role="status">{note}</p>}
-        <details class="ai-preview">
-          <summary>{t('aiPreview', prompt.length)}</summary>
-          <pre class="frag-text">{prompt}</pre>
-        </details>
       </div>
 
-      <div class="ai-paste">
-        <textarea
-          rows={4}
-          value={raw}
-          placeholder={t('aiPastePlaceholder')}
-          aria-label={t('aiPasteLabel')}
-          onInput={(e) => setRaw((e.target as HTMLTextAreaElement).value)}
-        />
-        <div class="ai-buttons">
-          <select
-            aria-label={t('aiService')}
-            value={service}
-            onChange={(e) => setService((e.target as HTMLSelectElement).value as AiServiceId)}
-          >
-            {AI_SERVICES.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-            <option value="other">{t('aiServiceOther')}</option>
-          </select>
-          <button class="primary" disabled={!raw.trim()} onClick={saveAnswer}>{t('aiSaveAnswer')}</button>
-          {lastService && <span class="muted">{t('aiPasteHint')}</span>}
+      <div class="ai-step">
+        <h4><span class="step-no">2</span>{t('aiStepPaste')}</h4>
+        <div class="ai-paste">
+          <textarea
+            rows={4}
+            value={raw}
+            placeholder={t('aiPastePlaceholder')}
+            aria-label={t('aiPasteLabel')}
+            onInput={(e) => setRaw((e.target as HTMLTextAreaElement).value)}
+          />
+          <div class="ai-buttons">
+            <select
+              aria-label={t('aiService')}
+              value={service}
+              onChange={(e) => setService((e.target as HTMLSelectElement).value as AiServiceId)}
+            >
+              {AI_SERVICES.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+              <option value="other">{t('aiServiceOther')}</option>
+            </select>
+            <button class="primary" disabled={!raw.trim()} onClick={saveAnswer}>{t('aiSaveAnswer')}</button>
+          </div>
+          <label class="check small">
+            <input
+              type="checkbox"
+              checked={applyHeadline}
+              onChange={async (e) => {
+                const v = (e.target as HTMLInputElement).checked;
+                setApplyHeadline(v);
+                await setSettings({ aiApplyHeadline: v });
+              }}
+            />
+            {t('aiApplyHeadline')}
+          </label>
+          {lastService && <p class="help">{t('aiPasteHint')}</p>}
         </div>
       </div>
 
       {answers.length > 0 && (
-        <>
+        <div class="ai-step">
           <h4>{t('aiAnswers', answers.length)}</h4>
           <ul class="answers">
             {answers.map((a) => (
               <AnswerCard key={a.id} a={a} scrap={scrap} />
             ))}
           </ul>
-        </>
+        </div>
       )}
     </section>
   );
 }
-

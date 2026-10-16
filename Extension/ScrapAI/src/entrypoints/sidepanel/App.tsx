@@ -4,6 +4,7 @@ import { t } from '@/lib/i18n';
 import type { Settings } from '@/lib/types';
 import { DetailView } from '@/ui/DetailView';
 import { ListBrowser } from '@/ui/ListBrowser';
+import { Icon } from '@/ui/icons';
 import { OPEN_SCRAP_KEY, openManager } from '@/ui/nav';
 
 interface OpenRequest {
@@ -46,8 +47,14 @@ export function App({ settings }: { settings: Settings }) {
         />
       ) : (
         <>
+          <header class="popup-head">
+            <span class="brand"><img src="/icon/32.png" width="18" height="18" alt="" />ScrapAI</span>
+            <span class="spacer" />
+            <button class="icon-btn" aria-label={t('openManager')} title={t('openManager')} onClick={() => openManager()}>
+              <Icon name="manager" />
+            </button>
+          </header>
           <ListBrowser settings={settings} onOpen={setSelectedId} />
-          <button onClick={() => openManager()}>{t('openManager')}</button>
         </>
       )}
     </main>

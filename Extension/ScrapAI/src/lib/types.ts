@@ -125,6 +125,7 @@ export interface Settings {
   contextMenu: boolean; // 右クリックメニューに「ScrapAIに保存」を出す（既定オフ。contextMenus権限が必要）
   cardColumns: number; // カード表示の列数（0 = 自動、1〜6）
   aiTemplateId: string; // 最後に使ったAIテンプレート（P4）
+  aiApplyHeadline: boolean; // 回答を保存したとき、見出しでタイトルを置き換える（既定オン）
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -135,6 +136,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cardColumns: 0,
   contextMenu: false,
   aiTemplateId: 'builtin-verify',
+  aiApplyHeadline: true,
 };
 
 // 保存処理の結果（背景ページ → ポップアップ）

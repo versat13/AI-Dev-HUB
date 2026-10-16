@@ -18,7 +18,8 @@ import type { Category, Settings } from '@/lib/types';
 import { applyLocale } from '@/ui/boot';
 import { DataSettings } from '@/ui/DataSettings';
 import { DetailView } from '@/ui/DetailView';
-import { FilterPanel, SearchBox } from '@/ui/Filters';
+import { ActiveFilters, FilterPanel, SearchBox, SortSelect } from '@/ui/Filters';
+import { Icon } from '@/ui/icons';
 import { formatBytes } from '@/ui/format';
 import { useCategories, useListData, useLive } from '@/ui/hooks';
 import { ScrapList } from '@/ui/ListBrowser';
@@ -54,6 +55,23 @@ export function App({ initial }: { initial: Settings }) {
   const [selection, setSelection] = useState<Set<string>>(new Set());
   const categories = useCategories();
   const data = useListData(params);
+  const changeParams = (p: ListParams) => {
+    setParams(p);
+    setSelection(new Set());
+  };
+  // サイドバーの件数（アーカイブ以外をカテゴリ別に数える）
+  const counts =
+    useLive(async () => {
+      let active = 0;
+      let archived = 0;
+      const byCat = new Map<string, number>();
+      await db.scraps.each((s) => {
+        if (s.archivedAt != null) return void archived++;
+        active++;
+        s.categoryIds.forEach((c) => byCat.set(c, (byCat.get(c) ?? 0) + 1));
+      });
+      return { active, archived, byCat };
+    }, []) ?? { active: 0, archived: 0, byCat: new Map<string, number>() };
 
   // ポップアップなどから #scrap=<id> 付きで開かれたとき
   useEffect(() => {
@@ -91,25 +109,56 @@ export function App({ initial }: { initial: Settings }) {
   return (
     <div class={layout}>
       <aside class="m-side">
-        <h1>ScrapAI</h1>
+        <h1 class="brand"><img src="/icon/32.png" width="20" height="20" alt="" />ScrapAI</h1>
         <nav class="m-nav" aria-label="ScrapAI">
-          {SECTIONS.map((s) => (
+          <button
+            aria-current={section === 'library' && params.view !== 'archived' ? 'page' : undefined}
+            onClick={() => {
+              setSection('library');
+              changeParams({ ...params, view: 'active' });
+            }}
+          >
+            {t('navLibrary')}
+            <span class="nav-count">{counts.active}</span>
+          </button>
+          <button
+            aria-current={section === 'library' && params.view === 'archived' ? 'page' : undefined}
+            onClick={() => {
+              setSection('library');
+              changeParams({ ...params, view: 'archived' });
+            }}
+          >
+            {t('viewArchived')}
+            <span class="nav-count">{counts.archived}</span>
+          </button>
+        </nav>
+
+        {categories.length > 0 && (
+          <nav class="m-cats" aria-label={t('categories')}>
+            <h2>{t('categories')}</h2>
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                aria-current={section === 'library' && params.category === c.id ? 'true' : undefined}
+                onClick={() => {
+                  setSection('library');
+                  changeParams({ ...params, category: params.category === c.id ? 'any' : c.id });
+                }}
+              >
+                {c.name}
+                <span class="nav-count">{counts.byCat.get(c.id) ?? 0}</span>
+              </button>
+            ))}
+          </nav>
+        )}
+
+        <nav class="m-nav m-tools" aria-label={t('navSettings')}>
+          {SECTIONS.filter((s) => s !== 'library').map((s) => (
             <button key={s} aria-current={section === s ? 'page' : undefined} onClick={() => setSection(s)}>
               {t(NAV_LABEL[s])}
             </button>
           ))}
         </nav>
-        {section === 'library' && (
-          <FilterPanel
-            params={params}
-            onChange={(p) => {
-              setParams(p);
-              setSelection(new Set());
-            }}
-            domains={data?.domains ?? []}
-            categories={categories}
-          />
-        )}
       </aside>
 
       <main class="m-main">
@@ -117,10 +166,7 @@ export function App({ initial }: { initial: Settings }) {
           <Library
             settings={settings}
             params={params}
-            setParams={(p) => {
-              setParams(p);
-              setSelection(new Set());
-            }}
+            setParams={changeParams}
             data={data}
             categories={categories}
             activeId={activeId}
@@ -172,6 +218,7 @@ function Library(props: {
   const { selection, params } = props;
   const ids = [...selection];
   const archivedView = params.view === 'archived';
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   async function bulk(fn: (ids: string[]) => Promise<void>) {
     await fn(ids);
@@ -182,7 +229,14 @@ function Library(props: {
     <>
       <div class="m-toolbar">
         <SearchBox value={params.q} onInput={(q) => props.setParams({ ...params, q })} />
-        <button onClick={props.selectAll}>{t('selectAll')}</button>
+        <button
+          class={`toggle${filtersOpen ? ' on' : ''}`}
+          aria-expanded={filtersOpen}
+          onClick={() => setFiltersOpen(!filtersOpen)}
+        >
+          <Icon name="filter" size={14} /> {t('filters')}
+        </button>
+        <SortSelect value={params.sort} onChange={(sort) => props.setParams({ ...params, sort })} />
         <span class="spacer" />
         <div role="group" aria-label={`${t('densityCompact')} / ${t('densityCard')}`}>
           <button
@@ -213,6 +267,23 @@ function Library(props: {
             ))}
           </div>
         )}
+      </div>
+      {filtersOpen && (
+        <div class="filter-pop">
+          <FilterPanel
+            params={params}
+            onChange={props.setParams}
+            domains={props.data?.domains ?? []}
+            categories={props.categories}
+            hide={['view', 'category', 'sort']}
+          />
+        </div>
+      )}
+      <div class="list-head">
+        <span class="count" aria-live="polite">{props.data ? t('itemCount', props.data.items.length) : ''}</span>
+        <ActiveFilters params={params} onChange={props.setParams} categories={props.categories} />
+        <span class="spacer" />
+        <button class="link" onClick={props.selectAll}>{t('selectAll')}</button>
       </div>
 
       {selection.size > 0 && (
@@ -271,6 +342,7 @@ function Library(props: {
         categories={props.categories}
         density={props.settings.listStyle}
         columns={props.settings.cardColumns}
+        hideCount
         activeId={props.activeId}
         selectable
         selection={selection}

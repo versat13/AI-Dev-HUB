@@ -21,8 +21,9 @@ export async function addAiAnswer(input: {
   templateId?: string;
   fragmentIds?: string[];
   expected?: SectionKey[];
+  applyToScrap?: boolean; // 見出し（と日本語訳）をスクラップに反映する
   now?: number;
-}): Promise<AiAnswer> {
+}): Promise<AiAnswer & { applied?: ApplyResult }> {
   const now = input.now ?? Date.now();
   const raw = input.raw.replace(/\r\n?/g, '\n').trim();
   const parsed = parseAnswer(raw, input.expected);
@@ -42,7 +43,8 @@ export async function addAiAnswer(input: {
     await db.aiAnswers.add(answer);
     await refreshCount(input.scrapId, now);
   });
-  return answer;
+  if (!input.applyToScrap) return answer;
+  return { ...answer, applied: await applyAnswer(input.scrapId, answerParts(answer), now) };
 }
 
 export async function deleteAiAnswer(id: string): Promise<void> {
@@ -85,7 +87,7 @@ export async function deleteTemplate(id: string): Promise<void> {
   await db.promptTemplates.delete(id);
 }
 
-// ---- 日本語訳の適用 ----
+// ---- 見出し・日本語訳の反映 ----
 
 /** 見出し行の装飾（#、**、「」、先頭の記号）を外して1行のタイトルにする */
 export function cleanTitle(body: string): string {
@@ -99,27 +101,32 @@ export function cleanTitle(body: string): string {
     .slice(0, 200);
 }
 
-export interface TranslationParts {
+export interface AnswerParts {
   title: string; // 空なら適用しない
   body: string; // 空なら適用しない
 }
 
-export function translationParts(a: Pick<AiAnswer, 'sections'>): TranslationParts {
+export function answerParts(a: Pick<AiAnswer, 'sections'>): AnswerParts {
   return {
-    title: cleanTitle(a.sections.find((s) => s.key === 'jaTitle')?.body ?? ''),
+    title: cleanTitle(a.sections.find((s) => s.key === 'headline' || s.key === 'jaTitle')?.body ?? ''),
     body: (a.sections.find((s) => s.key === 'translation')?.body ?? '').trim(),
   };
 }
 
+export interface ApplyResult {
+  titleChanged: boolean;
+  fragmentAdded: boolean;
+}
+
 /**
- * 日本語訳を適用する: タイトルを日本語にし（元のタイトルは originalTitle に残す）、
+ * 回答をスクラップに反映する: タイトルを見出しにし（元のタイトルは originalTitle に残す）、
  * 訳文を断片として追加する。元の本文の断片は変更しない。同じ訳文は重複して追加しない。
  */
-export async function applyTranslation(
+export async function applyAnswer(
   scrapId: string,
-  parts: TranslationParts,
+  parts: AnswerParts,
   now = Date.now(),
-): Promise<{ titleChanged: boolean; fragmentAdded: boolean }> {
+): Promise<ApplyResult> {
   let titleChanged = false;
   let fragmentAdded = false;
   await db.transaction('rw', db.scraps, db.fragments, async () => {

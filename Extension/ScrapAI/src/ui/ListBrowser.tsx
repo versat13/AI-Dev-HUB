@@ -3,7 +3,8 @@ import { t } from '@/lib/i18n';
 import type { ListData } from '@/lib/list';
 import { DEFAULT_PARAMS, isFiltered, type ListParams } from '@/lib/query';
 import type { Category, Settings } from '@/lib/types';
-import { FilterPanel, SearchBox } from './Filters';
+import { ActiveFilters, FilterPanel, SearchBox } from './Filters';
+import { Icon } from './icons';
 import { useCategories, useListData } from './hooks';
 import { ScrapRow } from './ScrapRow';
 
@@ -13,7 +14,8 @@ export function ScrapList(props: {
   params: ListParams;
   categories: Category[];
   density: 'compact' | 'card';
-  columns?: number; // カード表示の列数（0または未指定 = 1列。管理タブでのみ指定する）
+  columns?: number;
+  hideCount?: boolean; // 件数を呼び出し側で出す（管理タブ） // カード表示の列数（0または未指定 = 1列。管理タブでのみ指定する）
   activeId?: string | null;
   selectable?: boolean;
   selection?: Set<string>;
@@ -33,7 +35,7 @@ export function ScrapList(props: {
 
   return (
     <>
-      <p class="count" aria-live="polite">{t('itemCount', data.items.length)}</p>
+      {!props.hideCount && <p class="count" aria-live="polite">{t('itemCount', data.items.length)}</p>}
       {empty ? (
         <p class="empty">{empty}</p>
       ) : (
@@ -83,14 +85,16 @@ export function ListBrowser(props: {
       <div class="browser-bar">
         <SearchBox value={params.q} onInput={(q) => setParams({ ...params, q })} />
         <button
-          class={`toggle${isFiltered(params) ? ' on' : ''}`}
+          class={`toggle icon-btn${isFiltered(params) ? ' on' : ''}`}
           aria-expanded={showFilters}
+          aria-label={t('filters')}
+          title={t('filters')}
           onClick={() => setShowFilters(!showFilters)}
         >
-          {t('filters')}
-          {isFiltered(params) ? ' ●' : ''}
+          <Icon name="filter" />
         </button>
       </div>
+      <ActiveFilters params={params} onChange={setParams} categories={categories} />
       {showFilters && (
         <FilterPanel
           params={params}

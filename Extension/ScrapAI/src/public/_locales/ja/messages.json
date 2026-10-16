@@ -189,7 +189,7 @@
     "message": "元のページを開く"
   },
   "savedAt": {
-    "message": "保存: {0}"
+    "message": "{0}に保存"
   },
   "titleLabel": {
     "message": "タイトル"
@@ -198,7 +198,7 @@
     "message": "メモ"
   },
   "memoPlaceholder": {
-    "message": "保存した理由、試したいことなど"
+    "message": "メモ（保存した理由、試したいことなど）"
   },
   "categories": {
     "message": "カテゴリ"
@@ -687,10 +687,10 @@
     "message": "ファイルの内容が不正です。何も変更していません。"
   },
   "translationApply": {
-    "message": "日本語訳を適用"
+    "message": "見出しと訳文を反映"
   },
   "translationApplied": {
-    "message": "タイトルを日本語にし、訳文を断片に追加しました。"
+    "message": "スクラップに反映しました。"
   },
   "translationAlready": {
     "message": "すでに適用済みです。"
@@ -736,5 +736,44 @@
   },
   "settingsShortcutsOpen": {
     "message": "ショートカット設定を開く"
+  },
+  "moreActions": {
+    "message": "その他の操作"
+  },
+  "editCategories": {
+    "message": "カテゴリを編集"
+  },
+  "addCategoryShort": {
+    "message": "＋ カテゴリ"
+  },
+  "detailTabs": {
+    "message": "表示する内容"
+  },
+  "tabBody": {
+    "message": "本文"
+  },
+  "aiStepAsk": {
+    "message": "AIに聞く"
+  },
+  "aiStepPaste": {
+    "message": "回答を貼り付ける"
+  },
+  "aiApplyHeadline": {
+    "message": "回答の「見出し」でタイトルを置き換える"
+  },
+  "aiAnswerSavedTitled": {
+    "message": "回答を保存し、タイトルを見出しに置き換えました。"
+  },
+  "aiMoreSections": {
+    "message": "ほかの項目（{0}）"
+  },
+  "applyHeadline": {
+    "message": "見出しをタイトルにする"
+  },
+  "filterAiHas": {
+    "message": "AI要約あり"
+  },
+  "filterRemove": {
+    "message": "{0} を解除"
   }
 }

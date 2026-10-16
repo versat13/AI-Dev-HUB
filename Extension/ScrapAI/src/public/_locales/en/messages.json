@@ -198,7 +198,7 @@
     "message": "Memo"
   },
   "memoPlaceholder": {
-    "message": "Why you saved this, what to try…"
+    "message": "Note (why you saved it, what to try)"
   },
   "categories": {
     "message": "Categories"
@@ -687,10 +687,10 @@
     "message": "The file contents are invalid. Nothing was changed."
   },
   "translationApply": {
-    "message": "Apply Japanese translation"
+    "message": "Apply headline and translation"
   },
   "translationApplied": {
-    "message": "Title set to Japanese and the translation added as a fragment."
+    "message": "Applied to the scrap."
   },
   "translationAlready": {
     "message": "Already applied."
@@ -736,5 +736,44 @@
   },
   "settingsShortcutsOpen": {
     "message": "Open shortcut settings"
+  },
+  "moreActions": {
+    "message": "More actions"
+  },
+  "editCategories": {
+    "message": "Edit categories"
+  },
+  "addCategoryShort": {
+    "message": "+ Category"
+  },
+  "detailTabs": {
+    "message": "Content"
+  },
+  "tabBody": {
+    "message": "Text"
+  },
+  "aiStepAsk": {
+    "message": "Ask an AI"
+  },
+  "aiStepPaste": {
+    "message": "Paste the answer"
+  },
+  "aiApplyHeadline": {
+    "message": "Replace the title with the answer’s headline"
+  },
+  "aiAnswerSavedTitled": {
+    "message": "Answer saved and the title replaced with its headline."
+  },
+  "aiMoreSections": {
+    "message": "Other sections ({0})"
+  },
+  "applyHeadline": {
+    "message": "Use headline as title"
+  },
+  "filterAiHas": {
+    "message": "Has AI answers"
+  },
+  "filterRemove": {
+    "message": "Remove {0}"
   }
 }

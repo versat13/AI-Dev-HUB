@@ -7,6 +7,7 @@ import type { AiAnswer, Fragment, PromptTemplate, Scrap } from './types';
 export type Lang = 'ja' | 'en';
 
 export type SectionKey =
+  | 'headline'
   | 'summary'
   | 'usefulness'
   | 'facts'
@@ -15,7 +16,6 @@ export type SectionKey =
   | 'firstStep'
   | 'nextPrompt'
   | 'sources'
-  | 'jaTitle'
   | 'translation';
 
 interface SectionDef {
@@ -26,6 +26,13 @@ interface SectionDef {
 }
 
 export const SECTIONS: SectionDef[] = [
+  {
+    key: 'headline',
+    title: { ja: '見出し', en: 'Headline' },
+    hint: { ja: '内容が一目で分かる1行の日本語タイトル（40字以内）', en: 'a one-line title that conveys the content at a glance (under 80 characters)' },
+    // 旧「日本語タイトル」もここに寄せる
+    aliases: ['日本語タイトル', '日本語の見出し', '日本語見出し', '邦題', 'japanese title', 'headline'],
+  },
   {
     key: 'summary',
     title: { ja: '要点', en: 'Key points' },
@@ -75,12 +82,6 @@ export const SECTIONS: SectionDef[] = [
     aliases: ['出典', '参考URL', '参考', '参考文献', 'sources', 'references', 'links'],
   },
   {
-    key: 'jaTitle',
-    title: { ja: '日本語タイトル', en: 'Japanese title' },
-    hint: { ja: '資料の見出しとして使う、1行の日本語タイトル', en: 'a one-line Japanese title to use as the heading' },
-    aliases: ['日本語の見出し', '日本語見出し', '邦題', 'japanese title'],
-  },
-  {
     key: 'translation',
     title: { ja: '日本語訳', en: 'Japanese translation' },
     hint: { ja: '本文全体の日本語訳（意訳でよい。要約しない）', en: 'Japanese translation of the whole body (free translation is fine; do not summarize)' },
@@ -88,11 +89,12 @@ export const SECTIONS: SectionDef[] = [
   },
 ];
 
-// 翻訳専用の節。「要約と検証」などの既定の見出しには含めない
-export const TRANSLATION_KEYS: SectionKey[] = ['jaTitle', 'translation'];
-export const ALL_SECTION_KEYS: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => !TRANSLATION_KEYS.includes(k));
+// 翻訳テンプレートの節。「日本語訳」は既定の見出しには含めない（見出しは全テンプレート共通）
+export const TRANSLATION_KEYS: SectionKey[] = ['headline', 'translation'];
+export const ALL_SECTION_KEYS: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => k !== 'translation');
 
 export function sectionTitle(key: string, lang: Lang): string {
+  if (key === 'jaTitle') key = 'headline'; // v1.0.6 で保存した回答
   return SECTIONS.find((s) => s.key === key)?.title[lang] ?? key;
 }
 
@@ -134,7 +136,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
     id: 'builtin-try',
     name: { ja: '試し方を知りたい', en: 'How do I try this?' },
-    sections: ['summary', 'prerequisites', 'firstStep', 'unverified', 'nextPrompt', 'sources'],
+    sections: ['headline', 'summary', 'prerequisites', 'firstStep', 'unverified', 'nextPrompt', 'sources'],
     body: {
       ja: `次の資料の内容を、自分で試すための手順にしてください。
 
@@ -167,7 +169,6 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
 
 - 意訳でかまいませんが、要約や省略はせず、本文全体を訳してください。
 - 固有名詞・コード・URLは原文のままにしてください。
-- 日本語タイトルは、資料の内容が一目で分かる1行にしてください。
 - 回答は、下の見出しを変えずに、この順番で書いてください。
 
 {{format}}
@@ -177,7 +178,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
 
 - A free translation is fine, but translate the whole body without summarizing or omitting.
 - Keep proper nouns, code and URLs as in the original.
-- Make the Japanese title a single line that conveys the content at a glance.
+- Write the headline in Japanese.
 - Use the headings below unchanged and in this order.
 
 {{format}}
@@ -188,7 +189,7 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
     id: 'builtin-brief',
     name: { ja: '短く要点だけ', en: 'Just the key points' },
-    sections: ['summary', 'usefulness'],
+    sections: ['headline', 'summary', 'usefulness'],
     body: {
       ja: `次の資料の要点を短くまとめてください。回答は日本語で、下の見出しを変えずに書いてください。
 

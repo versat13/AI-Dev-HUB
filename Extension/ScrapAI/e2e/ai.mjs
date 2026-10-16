@@ -117,6 +117,7 @@ await mg.setViewportSize({ width: 1280, height: 1000 });
 await mg.goto(`chrome-extension://${extId}/manager.html#scrap=${scrapId}`);
 await mg.waitForTimeout(800);
 const det = mg.locator('.m-detail');
+await det.getByRole('tab', { name: /AI/ }).click();
 check('詳細にAI欄がある', await det.locator('.ai-panel').isVisible());
 
 // プロンプトのコピー
@@ -148,7 +149,7 @@ await det.locator('.ai-frags input[type=checkbox]').nth(1).check();
 
 // コピーしてAIサイトを開く
 const before = ctx.pages().length;
-await det.getByRole('button', { name: 'ChatGPT ↗' }).click();
+await det.getByRole('button', { name: 'ChatGPT' }).click();
 let opened;
 for (let i = 0; i < 20 && ctx.pages().length === before; i++) await mg.waitForTimeout(150);
 opened = ctx.pages().find((p) => !p.url().startsWith('chrome-extension://') && p.url() !== 'about:blank') ?? ctx.pages().at(-1);
@@ -160,6 +161,7 @@ check('ChatGPTを開く: 案内とクリップボード', /ChatGPT の入力欄�
 // 回答の貼り付け（形式どおり）
 const good = [
   'はい、整理します。',
+  '## 見出し', 'テスト記事を整理した見出し',
   '## 要点', '- 段落が12回繰り返される', '## 有用性', '動作確認に使える',
   '## 確認済みの事実', 'タイトルはテスト記事', '## 未確認事項・確度の根拠', '作者は不明',
   '## 前提条件', 'Chrome', '## 最初の一歩', '保存ボタンを押す',
@@ -173,12 +175,18 @@ let db = await dump();
 let ans = db.aiAnswers.filter((a) => a.scrapId === scrapId);
 check('回答保存: 構造化 ok、原文も保存', ans.length === 1 && ans[0].parseStatus === 'ok' && ans[0].raw === good && ans[0].service === 'claude', JSON.stringify(ans.map((a) => a.parseStatus)));
 check('回答保存: 件数が「AI要約あり」に反映', db.scraps.find((s) => s.id === scrapId)?.aiAnswerCount === 1);
+check('見出し: タイトルが自動で置き換わる', (await det.locator('.title-input').inputValue()) === 'テスト記事を整理した見出し' && db.scraps.find((s) => s.id === scrapId)?.originalTitle === 'テスト記事');
+check('見出し: カードの先頭に見出し、残りは折りたたみ', (await det.locator('.answer-headline').first().innerText()).includes('テスト記事を整理した見出し') && !(await det.locator('.answer').first().innerText()).includes('保存ボタンを押す'));
+await det.locator('.answer-more summary').first().click();
 let card = await det.locator('.answer').first().innerText();
 check('回答カード: 見出しごとに表示', /構造化済み/.test(card) && /最初の一歩/.test(card) && /保存ボタンを押す/.test(card) && /Claude/.test(card), card.replace(/\n+/g, ' / ').slice(0, 100));
 await det.getByRole('button', { name: '次回の指示をコピー' }).click();
 await mg.waitForTimeout(200);
 check('次回の指示をコピー', (await mg.evaluate(() => navigator.clipboard.readText())) === 'この記事の続きを調べて');
 await mg.screenshot({ path: path.join(OUT, 'p4-answer.png'), fullPage: true });
+await det.locator('.original-title').getByRole('button', { name: 'タイトルを元に戻す' }).click();
+await mg.waitForTimeout(400);
+check('見出し: 元のタイトルに戻せる', (await det.locator('.title-input').inputValue()) === 'テスト記事');
 
 // 形式が違う回答 → 原文のみ
 await det.getByLabel('AIの回答').fill('見出しのない自由な回答です。\n<script>alert(1)</script>');
@@ -194,11 +202,12 @@ await mg.locator('.m-detail').getByRole('button', { name: /閉じる/ }).click()
 await mg.waitForTimeout(400);
 const row = await mg.locator('.m-main').innerText();
 check('一覧: AI要約 2件 と表示', /AI要約 2件/.test(row), row.slice(0, 120));
-await mg.locator('.m-side .filters select').nth(2).selectOption('none');
+await mg.getByRole('button', { name: '絞り込み' }).click();
+await mg.locator('.filter-pop .filters select').nth(1).selectOption('none');
 await mg.waitForTimeout(400);
 let main = await mg.locator('.m-main').innerText();
 check('絞り込み: AI要約なしに出ない', !main.includes('テスト記事') && main.includes('別の記事'));
-await mg.locator('.m-side .filters select').nth(2).selectOption('any');
+await mg.locator('.filter-pop .filters select').nth(1).selectOption('any');
 await mg.getByPlaceholder('タイトル・URL・メモ・本文を検索').fill('続きを調べて');
 await mg.waitForTimeout(500);
 main = await mg.locator('.m-main').innerText();
@@ -219,6 +228,7 @@ await mg.screenshot({ path: path.join(OUT, 'p4-templates.png'), fullPage: true }
 await mg.goto(`chrome-extension://${extId}/manager.html#scrap=${scrapId}`);
 await mg.reload();
 await mg.waitForTimeout(800);
+await mg.locator('.m-detail').getByRole('tab', { name: /AI/ }).click();
 await mg.locator('.m-detail .ai-ask select').selectOption({ label: '私の検証' });
 await mg.locator('.m-detail').getByRole('button', { name: 'プロンプトをコピー' }).click();
 await mg.waitForTimeout(300);
@@ -235,17 +245,17 @@ check('回答の削除: 件数1に戻る', db.scraps.find((s) => s.id === scrapI
 await mg.locator('.m-detail .ai-ask select').selectOption({ label: '日本語に訳す' });
 await mg.locator('.m-detail').getByRole('button', { name: 'プロンプトをコピー' }).click();
 clip = await mg.evaluate(() => navigator.clipboard.readText());
-check('日本語訳: プロンプトの見出し', clip.includes('## 日本語タイトル') && clip.includes('## 日本語訳') && !clip.includes('## 要点'));
+check('日本語訳: プロンプトの見出し', clip.includes('## 見出し') && clip.includes('## 日本語訳') && !clip.includes('## 要点'));
 await mg.locator('.m-detail .ai-paste textarea').fill('## 日本語タイトル\n**テスト記事の日本語題**\n\n## 日本語訳\nこれは訳文の本文です。');
 await mg.locator('.m-detail').getByRole('button', { name: '回答を保存' }).click();
 await mg.waitForTimeout(500);
-await mg.locator('.m-detail .answer').first().getByRole('button', { name: '日本語訳を適用' }).click();
-await mg.waitForTimeout(600);
+// 保存時に見出し（旧「日本語タイトル」も可）と訳文が自動で反映される。ボタンは再反映用
+check('日本語訳: 反映ボタンがある', (await mg.locator('.m-detail .answer').first().getByRole('button', { name: '見出しと訳文を反映' }).count()) === 1);
 check('日本語訳: タイトルが日本語に', (await mg.locator('.m-detail .title-input').inputValue()) === 'テスト記事の日本語題');
 check('日本語訳: 元のタイトルを表示', (await mg.locator('.m-detail .original-title').innerText()).includes('テスト記事'));
 db = await dump();
 check('日本語訳: 訳文が断片に追加', db.fragments.some((f) => f.scrapId === scrapId && f.source === 'translation' && f.text === 'これは訳文の本文です。'));
-await mg.locator('.m-detail .answer').first().getByRole('button', { name: 'タイトルを元に戻す' }).click();
+await mg.locator('.m-detail .original-title').getByRole('button', { name: 'タイトルを元に戻す' }).click();
 await mg.waitForTimeout(600);
 check('日本語訳: 元に戻せる', (await mg.locator('.m-detail .title-input').inputValue()) === 'テスト記事');
 
@@ -256,6 +266,8 @@ await sp.goto(`chrome-extension://${extId}/sidepanel.html`);
 await sp.waitForTimeout(600);
 await sp.getByText('テスト記事').first().click();
 await sp.waitForTimeout(500);
+await sp.getByRole('tab', { name: /AI/ }).click();
+await sp.locator('.ai-panel .answer').first().waitFor({ timeout: 5000 }).catch(() => {});
 check('サイドパネル: AI欄と回答が出る', (await sp.locator('.ai-panel').count()) === 1 && /構造化済み/.test(await sp.locator('.ai-panel').innerText()));
 await sp.screenshot({ path: path.join(OUT, 'p4-sidepanel.png'), fullPage: true });
 

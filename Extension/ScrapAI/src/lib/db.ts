@@ -63,7 +63,7 @@ export async function listFragments(scrapId: string): Promise<Fragment[]> {
 
 export async function updateScrap(
   id: string,
-  patch: Partial<Pick<Scrap, 'memo' | 'stars' | 'pinned' | 'categoryIds' | 'archivedAt' | 'title'>>,
+  patch: Partial<Pick<Scrap, 'memo' | 'stars' | 'pinned' | 'categoryIds' | 'archivedAt' | 'title' | 'originalTitle'>>,
 ): Promise<void> {
   await db.scraps.update(id, { ...patch, updatedAt: Date.now() });
 }

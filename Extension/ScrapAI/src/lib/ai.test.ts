@@ -82,7 +82,7 @@ describe('回答の読み取り', () => {
   });
 
   it('全ての見出しがあれば ok、節の本文を取り出す', () => {
-    const raw = ALL_SECTION_KEYS.map((k, i) => `## ${['要点', '有用性', '確認済みの事実', '未確認事項・確度の根拠', '前提条件', '最初の一歩', '次回AIに渡す指示', '出典URL'][i]}\n${k}の本文`).join('\n\n');
+    const raw = ALL_SECTION_KEYS.map((k, i) => `## ${['見出し', '要点', '有用性', '確認済みの事実', '未確認事項・確度の根拠', '前提条件', '最初の一歩', '次回AIに渡す指示', '出典URL'][i]}\n${k}の本文`).join('\n\n');
     const r = parseAnswer('はい、まとめます。\n\n' + raw);
     expect(r.parseStatus).toBe('ok');
     expect(r.sections[0]).toEqual({ key: 'intro', body: 'はい、まとめます。' });

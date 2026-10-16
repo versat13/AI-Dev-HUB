@@ -12,6 +12,18 @@ export function formatDateTime(ts: number): string {
   }).format(ts);
 }
 
+/** 「3日前」のような相対表示。1週間より前は日付だけにする */
+export function formatRelative(ts: number, now = Date.now()): string {
+  const diff = Math.round((ts - now) / 1000);
+  const abs = Math.abs(diff);
+  const rtf = new Intl.RelativeTimeFormat(tag(), { numeric: 'auto' });
+  if (abs < 60) return rtf.format(0, 'second');
+  if (abs < 3600) return rtf.format(Math.round(diff / 60), 'minute');
+  if (abs < 86400) return rtf.format(Math.round(diff / 3600), 'hour');
+  if (abs < 86400 * 7) return rtf.format(Math.round(diff / 86400), 'day');
+  return new Intl.DateTimeFormat(tag(), { year: 'numeric', month: 'short', day: 'numeric' }).format(ts);
+}
+
 /** 組み込みの断片ラベル（selection / article / description）は翻訳し、ユーザー定義のラベルはそのまま出す */
 export function fragLabel(label: string): string {
   const key = `fragLabel_${label}`;

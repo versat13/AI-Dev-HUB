@@ -4,6 +4,7 @@ import { deleteFragments, deleteScraps } from '@/lib/db';
 import { t } from '@/lib/i18n';
 import type { SaveMode, SaveOutcome, Settings } from '@/lib/types';
 import { ListBrowser } from '@/ui/ListBrowser';
+import { Icon } from '@/ui/icons';
 import { openInSidePanel, openManager } from '@/ui/nav';
 
 type Banner =
@@ -71,7 +72,17 @@ export function App({ settings }: { settings: Settings }) {
 
   return (
     <main class="popup">
-      <button class="primary" disabled={saving} onClick={() => save('auto')}>
+      <header class="popup-head">
+        <span class="brand"><img src="/icon/32.png" width="18" height="18" alt="" />ScrapAI</span>
+        <span class="spacer" />
+        <button class="icon-btn" aria-label={t('openSidePanel')} title={t('openSidePanel')} onClick={() => openInSidePanel()}>
+          <Icon name="panel" />
+        </button>
+        <button class="icon-btn" aria-label={t('openManager')} title={t('openManager')} onClick={() => openManager()}>
+          <Icon name="manager" />
+        </button>
+      </header>
+      <button class="primary save-btn" disabled={saving} onClick={() => save('auto')}>
         {saving ? t('saving') : t('saveButton')}
       </button>
 
@@ -87,14 +98,10 @@ export function App({ settings }: { settings: Settings }) {
 
       <ListBrowser settings={settings} onOpen={(id) => openInSidePanel(id)} />
 
-      <div class="popup-actions">
-        <button onClick={() => openInSidePanel()}>{t('openSidePanel')}</button>
-        <button onClick={() => openManager()}>{t('openManager')}</button>
-      </div>
-      <div class="popup-actions">
-        <button class="link" onClick={startPicker}>{t('pickElement')}</button>
-        <button class="link" onClick={() => openManager(undefined, 'sites')}>{t('navSites')}</button>
-      </div>
+      <footer class="popup-foot">
+        <button class="link" onClick={startPicker}><Icon name="pick" size={13} /> {t('pickElement')}</button>
+        <button class="link" onClick={() => openManager(undefined, 'sites')}><Icon name="sites" size={13} /> {t('navSites')}</button>
+      </footer>
       <p class="note">{t('localOnly')}</p>
     </main>
   );
