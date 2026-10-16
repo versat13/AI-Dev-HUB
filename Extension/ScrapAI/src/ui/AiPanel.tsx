@@ -110,7 +110,7 @@ function AnswerCard({ a, scrap }: { a: AiAnswer; scrap: Scrap }) {
   );
 }
 
-/** 詳細画面の「AI」欄: プロンプトを作ってコピー／AIサイトを開く、回答を貼り付けて保存 */
+/** 詳細画面の「AI」欄: プロンプトを作ってコピー／AIサービスを開く、回答を貼り付けて保存 */
 export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
   const custom = useLive(listCustomTemplates, []) ?? [];
   const answers = useLive(() => listAiAnswers(scrap.id), [scrap.id]) ?? [];

@@ -1,7 +1,7 @@
 import { browser } from 'wxt/browser';
 import { fillComposer, findAnswer, findComposer, findSend } from '@/lib/ai-bridge';
 
-// AIサイト（ChatGPT / Claude / Gemini）に、ScrapAIから開いたときだけ注入する。
+// AIサービス（ChatGPT / Claude / Gemini など）に、ScrapAIから開いたときだけ注入する。
 // 1) 入力欄にプロンプトを入れる（設定で自動送信） 2) 画面の右下に「ScrapAIに取り込む」ボタンを出す。
 // 取り込んだ回答は背景ページに送って保存する。ページの他の内容は読まない。
 

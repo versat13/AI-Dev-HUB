@@ -1,4 +1,4 @@
-// AIサイトの画面から「入力欄」「送信ボタン」「回答」を探す。
+// AIサービスの画面から「入力欄」「送信ボタン」「回答」を探す。
 // まず各サイトで分かっている場所を試し、見つからなければ画面の形から推定する（サイトの作りが変わっても動き続けるように）。
 // DOM だけに依存する純粋な関数にして、テスト用の見本ページでも同じように動くようにする。
 
@@ -16,7 +16,8 @@ export const KNOWN = {
     'button.send-button',
   ],
   assistant: [
-    '[data-message-author-role="assistant"]', // ChatGPT
+    '[data-message-author-role="assistant"]', // ChatGPT（旧）
+    '[data-code-block-source] code', // ChatGPT（コードブロックが pre ではなく div > code で出る）
     '.font-claude-response, [data-testid="assistant-message"]', // Claude
     'model-response, message-content', // Gemini
   ],
@@ -109,9 +110,13 @@ export function findAnswer(doc: Document, prompt: string): string | null {
   // 入力欄や表示で改行・空白が変わっても比べられるように、空白をそろえて比べる
   const squash = (t: string) => t.replace(/\s+/g, ' ').trim();
   const sentPrompt = squash(prompt);
-  const pres = [...doc.querySelectorAll('pre')].reverse();
-  for (const pre of pres) {
-    const text = ((pre.querySelector('code') ?? pre) as HTMLElement).innerText ?? pre.textContent ?? '';
+  // コードブロックは pre のほか、ChatGPT のように div[data-code-block-source] > code で出るものもある
+  const blocks = [...doc.querySelectorAll('pre, [data-code-block-source], code')].reverse();
+  for (const el of blocks) {
+    const inner = el.matches('pre, [data-code-block-source]') ? el.querySelector('code') ?? el : el;
+    let text = (inner as HTMLElement).innerText ?? inner.textContent ?? '';
+    // 行が span で分かれて改行が失われた場合は、見出しの前で改行を補う
+    if (!text.includes('\n')) text = text.replace(/\s+(#{1,3} )/g, '\n$1');
     const norm = text.trim();
     if (!norm || !isHeadings(norm)) continue;
     if (sentPrompt.includes(squash(norm).slice(0, 200))) continue; // 送ったプロンプト（またはその中の見本）

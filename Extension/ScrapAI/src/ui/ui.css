@@ -360,10 +360,10 @@ textarea { width: 100%; resize: vertical; }
 .frag-extras { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 4px 0 0; font-size: 12px; color: var(--ink-3); }
 
 /* ---- ポップアップ・サイドパネル ---- */
-.popup { width: 400px; padding: 10px 12px 10px; display: flex; flex-direction: column; gap: 8px; }
+.popup { width: 460px; padding: 10px 12px 10px; display: flex; flex-direction: column; gap: 8px; }
 .popup-head { display: flex; align-items: center; gap: 2px; }
 .save-btn { width: 100%; padding: 9px 14px; font-size: 14px; }
-.popup .browser-list { max-height: 340px; overflow-y: auto; margin: 0 -6px; padding: 0 2px; }
+.popup .browser-list { max-height: 400px; overflow-y: auto; margin: 0 -6px; padding: 0 2px; }
 .popup-foot { display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--line); padding-top: 6px; margin: 0 -2px; }
 .popup-foot button.link { font-size: 12px; white-space: nowrap; }
 .note { margin: 0; color: var(--ink-3); font-size: 11px; }
@@ -627,3 +627,46 @@ button.danger.solid { background: var(--err); border-color: var(--err); color: #
 .sync-devices { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .sync-devices li { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line); }
 .set-row .badge { flex: none; }
+
+/* ページ送り */
+.pager { display: flex; align-items: center; gap: 2px; justify-content: center; margin-top: 8px; font-size: 12px; color: var(--ink-2); }
+.pager.compact { justify-content: flex-end; margin-top: 4px; }
+.pager button:disabled { opacity: 0.35; cursor: default; }
+.pager-num { min-width: 28px; height: 28px; border-radius: 6px; border: 1px solid transparent; background: transparent; padding: 0 6px; }
+.pager-num.on { background: var(--accent-bg, var(--paper)); border-color: var(--line); font-weight: 700; color: var(--ink); }
+.pager-gap { padding: 0 4px; }
+.pager-pos { min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; }
+.src-icon { width: 16px; height: 16px; border-radius: 3px; object-fit: contain; background: transparent; }
+.popup.detail { padding: 10px 12px; max-height: 580px; overflow-y: auto; }
+
+/* カードのスナップショット: 高さを抑えて、文字を押しのけない */
+.row-thumb { display: block; max-width: 100%; max-height: 100px; width: auto; height: auto; object-fit: contain; object-position: left top; margin: 6px 0 2px; border: 1px solid var(--line); border-radius: var(--radius-s); }
+.row.large .row-thumb { max-height: 160px; }
+/* 詳細のスナップショットも縦に伸びすぎないようにする */
+.snap img { max-height: 320px; width: auto; object-fit: contain; }
+
+/* 一覧の操作バー（Gmail のように常に出す） */
+.bulkbar { position: sticky; top: 0; z-index: 5; display: flex; gap: 4px 6px; align-items: center; flex-wrap: wrap; padding: 4px 10px; margin: 0 0 8px; background: var(--accent-soft); border-radius: var(--radius-m); min-height: 40px; }
+.bulkbar.idle { background: var(--paper); border: 1px solid var(--line); }
+.bulk-check { margin: 0 4px 0 2px; }
+.bulk-count { font-size: 13px; margin-left: 4px; }
+.bulk-sep { width: 1px; height: 20px; background: var(--line-strong); margin: 0 6px; }
+.bulkbar .link:disabled { opacity: 0.4; cursor: default; }
+.bulk-btn { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border: 1px solid transparent; background: transparent; border-radius: var(--radius-s); font-size: 12.5px; }
+.bulk-btn:hover:not(:disabled) { background: var(--surface); border-color: var(--line); }
+.bulk-btn:disabled { opacity: 0.4; cursor: default; }
+.bulk-btn[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent); }
+.bulk-btn .caret { font-size: 9px; opacity: 0.6; }
+.pop { position: relative; display: inline-block; }
+.pop-list { position: absolute; top: calc(100% + 4px); left: 0; z-index: 20; min-width: 180px; max-height: 320px; overflow-y: auto; padding: 4px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-m); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14); display: flex; flex-direction: column; }
+.pop-list button { display: flex; align-items: center; gap: 8px; border: none; background: transparent; text-align: left; padding: 6px 10px; border-radius: var(--radius-s); white-space: nowrap; }
+.pop-list button:hover { background: var(--paper); }
+.pop-list hr { border: none; border-top: 1px solid var(--line); margin: 4px 2px; width: auto; }
+.pop-list .tick { width: 14px; text-align: center; color: var(--accent); }
+.pop-empty { margin: 6px 10px; color: var(--ink-3); font-size: 12px; }
+.stars-on { color: var(--star); letter-spacing: 1px; }
+.stars-off { color: var(--line-strong); letter-spacing: 1px; }
+.list-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.list-foot .pager { margin-top: 0; }
+.page-size { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+.page-size input { width: 64px; }

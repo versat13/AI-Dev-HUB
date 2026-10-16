@@ -11,7 +11,7 @@ import type {
   Snapshot,
 } from './types';
 
-export const SCHEMA_VERSION = 6; // 2: snapshots / 3: aiExcerpt / 4: aiHeadline / 5: 概要の作り直し / 6: tombstones（同期用の削除記録）
+export const SCHEMA_VERSION = 7; // 2: snapshots / 3: aiExcerpt / 4: aiHeadline / 5: 概要の作り直し / 6: tombstones（同期用の削除記録） / 7: favicons（ドメインのアイコン）
 
 class ScrapDB extends Dexie {
   scraps!: Table<Scrap, string>;
@@ -23,6 +23,7 @@ class ScrapDB extends Dexie {
   meta!: Table<{ key: string; value: unknown }, string>;
   snapshots!: Table<Snapshot, string>;
   tombstones!: Table<Tombstone, string>;
+  favicons!: Table<Favicon, string>;
 
   constructor(name = 'scrapai') {
     super(name);
@@ -84,6 +85,17 @@ class ScrapDB extends Dexie {
     this.version(6)
       .stores({ tombstones: 'id, table, deletedAt' })
       .upgrade((tx) => tx.table('meta').put({ key: 'schemaVersion', value: 6 }));
+    // 拡張機能の更新で別のページがDBを新しい版に上げるとき: 警告を出さず、握っている接続を静かに閉じる。
+    // 開いたままの画面（管理画面など）は古いコードのままなので読み込み直す。背景ページは次の利用時に自動で開き直す。
+    // 7: ドメインごとのアイコン（保存時にそのページから取る。そのドメインの項目が無くなれば消す）
+    this.version(7)
+      .stores({ favicons: 'domain' })
+      .upgrade((tx) => tx.table('meta').put({ key: 'schemaVersion', value: 7 }));
+    this.on('versionchange', () => {
+      this.close({ disableAutoOpen: false });
+      if (typeof document !== 'undefined' && typeof location !== 'undefined') setTimeout(() => location.reload(), 0);
+      return false;
+    });
     this.on('populate', (tx) => {
       tx.table('meta').add({ key: 'schemaVersion', value: SCHEMA_VERSION });
     });
@@ -98,6 +110,24 @@ export interface Tombstone {
   id: string; // 消した記録のID
   table: SyncTable;
   deletedAt: number;
+}
+
+/** ドメインのアイコン（dataURL）。この端末だけに置く（同期・書き出しの対象外） */
+export interface Favicon {
+  domain: string;
+  data: string;
+  updatedAt: number;
+}
+
+export async function setFavicon(domain: string, data: string | undefined): Promise<void> {
+  if (domain && data) await db.favicons.put({ domain, data, updatedAt: Date.now() });
+}
+
+/** 項目が1つも無いドメインのアイコンを消す */
+export async function pruneFavicons(): Promise<void> {
+  const domains = new Set((await db.scraps.orderBy('domain').uniqueKeys()) as string[]);
+  const stale = (await db.favicons.toCollection().primaryKeys()).filter((d) => !domains.has(d));
+  if (stale.length) await db.favicons.bulkDelete(stale);
 }
 
 /** 消したことを記録する（呼び出し側のトランザクションに db.tombstones を含めること） */
@@ -162,6 +192,8 @@ export async function deleteScraps(ids: string[]): Promise<void> {
     await db.snapshots.where('scrapId').anyOf(ids).delete();
     await db.scraps.bulkDelete(ids);
   });
+  // 呼び出し元が別のトランザクションの中なら、掃除はその呼び出し側に任せる
+  if (!Dexie.currentTransaction) await pruneFavicons();
 }
 
 export async function deleteScrap(id: string): Promise<void> {
@@ -175,6 +207,24 @@ export async function setCategoryOn(ids: string[], categoryId: string, on: boole
     const has = s.categoryIds.includes(categoryId);
     if (on && !has) s.categoryIds = [...s.categoryIds, categoryId];
     if (!on && has) s.categoryIds = s.categoryIds.filter((c) => c !== categoryId);
+    s.updatedAt = now;
+  });
+}
+
+/** 複数項目の星をまとめて付ける（null で外す） */
+export async function setStarsOn(ids: string[], stars: number | null): Promise<void> {
+  const now = Date.now();
+  await db.scraps.where('id').anyOf(ids).modify((s) => {
+    s.stars = stars;
+    s.updatedAt = now;
+  });
+}
+
+/** 複数項目のピン留めをまとめて付ける／外す */
+export async function setPinnedOn(ids: string[], pinned: boolean): Promise<void> {
+  const now = Date.now();
+  await db.scraps.where('id').anyOf(ids).modify((s) => {
+    s.pinned = pinned;
     s.updatedAt = now;
   });
 }

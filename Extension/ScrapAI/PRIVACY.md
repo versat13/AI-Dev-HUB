@@ -10,7 +10,7 @@ ScrapAI は、あなたが保存したページの情報を **お使いのブラ
 - **AIのAPIは呼びません。** AIに渡すときは、あなたが選んだAIサービス（ChatGPT・Claude・Gemini）の画面を開き、プロンプトを入力欄に入れます（設定でコピー＆貼り付けにもできます）。その後の扱いは各AIサービスの規約に従います。
 - **同期はあなたのフォルダだけを使います。** 同期を使う場合、あなたが選んだPC上のフォルダにファイルを書き出し、読み込みます。そのフォルダをクラウドと同期するかどうかは、あなたが使うクラウドサービス（Google Drive など）の設定によります。
 - **保存するのは、あなたが保存を実行したページだけです。** 閲覧履歴を自動で集めることはありません。
-- **保存する内容:** ページのURL・タイトル、抽出した本文、あなたのメモ・星・カテゴリ、AIの回答、ページの一部の画像（スナップショット）、サイト設定、プロンプト、表示設定。
+- **保存する内容:** ページのURL・タイトル、抽出した本文、あなたのメモ・星・カテゴリ、AIの回答、ページの一部の画像（スナップショット）、サイトのアイコン（保存したページ自身が読み込むもの）、サイト設定、プロンプト、表示設定。
 - **翻訳:** カードの翻訳は Chrome に内蔵された翻訳機能を使い、端末の中で行います。
 - **データの削除:** 拡張機能の画面から項目を削除できます。拡張機能を削除すると、保存したデータも消えます（必要なら先にエクスポートしてください）。
 
@@ -35,7 +35,7 @@ ScrapAI stores the pages you save **only inside your browser (IndexedDB)**. The 
 - **No AI API is called.** To use an AI, ScrapAI opens the AI service you choose (ChatGPT, Claude or Gemini) and fills in the prompt (or you can copy and paste). What happens next is governed by that service’s terms.
 - **Sync uses only your own folder.** If you use sync, ScrapAI writes and reads a file in a folder on your computer that you choose. Whether that folder is synced to the cloud depends on your own cloud app (such as Google Drive).
 - **Only pages you explicitly save are stored.** Browsing history is never collected.
-- **Stored:** page URL and title, extracted text, your notes, stars and categories, AI answers, images of part of a page (snapshots), site settings, prompts and display settings.
+- **Stored:** page URL and title, extracted text, your notes, stars and categories, AI answers, images of part of a page (snapshots), site icons (the ones the saved page itself loads), site settings, prompts and display settings.
 - **Translation** uses Chrome’s built-in on-device translator.
 - **Deletion:** delete items from the extension’s screens. Uninstalling deletes all data (export first if needed).
 

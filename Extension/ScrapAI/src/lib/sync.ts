@@ -1,5 +1,5 @@
 import { refreshCount } from './ai-db';
-import { db, type SyncTable, type Tombstone } from './db';
+import { db, pruneFavicons, type SyncTable, type Tombstone } from './db';
 import { fromBase64, toBase64 } from './export';
 
 /*
@@ -179,6 +179,7 @@ export async function mergeSyncFile(file: SyncFile, report: Pick<SyncReport, 'ad
   });
   // AI回答の件数・一覧用の要点を合わせ直す
   for (const id of touchedScraps) if (await db.scraps.get(id)) await refreshCount(id, (await db.scraps.get(id))!.updatedAt);
+  await pruneFavicons();
 }
 
 /** 同期を1回行う: 他のPCのファイルを読んで統合し、この端末のファイルを書き出す */

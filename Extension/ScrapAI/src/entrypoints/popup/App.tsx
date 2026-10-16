@@ -6,6 +6,7 @@ import { t } from '@/lib/i18n';
 import type { SaveMode, SaveOutcome, Settings } from '@/lib/types';
 import { ListBrowser } from '@/ui/ListBrowser';
 import { Icon } from '@/ui/icons';
+import { DetailView } from '@/ui/DetailView';
 import { openInSidePanel, openManager } from '@/ui/nav';
 
 type Banner =
@@ -14,14 +15,9 @@ type Banner =
   | { kind: 'done'; outcome: SaveOutcome }
   | { kind: 'undone' };
 
-function extractLabel(status: SaveOutcome['extractStatus']) {
-  if (status === 'ok') return { icon: '✓', text: t('extractOk'), warn: false };
-  if (status === 'partial') return { icon: '△', text: t('extractPartial'), warn: true };
-  return { icon: '!', text: t('extractFailed'), warn: true };
-}
-
 export function App({ settings }: { settings: Settings }) {
   const [banner, setBanner] = useState<Banner | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null); // ポップアップの中で詳細を見る（サイドパネルは開かない）
   const saving = banner?.kind === 'saving';
 
   // 保存はボタンを押したときだけ行う。実際の処理は背景ページ（ポップアップが閉じても完了させるため）
@@ -74,6 +70,21 @@ export function App({ settings }: { settings: Settings }) {
     else setBanner({ kind: 'error', message: t('errorSave', res?.error ?? 'unknown') });
   }
 
+  // 詳細はポップアップの中に出す（サイドパネルと重ならないように）
+  if (detailId) {
+    return (
+      <main class="popup detail">
+        <DetailView
+          key={detailId}
+          scrapId={detailId}
+          closeLabel={t('back')}
+          onClose={() => setDetailId(null)}
+          onOpenOther={(id) => setDetailId(id)}
+        />
+      </main>
+    );
+  }
+
   return (
     <main class="popup">
       <header class="popup-head">
@@ -95,12 +106,12 @@ export function App({ settings }: { settings: Settings }) {
           banner={banner}
           onSave={save}
           onUndo={undo}
-          onOpen={(id) => openInSidePanel(id)}
+          onOpen={(id) => setDetailId(id)}
           onRetry={() => save('auto')}
         />
       )}
 
-      <ListBrowser settings={settings} onOpen={(id) => openInSidePanel(id)} />
+      <ListBrowser settings={settings} onOpen={(id) => setDetailId(id)} />
 
       <footer class="popup-foot">
         <button class="link" onClick={startPicker}><Icon name="pick" size={13} /> {t('pickElement')}</button>
@@ -136,7 +147,6 @@ function ResultBanner(props: {
   }
 
   const o = banner.outcome;
-  const ex = extractLabel(o.extractStatus);
   let headline = t('savedNew');
   if (o.kind === 'fragment-added') headline = t('fragmentAdded', o.fragmentCount ?? 0);
   if (o.kind === 'duplicate-fragment') headline = t('duplicateFragment');
@@ -147,10 +157,9 @@ function ResultBanner(props: {
     <div class="banner" role="status">
       <p class="status"><span class="icon" aria-hidden="true">✓</span> {headline}</p>
       <p class="sub">{o.title}</p>
-      <p class={`sub ${ex.warn ? 'warn' : ''}`}>
-        <span class="icon" aria-hidden="true">{ex.icon}</span> {ex.text}
-        {o.fragmentCount ? ` · ${t('fragmentsCount', o.fragmentCount)}` : ''}
-      </p>
+      {o.extractStatus && o.extractStatus !== 'ok' && (
+        <p class="sub warn"><span class="icon" aria-hidden="true">{o.extractStatus === 'partial' ? '△' : '!'}</span> {o.extractStatus === 'partial' ? t('extractPartial') : t('extractFailed')}</p>
+      )}
       {o.snapshot && o.scrapId && <SnapshotOffer outcome={o} onTaken={(id) => (o.addedSnapshotId = id)} />}
       <div class="actions">
         {o.kind === 'already-saved' && (

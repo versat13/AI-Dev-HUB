@@ -39,10 +39,10 @@
     "message": "断片 {0}件"
   },
   "reextract": {
-    "message": "再抽出して追加"
+    "message": "上書き保存"
   },
   "saveSeparate": {
-    "message": "別の項目として保存"
+    "message": "新規保存"
   },
   "undo": {
     "message": "取り消し"
@@ -132,7 +132,7 @@
     "message": "星{0}"
   },
   "categoryNone": {
-    "message": "未分類"
+    "message": "カテゴリがありません"
   },
   "pinnedOnly": {
     "message": "ピン留めのみ"
@@ -327,7 +327,7 @@
     "message": "これから保存するページに適用されます。空欄で無制限です。"
   },
   "settingsPinnedFirst": {
-    "message": "ピン留めを先頭に表示する"
+    "message": "ピン留めしたカードを先頭に表示する"
   },
   "settingsData": {
     "message": "データ"
@@ -900,10 +900,10 @@
     "message": "表示言語"
   },
   "setTemporaryChat": {
-    "message": "AIサイトは一時チャットで開く"
+    "message": "AIサービスは一時チャットで開く"
   },
   "setTemporaryChatHelp": {
-    "message": "履歴に残らず、過去の会話の影響を受けにくくなります。ChatGPT・Claudeに対応。Geminiは指定できないため通常のチャットで開きます。"
+    "message": "履歴に残らず、過去の会話の影響を受けにくくなります。一時チャットに対応していないAIサービスでは、通常のチャットで開きます。"
   },
   "importHelp": {
     "message": "エクスポートしたJSONファイルを読み込みます。不正なファイルは何も変更せずに拒否します。"
@@ -1077,9 +1077,51 @@
     "message": "ボタン一つでAIに渡し、回答を取り込む"
   },
   "setAiDirectHelp": {
-    "message": "AIサイトを開いたとき入力欄にプロンプトを入れ、回答の取り込みボタンを出します。最初に使うときだけ、そのサイト（ChatGPT・Claude・Gemini）へのアクセスの許可を求めます。サイトの作りが変わっても入力欄や回答を自動で探しますが、うまくいかないときはコピー＆貼り付けで使えます。"
+    "message": "AIサービスを開いたとき入力欄にプロンプトを入れ、回答の取り込みボタンを出します。最初に使うときだけ、そのAIサービスへのアクセスの許可を求めます。サイトの作りが変わっても入力欄や回答を自動で探しますが、うまくいかないときはコピー＆貼り付けで使えます。"
   },
   "setAiAutoSend": {
     "message": "入れたあと自動で送信する"
+  },
+  "pagerLabel": {
+    "message": "ページ送り"
+  },
+  "pagerPrev": {
+    "message": "前のページ"
+  },
+  "pagerNext": {
+    "message": "次のページ"
+  },
+  "pageSizeLabel": {
+    "message": "1ページの表示件数"
+  },
+  "pageSizeUnit": {
+    "message": "件"
+  },
+  "bulkCategory": {
+    "message": "カテゴリ"
+  },
+  "bulkRating": {
+    "message": "評価"
+  },
+  "bulkRatingClear": {
+    "message": "評価を外す"
+  },
+  "bulkPin": {
+    "message": "ピン留め"
+  },
+  "bulkUnpin": {
+    "message": "ピン留めを外す"
+  },
+  "bulkDeleteSnapshots": {
+    "message": "スナップショットを削除（{0}件分）"
+  },
+  "showSnapshots": {
+    "message": "画像"
+  },
+  "showSnapshotsTitle": {
+    "message": "カードにスナップショットを表示"
+  },
+  "bulkHint": {
+    "message": "項目を選ぶと操作できます"
   }
 }

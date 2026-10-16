@@ -1,6 +1,6 @@
 import { browser } from 'wxt/browser';
 import { ensureBuiltInProfiles } from '@/lib/builtin-profiles';
-import { db } from '@/lib/db';
+import { db, newProfile, saveProfile } from '@/lib/db';
 import type { ExtractResult } from '@/lib/extract-page';
 import { resolveLocale, setLocale, t } from '@/lib/i18n';
 import { SNAP_ATTR } from '@/lib/profile-extract';
@@ -18,6 +18,7 @@ interface SaveMessage {
   type: 'save';
   tabId: number;
   mode?: SaveMode;
+  explicit?: boolean; // 右クリック・ショートカットからの保存（結果の画面がないので、保存済みでも自動で撮る）
 }
 interface SnapshotMessage {
   type: 'snapshot';
@@ -86,13 +87,18 @@ async function handleSave(msg: SaveMessage): Promise<SaveOutcome> {
       settings,
       msg.mode ?? 'auto',
     );
-    // 新しく保存したもの（項目・断片）があるときだけ撮る。同じ内容の再保存で画像を増やさない
-    if (snap && outcome.scrapId && (outcome.kind === 'created' || outcome.kind === 'fragment-added')) {
-      if (snap === 'auto') {
-        const id = await captureSnapshot(msg.tabId, outcome.scrapId);
-        outcome.snapshot = id ? 'taken' : 'failed';
-        if (id) outcome.addedSnapshotId = id;
-      } else outcome.snapshot = 'available';
+    // 保存した（または上書き・新規保存を選んだ）ときに撮る。何もしなかった再保存では画像を増やさない。
+    // 設定のないサイトでも、結果の画面には必ず「撮る」を出す（範囲は画面に見えている部分）
+    if (outcome.scrapId && outcome.kind !== 'failed') {
+      const chosen = msg.mode === 'reextract' || msg.mode === 'separate' || msg.explicit;
+      const fresh = outcome.kind === 'created' || outcome.kind === 'fragment-added' || chosen;
+      if (fresh) {
+        if (snap === 'auto') {
+          const id = await captureSnapshot(msg.tabId, outcome.scrapId);
+          outcome.snapshot = id ? 'taken' : 'failed';
+          if (id) outcome.addedSnapshotId = id;
+        } else outcome.snapshot = 'available';
+      }
     }
     return outcome;
   } catch (e) {
@@ -112,9 +118,10 @@ async function captureSnapshot(tabId: number, scrapId: string): Promise<string |
       func: (attr: string) =>
         new Promise<(SnapRect & { prevX: number; prevY: number }) | null>((resolve) => {
           const el = document.querySelector(`[${attr}]`);
-          if (!el) return resolve(null);
           const prevX = scrollX;
           const prevY = scrollY;
+          // 範囲の印がなければ、画面に見えている範囲全体を撮る
+          if (!el) return resolve({ x: 0, y: 0, w: innerWidth, h: innerHeight, viewportW: innerWidth, prevX, prevY });
           const fits = el.getBoundingClientRect().height < innerHeight * 0.9;
           el.scrollIntoView({ block: fits ? 'center' : 'start', inline: 'nearest' });
           // 再描画と遅延読み込みの画像を少し待つ
@@ -157,18 +164,19 @@ async function handleSnapshot(msg: SnapshotMessage): Promise<{ ok: boolean; id?:
   if (ok && msg.remember) {
     const tab = await browser.tabs.get(msg.tabId);
     const p = tab.url ? await findProfile(tab.url).catch(() => undefined) : undefined;
-    if (p?.snapshot) {
-      await db.siteProfiles.update(p.id, {
-        snapshot: { ...p.snapshot, mode: 'auto' },
-        modified: p.builtIn ? true : p.modified,
-        updatedAt: Date.now(),
-      });
+    const rule = { selector: '@viewport', ...p?.snapshot, mode: 'auto' as const };
+    if (p) {
+      await db.siteProfiles.update(p.id, { snapshot: rule, modified: p.builtIn ? true : p.modified, updatedAt: Date.now() });
+    } else if (tab.url) {
+      // 設定のないサイト: そのドメイン用の自作設定（範囲は画面に見える部分）を作る
+      const domain = new URL(tab.url).hostname;
+      await saveProfile(newProfile({ name: domain, urlPatterns: [`${domain}/**`], snapshot: rule }));
     }
   }
   return { ok, id: id ?? undefined };
 }
 
-/** AIサイトを開き、読み込みが終わったら入力と取り込みボタンの仕組みを入れる */
+/** AIサービスを開き、読み込みが終わったら入力と取り込みボタンの仕組みを入れる */
 async function handleAiOpen(msg: AiOpenMessage): Promise<{ ok: boolean }> {
   try {
     const tab = await browser.tabs.create({ url: msg.url });
@@ -251,7 +259,7 @@ async function flashBadge(outcome: SaveOutcome): Promise<void> {
 
 async function saveTab(tabId: number | undefined): Promise<void> {
   if (tabId == null) return;
-  await flashBadge(await handleSave({ type: 'save', tabId }));
+  await flashBadge(await handleSave({ type: 'save', tabId, explicit: true }));
 }
 
 const MENU_ID = 'scrapai-save';

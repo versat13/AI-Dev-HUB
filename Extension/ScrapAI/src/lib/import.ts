@@ -1,4 +1,4 @@
-import { db, deleteScraps } from './db';
+import { db, deleteScraps, pruneFavicons } from './db';
 import { EXPORT_FORMAT, EXPORT_VERSION, fromBase64, type ExportFile } from './export';
 import type { AiAnswer, Category, Fragment, Scrap, Settings } from './types';
 
@@ -136,5 +136,6 @@ export async function importData(file: ExportFile, mode: DuplicateMode): Promise
   });
 
   if (file.settings) res.settings = file.settings;
+  await pruneFavicons();
   return res;
 }

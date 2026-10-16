@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import { t } from '@/lib/i18n';
 import type { Category, Density, Scrap, Settings } from '@/lib/types';
 import { formatDateTime } from './format';
+import type { Thumb } from './hooks';
 import { Icon, SourceMark } from './icons';
 import { canTranslate, looksForeign, targetLang, toggleScrapTranslation } from './translate';
 
@@ -10,6 +11,7 @@ export interface ScrapRowProps {
   categories: Map<string, Category>;
   density: Density;
   preview?: string; // カード（大）・原文表示で出す本文の冒頭
+  thumb?: Thumb; // スナップショット（カードに小さく出す。文字を押しのけない大きさに収める）
   face?: Settings['listFace'];
   active?: boolean;
   selectable?: boolean;
@@ -85,6 +87,7 @@ export function ScrapRow(p: ScrapRowProps) {
           {view.title}
         </span>
         {view.excerpt && <span class={`row-excerpt${view.ai ? ' is-ai' : ''}`}>{view.excerpt}</span>}
+        {p.thumb && <img class="row-thumb" src={p.thumb.url} width={p.thumb.width} height={p.thumb.height} alt="" loading="lazy" />}
         {/* 下段: 左に出典（幅をそろえる）と状態、右に星、右端にカテゴリ（幅をそろえる）。保存日時は詳細だけに出す */}
         <span class="row-meta">
           <span class="meta-src" title={`${s.domain} · ${formatDateTime(s.createdAt)}`}>

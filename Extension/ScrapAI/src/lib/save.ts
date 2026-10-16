@@ -1,4 +1,4 @@
-import { db, findScrapByNormalizedUrl, listFragments } from './db';
+import { db, findScrapByNormalizedUrl, listFragments, setFavicon } from './db';
 import type { ExtractResult } from './extract-page';
 import type { ProfileDraft } from './profile-extract';
 import { cleanPageTitle, excerptOf, normalizeText, truncate } from './text';
@@ -185,6 +185,7 @@ export async function saveFromPage(
       });
     });
 
+    await setFavicon(domain, ex?.faviconData);
     return {
       kind: 'created',
       scrapId: scrap.id,
@@ -196,6 +197,7 @@ export async function saveFromPage(
 
   // 既存の項目がある場合
   const ex = await safeExtract(extract);
+  if (ex?.faviconData && !(await db.favicons.get(existing.domain))) await setFavicon(existing.domain, ex.faviconData);
   const hasSelection = !!ex && normalizeText(ex.selection).length > 0;
 
   if (mode === 'auto' && !hasSelection) {

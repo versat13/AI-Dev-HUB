@@ -42,6 +42,18 @@ export async function listSnapshots(scrapId: string): Promise<Snapshot[]> {
   return list.sort((a, b) => a.createdAt - b.createdAt);
 }
 
+/** 複数項目のスナップショットをまとめて消す（項目自体は残す） */
+export async function deleteSnapshotsOf(scrapIds: string[]): Promise<void> {
+  if (scrapIds.length === 0) return;
+  await db.transaction('rw', db.snapshots, db.tombstones, db.scraps, async () => {
+    const ids = (await db.snapshots.where('scrapId').anyOf(scrapIds).primaryKeys()) as string[];
+    await bury('snapshots', ids);
+    await db.snapshots.bulkDelete(ids);
+    const now = Date.now();
+    await db.scraps.where('id').anyOf(scrapIds).modify((s) => void (s.updatedAt = now));
+  });
+}
+
 export async function deleteSnapshot(id: string): Promise<void> {
   await db.transaction('rw', db.snapshots, db.tombstones, async () => {
     await bury('snapshots', [id]);

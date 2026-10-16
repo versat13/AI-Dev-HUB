@@ -233,6 +233,7 @@ export function markSnapshotTarget(
 ): 'ask' | 'auto' | null {
   doc.querySelectorAll(`[${SNAP_ATTR}]`).forEach((el) => el.removeAttribute(SNAP_ATTR));
   if (!rule || rule.mode === 'off' || !rule.selector.trim()) return null;
+  if (rule.selector.trim() === '@viewport') return rule.mode; // 範囲の指定なし: 画面に見えている範囲をそのまま撮る
   let el: Element | null = null;
   try {
     el = rule.selector.trim() === '@unit' ? (units[0] ?? null) : doc.querySelector(rule.selector);

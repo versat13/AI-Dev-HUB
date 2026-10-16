@@ -158,11 +158,13 @@ export interface Settings {
   articleMaxChars: number | null; // 汎用本文の文字数上限（null = 無制限）
   pinnedFirst: boolean; // ピン留めを一覧の先頭に表示する
   listStyle: Density; // 管理タブの一覧表示
+  pageSize: number; // 管理タブの一覧の1ページの件数（既定50）
+  listSnapshots: boolean; // 管理タブのカードにスナップショットを出す
 
   contextMenu: boolean; // 右クリックメニューに「ScrapAIに保存」を出す（既定オフ。contextMenus権限が必要）
   panelKeepOpen: boolean; // サイドパネルを自動で閉じない
-  aiTemporaryChat: boolean; // AIサイトは一時チャットで開く
-  aiDirect: boolean; // AIサイトの入力欄に自動で入れ、回答を取り込むボタンを出す（初回にサイトへのアクセスを許可）
+  aiTemporaryChat: boolean; // AIサービスは一時チャットで開く
+  aiDirect: boolean; // AIサービスの入力欄に自動で入れ、回答を取り込むボタンを出す（初回にアクセスを許可）
   aiAutoSend: boolean; // 入れたあと自動で送信する
   listFace: 'ai' | 'original'; // 一覧の表示: AI要約を主役にするか、元の内容か
   cardColumns: number; // カード表示の列数（0 = 自動、1〜6）
@@ -174,9 +176,11 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   locale: 'auto',
   theme: 'light',
-  articleMaxChars: 3000,
+  articleMaxChars: 1000,
   pinnedFirst: true,
   listStyle: 'compact',
+  pageSize: 50,
+  listSnapshots: false,
   cardColumns: 0,
   panelKeepOpen: false,
   aiTemporaryChat: true,

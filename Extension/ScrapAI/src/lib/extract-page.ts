@@ -16,6 +16,7 @@ export interface ExtractResult {
   description: string;
   ogImage: string;
   faviconUrl: string;
+  faviconData?: string; // アイコンの中身（dataURL）。ページと同じ出所から取れたときだけ（content script が付与）
   selection: string;
   articleTitle: string;
   articleText: string;

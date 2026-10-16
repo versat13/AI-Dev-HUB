@@ -1,15 +1,11 @@
 import { browser } from 'wxt/browser';
 import { useEffect, useState } from 'preact/hooks';
 import {
-  archiveScraps,
   createCategory,
   db,
   deleteCategory,
-  deleteScraps,
   moveCategory,
   renameCategory,
-  restoreScraps,
-  setCategoryOn,
 } from '@/lib/db';
 import { t } from '@/lib/i18n';
 import { DEFAULT_PARAMS, type ListParams } from '@/lib/query';
@@ -19,11 +15,12 @@ import { applyLocale, applyTheme } from '@/ui/boot';
 import { DataSettings } from '@/ui/DataSettings';
 import { DetailView } from '@/ui/DetailView';
 import { ActiveFilters, FilterPanel, SearchBox, SortSelect } from '@/ui/Filters';
-import { ConfirmDelete } from '@/ui/ConfirmDelete';
 import { Icon } from '@/ui/icons';
 import { formatBytes } from '@/ui/format';
 import { useCategories, useListData, useLive } from '@/ui/hooks';
 import { FaceToggle, ScrapList } from '@/ui/ListBrowser';
+import { BulkBar } from '@/ui/BulkBar';
+import { Pager, pageSlice } from '@/ui/Pager';
 import { SiteSettings } from '@/ui/SiteSettings';
 import { SyncSettings, useAutoSync } from '@/ui/SyncSettings';
 import { TemplateSettings } from '@/ui/TemplateSettings';
@@ -179,10 +176,12 @@ export function App({ initial }: { initial: Settings }) {
             selection={selection}
             toggleSelect={toggleSelect}
             clearSelection={() => setSelection(new Set())}
-            selectAll={() => setSelection(new Set(data?.items.map((s) => s.id) ?? []))}
+            selectAll={(ids) => setSelection(new Set(ids))}
+            onPageSize={(pageSize) => updateSettings({ pageSize })}
             onDensity={(listStyle) => updateSettings({ listStyle })}
             onColumns={(cardColumns) => updateSettings({ cardColumns })}
             onFace={(listFace) => updateSettings({ listFace })}
+            onSnapshots={(listSnapshots) => updateSettings({ listSnapshots })}
           />
         )}
         {section === 'categories' && <CategoryManager categories={categories} />}
@@ -218,18 +217,27 @@ function Library(props: {
   selection: Set<string>;
   toggleSelect: (id: string) => void;
   clearSelection: () => void;
-  selectAll: () => void;
+  selectAll: (ids: string[]) => void;
+  onPageSize: (n: number) => void;
   onDensity: (d: Settings['listStyle']) => void;
   onColumns: (n: number) => void;
   onFace: (v: Settings['listFace']) => void;
+  onSnapshots: (on: boolean) => void;
 }) {
   const { selection, params } = props;
-  const ids = [...selection];
   const [filtersOpen, setFiltersOpen] = useState(false);
-
-  async function bulk(fn: (ids: string[]) => Promise<void>) {
-    await fn(ids);
-    props.clearSelection();
+  const [page, setPage] = useState(1);
+  const paged = pageSlice(props.data?.items ?? [], page, props.settings.pageSize);
+  // 検索・絞り込み・並び替えを変えたら1ページ目に戻す
+  useEffect(() => setPage(1), [JSON.stringify(params)]);
+  const [sizeText, setSizeText] = useState(String(props.settings.pageSize));
+  function commitSize() {
+    const n = Math.floor(Number(sizeText));
+    if (!Number.isFinite(n) || n < 10) return setSizeText(String(props.settings.pageSize));
+    const size = Math.min(500, n);
+    setSizeText(String(size));
+    props.onPageSize(size);
+    setPage(1);
   }
 
   return (
@@ -252,6 +260,16 @@ function Library(props: {
             </button>
           ))}
         </div>
+        {props.settings.listStyle !== 'compact' && (
+          <button
+            class="toggle bulk-btn"
+            aria-pressed={props.settings.listSnapshots}
+            title={t('showSnapshotsTitle')}
+            onClick={() => props.onSnapshots(!props.settings.listSnapshots)}
+          >
+            <Icon name="image" size={14} /> {t('showSnapshots')}
+          </button>
+        )}
         {props.settings.listStyle !== 'compact' && (
           <div class="columns" role="group" aria-label={t('columnsLabel')}>
             <span class="muted">{t('columnsLabel')}</span>
@@ -284,62 +302,22 @@ function Library(props: {
         <ActiveFilters params={params} onChange={props.setParams} categories={props.categories} hide={['view', 'category']} />
         <span class="spacer" />
         <FaceToggle value={props.settings.listFace} onChange={(listFace) => props.onFace(listFace)} />
-        <button class="link" onClick={props.selectAll}>{t('selectAll')}</button>
       </div>
 
-      {selection.size > 0 && (
-        <div class="bulkbar" role="region" aria-label={t('selected', selection.size)}>
-          <strong>{t('selected', selection.size)}</strong>
-          <button class="link" onClick={props.clearSelection}>{t('clearSelection')}</button>
-          <span class="spacer" />
-          {props.categories.length > 0 && (
-            <>
-              <select
-                aria-label={t('bulkAddCategory')}
-                value=""
-                onChange={async (e) => {
-                  const id = (e.target as HTMLSelectElement).value;
-                  if (id) await setCategoryOn(ids, id, true);
-                  (e.target as HTMLSelectElement).value = '';
-                }}
-              >
-                <option value="">{t('bulkAddCategory')}</option>
-                {props.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <select
-                aria-label={t('bulkRemoveCategory')}
-                value=""
-                onChange={async (e) => {
-                  const id = (e.target as HTMLSelectElement).value;
-                  if (id) await setCategoryOn(ids, id, false);
-                  (e.target as HTMLSelectElement).value = '';
-                }}
-              >
-                <option value="">{t('bulkRemoveCategory')}</option>
-                {props.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </>
-          )}
-          {params.view !== 'archived' && <button onClick={() => bulk(archiveScraps)}>{t('archive')}</button>}
-          {params.view !== 'active' && <button onClick={() => bulk(restoreScraps)}>{t('restore')}</button>}
-          <details class="menu bulk-more">
-            <summary>{t('bulkMore')}</summary>
-            <div class="menu-list">
-              <ConfirmDelete
-                label={t('bulkDelete', selection.size)}
-                onConfirm={async () => {
-                  const hadActive = props.activeId && selection.has(props.activeId);
-                  await bulk(deleteScraps);
-                  if (hadActive) props.setActiveId(null);
-                }}
-              />
-            </div>
-          </details>
-        </div>
-      )}
+      <BulkBar
+        items={props.data?.items ?? []}
+        pageIds={paged.items.map((s) => s.id)}
+        selection={selection}
+        categories={props.categories}
+        view={params.view}
+        activeId={props.activeId}
+        onSelectPage={() => props.selectAll(paged.items.map((s) => s.id))}
+        onClear={props.clearSelection}
+        onActiveGone={() => props.setActiveId(null)}
+      />
 
       <ScrapList
-        data={props.data}
+        data={props.data && { ...props.data, items: paged.items }}
         params={params}
         categories={props.categories}
         density={props.settings.listStyle}
@@ -350,8 +328,26 @@ function Library(props: {
         selectable
         selection={selection}
         onToggleSelect={props.toggleSelect}
+        showSnapshots={props.settings.listSnapshots}
         onOpen={(id) => props.setActiveId(id)}
       />
+      <div class="list-foot">
+        <Pager page={paged.page} pages={paged.pages} onPage={setPage} />
+        <label class="page-size">
+          {t('pageSizeLabel')}
+          <input
+            type="number"
+            min={10}
+            max={500}
+            step={10}
+            value={sizeText}
+            onInput={(e) => setSizeText((e.target as HTMLInputElement).value)}
+            onBlur={commitSize}
+            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+          />
+          {t('pageSizeUnit')}
+        </label>
+      </div>
     </>
   );
 }
@@ -490,14 +486,6 @@ function SettingsPane({
             <option value="en">English</option>
           </select>
         </label>
-        <label class="set-row check">
-          <input
-            type="checkbox"
-            checked={settings.pinnedFirst}
-            onChange={(e) => onChange({ pinnedFirst: (e.target as HTMLInputElement).checked })}
-          />
-          {t('settingsPinnedFirst')}
-        </label>
         <label class="set-row">
           <span>{t('setTheme')}</span>
           <select value={settings.theme} onChange={(e) => onChange({ theme: (e.target as HTMLSelectElement).value as Settings['theme'] })}>
@@ -505,6 +493,14 @@ function SettingsPane({
             <option value="dark">{t('themeDark')}</option>
             <option value="auto">{t('themeAuto')}</option>
           </select>
+        </label>
+        <label class="set-row check">
+          <input
+            type="checkbox"
+            checked={settings.pinnedFirst}
+            onChange={(e) => onChange({ pinnedFirst: (e.target as HTMLInputElement).checked })}
+          />
+          {t('settingsPinnedFirst')}
         </label>
         <label class="set-row check">
           <input

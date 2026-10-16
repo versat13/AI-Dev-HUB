@@ -34,6 +34,11 @@ const pages = {
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
+  if (url.pathname === '/favicon.ico') {
+    res.writeHead(200, { 'content-type': 'image/png' });
+    res.end(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'));
+    return;
+  }
   const body = pages[url.pathname];
   if (!body) { res.writeHead(404); res.end('nf'); return; }
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
@@ -111,7 +116,7 @@ const dump = () =>
         open.onsuccess = () => {
           const db = open.result;
           const out = {};
-          const names = ['scraps', 'fragments', 'meta'];
+          const names = ['scraps', 'fragments', 'meta', 'favicons'];
           const tx = db.transaction(names, 'readonly');
           let left = names.length;
           for (const n of names) {
@@ -141,7 +146,7 @@ const sources = db.fragments.map((f) => f.source).sort().join(',');
 check('記事: 断片=本文+概要', sources === 'meta,readability', sources);
 check('記事: 本文は上限3000字以内', db.fragments.find((f) => f.source === 'readability')?.text.length <= 3000);
 check('記事: 概要(excerpt)がOG概要', scrap?.excerpt === 'OGの概要文です', scrap?.excerpt);
-check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 6));
+check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 7));
 
 // 2) 同じURLを再度（選択なし）
 out = await save(aTab, 'auto');
@@ -209,6 +214,23 @@ check('ポップアップ: 取り消しで削除', (await dump()).scraps.length 
 await pop.getByRole('button', { name: 'このページをスクラップ' }).click();
 await pop.waitForTimeout(1200);
 check('ポップアップ: 再保存OK', (await dump()).scraps.length === n0 + 1);
+check('ポップアップ: 本文取得の行は出さない', !/本文を取得/.test(txt));
+check('ポップアップ: 設定のないサイトでもスナップショットの選択が出る', /スナップショットを撮る/.test(txt), txt.replace(/\n+/g, ' / ').slice(0, 160));
+check('アイコン: 保存時にドメインのアイコンを取り込む', (await dump()).favicons.some((f) => f.domain === 'localhost' && f.data.startsWith('data:image/')));
+// 保存済みのページをもう一度: 「上書き保存」「新規保存」の順
+await pop.getByRole('button', { name: 'このページをスクラップ' }).click();
+await pop.waitForTimeout(1200);
+const btns = await pop.locator('.banner .actions button').allInnerTexts();
+check('ポップアップ: 保存済みのボタンは「上書き保存」「新規保存」の順', btns[0] === '上書き保存' && btns[1] === '新規保存', btns.join('|'));
+// カードを押すと、サイドパネルではなくポップアップの中に詳細が出る
+await pop.locator('.browser-list .row-main').first().click();
+await pop.waitForSelector('main.popup.detail');
+await pop.waitForFunction(() => (document.querySelector('main.popup.detail')?.innerText ?? '').length > 20).catch(() => {});
+check('ポップアップ: カードを押すとポップアップ内に詳細が出る', (await pop.locator('main.popup.detail').innerText()).length > 20);
+await pop.screenshot({ path: path.join(OUT, 'p15-popup-detail.png') });
+await pop.locator('main.popup.detail').getByRole('button', { name: '戻る' }).first().click();
+await pop.waitForSelector('.browser-list .row');
+check('ポップアップ: 戻ると一覧に戻る', (await pop.locator('.browser-list .row').count()) > 0);
 await pop.close();
 
 // 管理画面
@@ -475,16 +497,59 @@ await cm.getByLabel('並び順').selectOption('domain-asc');
 await cm.waitForTimeout(300);
 check('並び順: ドメイン順を選べる', (await cm.locator('.rows .row').count()) > 0);
 
+// ページ送り: 1ページの件数を1にすると番号つきのページ送りが出る
+await ext.evaluate(async () => {
+  const cur = (await chrome.storage.local.get('settings')).settings ?? {};
+  await chrome.storage.local.set({ settings: { ...cur, pageSize: 1 } });
+});
+await cm.reload();
+await cm.waitForSelector('.rows .row');
+check('ページ送り: 1件ずつ表示される', (await cm.locator('.rows .row').count()) === 1);
+check('ページ送り: ページ番号が出る', (await cm.locator('.pager .pager-num').count()) >= 2);
+await cm.locator('.pager .pager-num').nth(1).click();
+check('ページ送り: 2ページ目に移れる', (await cm.locator('.pager .pager-num.on').innerText()) === '2');
+await cm.screenshot({ path: path.join(OUT, 'p14-pager.png') });
+await ext.evaluate(async () => {
+  const cur = (await chrome.storage.local.get('settings')).settings ?? {};
+  await chrome.storage.local.set({ settings: { ...cur, pageSize: 50 } });
+});
+await cm.reload();
+await cm.waitForSelector('.rows .row');
+check('ページ送り: 既定は50件で、1ページに収まるときは出さない', (await cm.locator('.pager').count()) === 0);
+check('操作バー: 何も選んでいなくても常に出ている', (await cm.locator('.bulkbar.idle').count()) === 1 && (await cm.locator('.bulkbar').getByRole('button', { name: 'ピン留め', exact: true }).isDisabled()));
+
+// 一括: ピン留め・星
+await cm.getByRole('button', { name: '表示中をすべて選択' }).click();
+await cm.locator('.bulkbar').getByRole('button', { name: 'ピン留め', exact: true }).click();
+await cm.waitForTimeout(500);
+let act = (await dump()).scraps.filter((x) => x.archivedAt == null);
+check('一括: ピン留めをまとめて付ける', act.length > 0 && act.every((x) => x.pinned));
+await cm.locator('.bulkbar').getByRole('button', { name: 'ピン留めを外す' }).click();
+await cm.waitForTimeout(500);
+act = (await dump()).scraps.filter((x) => x.archivedAt == null);
+check('一括: ピン留めをまとめて外す', act.every((x) => !x.pinned));
+await cm.locator('.bulkbar').getByRole('button', { name: '評価' }).click();
+await cm.getByRole('menuitem', { name: '星4' }).click();
+await cm.waitForTimeout(500);
+act = (await dump()).scraps.filter((x) => x.archivedAt == null);
+check('一括: 星をまとめて付ける', act.length > 0 && act.every((x) => x.stars === 4));
+await cm.locator('.bulkbar').getByRole('button', { name: '評価' }).click();
+await cm.getByRole('menuitem', { name: '評価を外す' }).click();
+await cm.waitForTimeout(500);
+act = (await dump()).scraps.filter((x) => x.archivedAt == null);
+check('一括: 星をまとめて外す', act.every((x) => x.stars == null));
+await cm.screenshot({ path: path.join(OUT, 'p14-bulk.png') });
+
 // 一括削除: 選択 → その他 → 削除 → 確認
 const nBefore = (await dump()).scraps.length;
-await cm.getByRole('button', { name: '表示中をすべて選択' }).click();
-await cm.locator('.bulkbar .bulk-more summary').click();
-await cm.locator('.bulkbar').getByRole('button', { name: /選択した\d+件を削除/ }).click();
+await cm.locator('.bulkbar').getByRole('button', { name: 'その他' }).click();
+await cm.getByRole('button', { name: /選択した\d+件を削除/ }).click();
 check('一括削除: 1回目では消えない', (await dump()).scraps.length === nBefore);
-await cm.locator('.bulkbar').getByRole('button', { name: 'もう一度押すと削除' }).click();
+await cm.getByRole('button', { name: 'もう一度押すと削除' }).click();
 await cm.waitForTimeout(700);
 check('一括削除: 表示中の項目が消える', (await dump()).scraps.filter((x) => x.archivedAt == null).length === 0, String((await dump()).scraps.length));
 
+check('アイコン: 項目が全部なくなればアイコンも消える', (await dump()).favicons.length === 0, JSON.stringify((await dump()).favicons.map((f) => f.domain)));
 check('JSエラーなし', errs.length === 0, errs.join(' | '));
 
 await ctx.close();

@@ -43,4 +43,13 @@ describe('AIサイトの画面から入力欄・送信・回答を探す', () =>
     document.body.innerHTML = `<pre><code>## Headline\n(x)\n## Key points\n(y)</code></pre>`;
     expect(findAnswer(document, prompt)).toBeNull();
   });
+
+  it('回答: ChatGPT のように pre を使わない code ブロックも拾う（行が span で分かれ改行がない）', () => {
+    const prompt = '```markdown\n## Headline\n(x)\n## Key points\n(y)\n```';
+    document.body.innerHTML = `
+      <div data-code-block-source="true"><code class="block"><span><span class="hljs-section">## Headline</span></span> <span>運動音痴の練習記録</span> <span><span class="hljs-section">## Key points</span></span> <span>- 一つ目</span></code></div>`;
+    const a = findAnswer(document, prompt)!;
+    expect(a.startsWith('## Headline')).toBe(true);
+    expect(a).toContain('\n## Key points');
+  });
 });

@@ -574,7 +574,7 @@ export const AI_SERVICES = [
 
 export type AiServiceId = (typeof AI_SERVICES)[number]['id'] | 'other';
 
-/** AIサイトを開くURL。一時チャットを選んでいて、そのサービスが対応していれば一時チャットのURL */
+/** AIサービスを開くURL。一時チャットを選んでいて、そのサービスが対応していれば一時チャットのURL */
 export function serviceUrl(s: (typeof AI_SERVICES)[number], temporary: boolean): string {
   return (temporary && s.tempUrl) || s.url;
 }

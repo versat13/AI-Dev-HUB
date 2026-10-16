@@ -9,8 +9,12 @@ import type { Category, Density, Settings } from '@/lib/types';
 import { ActiveFilters, FilterPanel, SearchBox } from './Filters';
 import { Icon } from './icons';
 import { setSettings } from '@/lib/settings';
-import { useCategories, useListData, useLive } from './hooks';
+import { useCategories, useListData, useLive, useThumbs } from './hooks';
+import { Pager, pageSlice } from './Pager';
 import { MAX_CATS, ScrapRow } from './ScrapRow';
+
+/** ポップアップ・サイドパネルの1ページの件数（上限） */
+export const BROWSER_PAGE_SIZE = 50;
 
 /** 一覧の本体（件数・空表示・行）。選択UIが要る管理タブでも使う */
 export function ScrapList(props: {
@@ -19,6 +23,7 @@ export function ScrapList(props: {
   categories: Category[];
   density: Density;
   columns?: number;
+  showSnapshots?: boolean; // カードにスナップショットを小さく出す（カード・カード（大）のみ）
   hideCount?: boolean; // 件数を呼び出し側で出す（管理タブ）
   face?: Settings['listFace']; // カード表示の列数（0または未指定 = 1列。管理タブでのみ指定する）
   activeId?: string | null;
@@ -39,6 +44,7 @@ export function ScrapList(props: {
     // 本文にあたる断片（タイトルだけの断片は飛ばす）の冒頭
     return new Map([...by].map(([k, list]) => [k, (bodyFragment(list, true)?.text ?? '').replace(/\s+/g, ' ').slice(0, 600)]));
   }, [wantPreview, ids]);
+  const thumbs = useThumbs(props.showSnapshots && props.density !== 'compact' ? ids : '');
   if (!data) return <p class="empty" role="status">…</p>;
   // ドメインの欄は、表示中で最も長いドメインに幅を合わせる（カードごとに位置がずれないように）
   const domW = Math.min(24, Math.max(6, ...data.items.map((s) => s.domain.length)));
@@ -95,6 +101,7 @@ export function ScrapList(props: {
               density={props.density}
               face={props.face}
               preview={previews?.get(s.id)}
+              thumb={thumbs.get(s.id)}
               active={props.activeId === s.id}
               selectable={props.selectable}
               selected={props.selection?.has(s.id)}
@@ -115,14 +122,22 @@ export function ListBrowser(props: {
   onOpen: (id: string) => void;
   activeId?: string | null;
 }) {
-  const [params, setParams] = useState<ListParams>({
+  const [params, setParams0] = useState<ListParams>({
     ...DEFAULT_PARAMS,
     pinnedFirst: props.settings.pinnedFirst,
   });
+  const [page, setPage] = useState(1);
+  // 検索・絞り込みを変えたら1ページ目に戻す
+  const setParams = (p: ListParams) => {
+    setParams0(p);
+    setPage(1);
+  };
   const [showFilters, setShowFilters] = useState(false);
   const [face, setFace] = useState<Settings['listFace']>(props.settings.listFace);
   const categories = useCategories();
   const data = useListData(params);
+  const paged = pageSlice(data?.items ?? [], page, BROWSER_PAGE_SIZE);
+  const shown = data ? { ...data, items: paged.items } : undefined;
 
   return (
     <section class="browser">
@@ -162,7 +177,7 @@ export function ListBrowser(props: {
       )}
       <div class="browser-list">
         <ScrapList
-          data={data}
+          data={shown}
           params={params}
           categories={categories}
           density="compact"
@@ -172,6 +187,7 @@ export function ListBrowser(props: {
           onOpen={props.onOpen}
         />
       </div>
+      <Pager compact page={paged.page} pages={paged.pages} onPage={setPage} />
     </section>
   );
 }

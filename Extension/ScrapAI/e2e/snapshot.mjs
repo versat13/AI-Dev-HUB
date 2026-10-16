@@ -183,9 +183,17 @@ const t3 = await ctx.newPage();
 await t3.goto(`${base}/text`);
 await t3.bringToFront();
 out = await save(await tabIdOf(`${base}/text*`), 'auto');
-check('条件: 画像がなければ撮らない', out?.kind === 'created' && out.snapshot === undefined, JSON.stringify(out));
+check('条件: 画像がなければ自動では撮らず、選択だけ出す', out?.kind === 'created' && out.snapshot === 'available', JSON.stringify(out));
 db = await dump();
 check('件数: 2枚', db.snapshots.length === 2);
+// 自動で撮る設定のサイトで「上書き保存」しても撮る
+out = await save(await tabIdOf(`${base}/tweet2*`), 'reextract');
+check('上書き保存でも自動で撮る', out?.snapshot === 'taken', JSON.stringify(out));
+// 右クリック・ショートカット相当（explicit）なら、保存済みのページでも自動で撮る
+out = await ext.evaluate((tabId) => chrome.runtime.sendMessage({ type: 'save', tabId, explicit: true }), await tabIdOf(`${base}/tweet2*`));
+check('右クリック相当の保存でも自動で撮る', out?.snapshot === 'taken', JSON.stringify(out));
+db = await dump();
+check('件数: 4枚', db.snapshots.length === 4);
 
 // 詳細に表示・削除
 const errs = [];
@@ -209,7 +217,7 @@ const [dl] = await Promise.all([
 ]);
 const file = path.join(OUT, 'export-snap.json');
 await dl.saveAs(file);
-check('エクスポート: 画像を含む', JSON.parse(fs.readFileSync(file, 'utf8')).snapshots?.length === 2);
+check('エクスポート: 画像を含む', JSON.parse(fs.readFileSync(file, 'utf8')).snapshots?.length === 4);
 
 await mg.goto(`chrome-extension://${extId}/manager.html#scrap=${scrap1}`);
 await mg.reload();
@@ -217,7 +225,41 @@ await mg.waitForTimeout(800);
 await mg.locator('.m-detail .snap').hover();
 await mg.locator('.m-detail .snap-del').click();
 await mg.waitForTimeout(500);
-check('詳細: スナップショットを削除', (await dump()).snapshots.length === 1);
+check('詳細: スナップショットを削除', (await dump()).snapshots.length === 3);
+
+// カードにスナップショットを出す（カード表示 + 画像オン）。文字を押しのけない大きさに収まる
+await ext.evaluate(async () => {
+  const cur = (await chrome.storage.local.get('settings')).settings ?? {};
+  await chrome.storage.local.set({ settings: { ...cur, listStyle: 'card', listSnapshots: true } });
+});
+await mg.goto(`chrome-extension://${extId}/manager.html`);
+await mg.waitForSelector('.rows .row');
+await mg.waitForTimeout(600);
+const thumbs = mg.locator('.rows .row-thumb');
+check('カード: スナップショットが出る', (await thumbs.count()) > 0);
+check('カード: 画像は高さ100px以内', (await thumbs.first().evaluate((el) => el.getBoundingClientRect().height)) <= 101);
+await mg.screenshot({ path: path.join(OUT, 'p16-card-snap.png') });
+// 一括: スナップショットだけを消す
+await mg.getByRole('button', { name: '表示中をすべて選択' }).click();
+await mg.locator('.bulkbar').getByRole('button', { name: 'その他' }).click();
+await mg.getByRole('button', { name: /スナップショットを削除/ }).click();
+await mg.getByRole('button', { name: 'もう一度押すと削除' }).click();
+await mg.waitForTimeout(600);
+db = await dump();
+check('一括: スナップショットだけが消え、項目は残る', db.snapshots.length === 0 && db.scraps.length > 0);
+
+// 設定のないサイト（どのプロファイルにも当たらない 127.0.0.1）で「次から自動で撮る」を覚えさせると、そのドメイン用の設定ができる
+const t4 = await ctx.newPage();
+await t4.goto(`http://127.0.0.1:${port}/text`);
+await t4.bringToFront();
+const tab4 = await tabIdOf(`http://127.0.0.1:${port}/text*`);
+out = await save(tab4, 'auto');
+check('設定のないサイト: 保存時に撮る選択が出る', out?.snapshot === 'available', JSON.stringify(out));
+out = await ext.evaluate((a) => chrome.runtime.sendMessage({ type: 'snapshot', ...a, remember: true }), { tabId: tab4, scrapId: out.scrapId });
+db = await dump();
+check('記憶: 画面に見える範囲を撮れて、ドメイン用の自動設定ができる', out?.ok === true && db.siteProfiles.some((p) => p.urlPatterns.includes('127.0.0.1/**') && p.snapshot?.mode === 'auto' && p.snapshot.selector === '@viewport'), JSON.stringify(out));
+out = await save(tab4, 'reextract');
+check('記憶したサイトでは次から自動で撮る', out?.snapshot === 'taken', JSON.stringify(out));
 check('JSエラーなし', errs.length === 0, errs.join(' | '));
 
 await ctx.close();

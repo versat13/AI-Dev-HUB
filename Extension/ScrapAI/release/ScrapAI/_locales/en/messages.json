@@ -39,10 +39,10 @@
     "message": "{0} snippets"
   },
   "reextract": {
-    "message": "Re-extract and add"
+    "message": "Overwrite"
   },
   "saveSeparate": {
-    "message": "Save as separate item"
+    "message": "Save as new"
   },
   "undo": {
     "message": "Undo"
@@ -132,7 +132,7 @@
     "message": "{0} stars"
   },
   "categoryNone": {
-    "message": "Uncategorized"
+    "message": "No categories"
   },
   "pinnedOnly": {
     "message": "Pinned only"
@@ -327,7 +327,7 @@
     "message": "Applies to newly saved pages. Leave empty for no limit."
   },
   "settingsPinnedFirst": {
-    "message": "Show pinned items first"
+    "message": "Show pinned cards first"
   },
   "settingsData": {
     "message": "Data"
@@ -900,10 +900,10 @@
     "message": "Your language"
   },
   "setTemporaryChat": {
-    "message": "Open AI sites in a temporary chat"
+    "message": "Open AI services in a temporary chat"
   },
   "setTemporaryChatHelp": {
-    "message": "Not kept in history and less affected by past conversations. Works for ChatGPT and Claude. Gemini cannot be set this way, so it opens a normal chat."
+    "message": "Not kept in history and less affected by past conversations. AI services without a temporary chat open a normal chat."
   },
   "importHelp": {
     "message": "Reads an exported JSON file. Invalid files are rejected without changing anything."
@@ -1077,9 +1077,51 @@
     "message": "One-click handoff to the AI and back"
   },
   "setAiDirectHelp": {
-    "message": "Fills the prompt into the AI site and shows a button to bring the answer back. The first time, it asks for access to that site (ChatGPT, Claude or Gemini). It looks for the input box and the answer automatically even if the site changes; if it fails, copy and paste still works."
+    "message": "Fills the prompt into the AI service and shows a button to bring the answer back. The first time, it asks for access to that AI service. It looks for the input box and the answer automatically even if the site changes; if it fails, copy and paste still works."
   },
   "setAiAutoSend": {
     "message": "Send automatically after filling in"
+  },
+  "pagerLabel": {
+    "message": "Pagination"
+  },
+  "pagerPrev": {
+    "message": "Previous page"
+  },
+  "pagerNext": {
+    "message": "Next page"
+  },
+  "pageSizeLabel": {
+    "message": "Items per page"
+  },
+  "pageSizeUnit": {
+    "message": ""
+  },
+  "bulkCategory": {
+    "message": "Category"
+  },
+  "bulkRating": {
+    "message": "Rating"
+  },
+  "bulkRatingClear": {
+    "message": "Clear rating"
+  },
+  "bulkPin": {
+    "message": "Pin"
+  },
+  "bulkUnpin": {
+    "message": "Unpin"
+  },
+  "bulkDeleteSnapshots": {
+    "message": "Delete snapshots ({0} items)"
+  },
+  "showSnapshots": {
+    "message": "Images"
+  },
+  "showSnapshotsTitle": {
+    "message": "Show snapshots on cards"
+  },
+  "bulkHint": {
+    "message": "Select items to act on them"
   }
 }
