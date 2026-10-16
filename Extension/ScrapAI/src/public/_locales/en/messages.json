@@ -1,0 +1,509 @@
+{
+  "extName": {
+    "message": "ScrapAI"
+  },
+  "extDescription": {
+    "message": "Save pages, posts and repos in one click, keep them on this device, and hand them to an AI for explanation later."
+  },
+  "actionTitle": {
+    "message": "ScrapAI"
+  },
+  "saving": {
+    "message": "Saving…"
+  },
+  "saveButton": {
+    "message": "Scrap this page"
+  },
+  "savedNew": {
+    "message": "Saved"
+  },
+  "fragmentAdded": {
+    "message": "Added to the existing item (snippet #{0})"
+  },
+  "duplicateFragment": {
+    "message": "This content is already saved"
+  },
+  "alreadySaved": {
+    "message": "Already saved"
+  },
+  "extractOk": {
+    "message": "Page text captured"
+  },
+  "extractPartial": {
+    "message": "Only part of the page could be captured"
+  },
+  "extractFailed": {
+    "message": "Page text could not be captured. The URL and title are saved."
+  },
+  "fragmentsCount": {
+    "message": "{0} snippets"
+  },
+  "reextract": {
+    "message": "Re-extract and add"
+  },
+  "saveSeparate": {
+    "message": "Save as separate item"
+  },
+  "undo": {
+    "message": "Undo"
+  },
+  "undone": {
+    "message": "Undone"
+  },
+  "openDetail": {
+    "message": "Open details"
+  },
+  "errorSave": {
+    "message": "Could not save: {0}"
+  },
+  "errorNoTab": {
+    "message": "There is no page to save in this tab."
+  },
+  "retry": {
+    "message": "Retry"
+  },
+  "localOnly": {
+    "message": "Data is stored only in this browser."
+  },
+  "openSidePanel": {
+    "message": "Side panel"
+  },
+  "openManager": {
+    "message": "Manage all"
+  },
+  "searchPlaceholder": {
+    "message": "Search title, URL, notes and text"
+  },
+  "filters": {
+    "message": "Filters"
+  },
+  "filterReset": {
+    "message": "Reset filters"
+  },
+  "labelView": {
+    "message": "Show"
+  },
+  "viewActive": {
+    "message": "Active"
+  },
+  "viewArchived": {
+    "message": "Archived"
+  },
+  "viewAll": {
+    "message": "All"
+  },
+  "labelDomain": {
+    "message": "Domain"
+  },
+  "optAllDomains": {
+    "message": "All domains"
+  },
+  "labelAi": {
+    "message": "AI summary"
+  },
+  "labelRating": {
+    "message": "Rating"
+  },
+  "labelCategory": {
+    "message": "Category"
+  },
+  "labelSort": {
+    "message": "Sort"
+  },
+  "optAny": {
+    "message": "Any"
+  },
+  "aiNone": {
+    "message": "No AI summary"
+  },
+  "aiYes": {
+    "message": "AI summary ({0})"
+  },
+  "ratingUnrated": {
+    "message": "Unrated"
+  },
+  "ratingMin": {
+    "message": "{0}+ stars"
+  },
+  "rating": {
+    "message": "Rating"
+  },
+  "starLabel": {
+    "message": "{0} stars"
+  },
+  "categoryNone": {
+    "message": "Uncategorized"
+  },
+  "pinnedOnly": {
+    "message": "Pinned only"
+  },
+  "pin": {
+    "message": "Pin"
+  },
+  "pinned": {
+    "message": "Pinned"
+  },
+  "sortCreatedDesc": {
+    "message": "Newest saved"
+  },
+  "sortCreatedAsc": {
+    "message": "Oldest saved"
+  },
+  "sortUpdatedDesc": {
+    "message": "Recently updated"
+  },
+  "sortStars": {
+    "message": "Highest rated"
+  },
+  "sortTitle": {
+    "message": "Title (A–Z)"
+  },
+  "emptyList": {
+    "message": "Nothing saved yet. Press “Scrap this page” to start."
+  },
+  "emptyFiltered": {
+    "message": "No items match these conditions."
+  },
+  "emptyArchived": {
+    "message": "The archive is empty."
+  },
+  "itemCount": {
+    "message": "{0} items"
+  },
+  "noBody": {
+    "message": "No page text"
+  },
+  "moreCats": {
+    "message": "+{0}"
+  },
+  "archivedBadge": {
+    "message": "Archived"
+  },
+  "back": {
+    "message": "Back"
+  },
+  "close": {
+    "message": "Close"
+  },
+  "openPage": {
+    "message": "Open original page"
+  },
+  "savedAt": {
+    "message": "Saved {0}"
+  },
+  "titleLabel": {
+    "message": "Title"
+  },
+  "memo": {
+    "message": "Memo"
+  },
+  "memoPlaceholder": {
+    "message": "Why you saved this, what to try…"
+  },
+  "categories": {
+    "message": "Categories"
+  },
+  "newCategory": {
+    "message": "New category"
+  },
+  "addCategory": {
+    "message": "Add"
+  },
+  "noCategories": {
+    "message": "No categories yet."
+  },
+  "fragments": {
+    "message": "Snippets ({0})"
+  },
+  "noFragments": {
+    "message": "No text was saved for this item."
+  },
+  "fragTruncated": {
+    "message": "truncated"
+  },
+  "fragDelete": {
+    "message": "Delete"
+  },
+  "fragSplit": {
+    "message": "Move to a separate item"
+  },
+  "confirmDeleteFragment": {
+    "message": "Delete this snippet?"
+  },
+  "fragLabel_selection": {
+    "message": "Selected text"
+  },
+  "fragLabel_article": {
+    "message": "Article text"
+  },
+  "fragLabel_description": {
+    "message": "Description"
+  },
+  "archive": {
+    "message": "Archive"
+  },
+  "restore": {
+    "message": "Restore"
+  },
+  "deleteForever": {
+    "message": "Delete permanently"
+  },
+  "confirmDeleteForever": {
+    "message": "Delete this item and all its snippets permanently? This cannot be undone."
+  },
+  "itemNotFound": {
+    "message": "This item no longer exists."
+  },
+  "navLibrary": {
+    "message": "Library"
+  },
+  "navCategories": {
+    "message": "Categories"
+  },
+  "navSettings": {
+    "message": "Settings"
+  },
+  "selected": {
+    "message": "{0} selected"
+  },
+  "selectAll": {
+    "message": "Select all shown"
+  },
+  "clearSelection": {
+    "message": "Clear selection"
+  },
+  "bulkAddCategory": {
+    "message": "Add category…"
+  },
+  "bulkRemoveCategory": {
+    "message": "Remove category…"
+  },
+  "confirmBulkDelete": {
+    "message": "Delete {0} items and all their snippets permanently? This cannot be undone."
+  },
+  "densityCompact": {
+    "message": "Compact"
+  },
+  "densityCard": {
+    "message": "Cards"
+  },
+  "renameCategory": {
+    "message": "Rename"
+  },
+  "moveUp": {
+    "message": "Move up"
+  },
+  "moveDown": {
+    "message": "Move down"
+  },
+  "deleteCategory": {
+    "message": "Delete"
+  },
+  "confirmDeleteCategory": {
+    "message": "Delete the category “{0}”? Items are kept and only lose this category."
+  },
+  "categoryUsage": {
+    "message": "{0} items"
+  },
+  "categoryNamePlaceholder": {
+    "message": "Category name"
+  },
+  "save": {
+    "message": "Save"
+  },
+  "cancel": {
+    "message": "Cancel"
+  },
+  "settingsLanguage": {
+    "message": "Language"
+  },
+  "langAuto": {
+    "message": "Auto (browser language)"
+  },
+  "settingsMaxChars": {
+    "message": "Max saved article length (characters)"
+  },
+  "maxCharsHelp": {
+    "message": "Applies to newly saved pages. Leave empty for no limit."
+  },
+  "settingsPinnedFirst": {
+    "message": "Show pinned items first"
+  },
+  "settingsData": {
+    "message": "Data"
+  },
+  "storageUsage": {
+    "message": "Storage used: {0}"
+  },
+  "localOnlyLong": {
+    "message": "All data is stored only in this browser on this computer and is not synced to other PCs. Export/import for moving data is planned."
+  },
+  "navSites": {
+    "message": "Sites"
+  },
+  "pickElement": {
+    "message": "Pick an element on the page"
+  },
+  "pickerTip": {
+    "message": "Click the part to save (↑↓ adjusts the range, Esc cancels)"
+  },
+  "sitesIntro": {
+    "message": "Choose where to extract from (CSS selectors) and the character limit for each site. If nothing matches, ScrapAI falls back to normal article extraction."
+  },
+  "pickResult": {
+    "message": "Element picked on the page"
+  },
+  "pickMatches": {
+    "message": "Matches on the page: {0}"
+  },
+  "pickNewProfile": {
+    "message": "Create a new profile"
+  },
+  "pickAddToProfile": {
+    "message": "Add as a field to the profile being edited"
+  },
+  "profileBuiltIn": {
+    "message": "Built-in"
+  },
+  "profileCustom": {
+    "message": "Custom"
+  },
+  "profileDisabled": {
+    "message": "disabled"
+  },
+  "profileNew": {
+    "message": "Add profile"
+  },
+  "profileNewName": {
+    "message": "New profile"
+  },
+  "profileSelectHint": {
+    "message": "Select a profile from the list."
+  },
+  "profileName": {
+    "message": "Name"
+  },
+  "profileEnabled": {
+    "message": "Use this profile"
+  },
+  "profilePatterns": {
+    "message": "Target URLs (one per line)"
+  },
+  "profilePatternsHelp": {
+    "message": "Example: x.com/** or *.2chan.net/b/res/*  (* is one path level, ** is the rest, a leading *. matches subdomains. Query strings are ignored)"
+  },
+  "profilePriority": {
+    "message": "Priority (higher wins)"
+  },
+  "profileFields": {
+    "message": "Page fields"
+  },
+  "profileFieldsHelp": {
+    "message": "Each field is saved as one fragment. If an attribute is set (e.g. href), its value is taken instead of the text."
+  },
+  "profileUnit": {
+    "message": "Repeating unit (replies / posts)"
+  },
+  "profileUnitUse": {
+    "message": "Use a repeating unit such as replies or posts"
+  },
+  "profileUnitHelp": {
+    "message": "With no selection, this page's post (or the first unit) is saved. Selecting across several units saves each unit as its own fragment."
+  },
+  "unitSelector": {
+    "message": "Unit selector"
+  },
+  "unitAnchor": {
+    "message": "Number selector (optional)"
+  },
+  "unitPermalink": {
+    "message": "Link selector (optional)"
+  },
+  "fieldLabel": {
+    "message": "Label"
+  },
+  "fieldRole": {
+    "message": "Role"
+  },
+  "fieldSelector": {
+    "message": "CSS selector"
+  },
+  "fieldAttr": {
+    "message": "Attribute"
+  },
+  "fieldMatch": {
+    "message": "Matches"
+  },
+  "matchFirst": {
+    "message": "First only"
+  },
+  "matchAll": {
+    "message": "All"
+  },
+  "fieldMaxChars": {
+    "message": "Max chars"
+  },
+  "fieldAdd": {
+    "message": "Add field"
+  },
+  "fieldRemove": {
+    "message": "Remove field"
+  },
+  "role_body": {
+    "message": "Body"
+  },
+  "role_title": {
+    "message": "Title"
+  },
+  "role_author": {
+    "message": "Author"
+  },
+  "role_date": {
+    "message": "Date"
+  },
+  "role_custom": {
+    "message": "Other"
+  },
+  "profileReset": {
+    "message": "Reset to default"
+  },
+  "profileDelete": {
+    "message": "Delete"
+  },
+  "confirmProfileReset": {
+    "message": "Reset this profile to its default content?"
+  },
+  "confirmProfileDelete": {
+    "message": "Delete profile \"{0}\"? Saved items are kept."
+  },
+  "confirmDiscard": {
+    "message": "You have unsaved changes. Discard them?"
+  },
+  "fragLabel_post": {
+    "message": "Post"
+  },
+  "fragLabel_res": {
+    "message": "Reply"
+  },
+  "fragLabel_author": {
+    "message": "Author"
+  },
+  "fragLabel_date": {
+    "message": "Date"
+  },
+  "fragLabel_about": {
+    "message": "About"
+  },
+  "fragLabel_topics": {
+    "message": "Topics"
+  },
+  "fragLabel_readme": {
+    "message": "README"
+  },
+  "fragLabel_title": {
+    "message": "Title"
+  },
+  "fragLabel_body": {
+    "message": "Body"
+  }
+}

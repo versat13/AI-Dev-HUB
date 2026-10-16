@@ -1,0 +1,27 @@
+{
+  "name": "scrapai",
+  "version": "1.0.3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "dexie": "^4.0.0",
+    "preact": "^10.0.0",
+    "wxt": "*"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "*",
+    "@types/chrome": "*",
+    "fake-indexeddb": "*",
+    "jsdom": "*",
+    "typescript": "*",
+    "vitest": "*"
+  }
+}
