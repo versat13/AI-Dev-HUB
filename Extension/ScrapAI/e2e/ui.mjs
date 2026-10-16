@@ -335,6 +335,43 @@ const pop2 = await openUi('popup.html', 380, 600, oTab);
 check('ポップアップ: サイドパネル/管理画面ボタン', (await pop2.getByRole('button', { name: 'サイドパネル' }).count()) === 1 && (await pop2.getByRole('button', { name: '管理画面' }).count()) === 1);
 await pop2.screenshot({ path: path.join(OUT, 'p2-popup-ja.png') });
 
+// P6: ショートカット・右クリック（既定オフ）
+{
+  const man = JSON.parse(fs.readFileSync(path.join(EXT, 'manifest.json'), 'utf8'));
+  check('manifest: コマンド登録・キーは未割り当て', !!man.commands?.['save-page'] && !!man.commands?.['open-manager'] && !man.commands['save-page'].suggested_key && !man.commands['open-manager'].suggested_key);
+  check('manifest: contextMenusは任意権限で、通常権限に入っていない', man.optional_permissions?.includes('contextMenus') && !man.permissions.includes('contextMenus'));
+  const sm = await ctx.newPage();
+  await sm.setViewportSize({ width: 1200, height: 1000 });
+  await sm.goto(`chrome-extension://${extId}/manager.html#section=settings`);
+  await sm.waitForTimeout(600);
+  const box = sm.getByLabel('右クリックメニューに「ScrapAIに保存」を出す');
+  check('設定: 右クリックメニューは既定オフ', (await box.isChecked()) === false);
+  check('設定: ショートカット案内がある', (await sm.locator('.shortcuts').innerText()).includes('既定は未割り当て'));
+  await sm.screenshot({ path: path.join(OUT, 'p6-settings.png'), fullPage: true });
+}
+
+// カード表示の列数
+const cm = await ctx.newPage();
+await cm.setViewportSize({ width: 1400, height: 900 });
+await cm.goto(`chrome-extension://${extId}/manager.html`);
+await cm.waitForTimeout(600);
+await cm.getByRole('button', { name: 'カード', exact: true }).click();
+await cm.waitForTimeout(300);
+const colsOf = () => cm.locator('.rows.grid').evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length);
+await cm.getByRole('button', { name: '2列' }).click();
+await cm.waitForTimeout(300);
+check('カード: 2列に切り替え', (await colsOf()) === 2);
+await cm.getByRole('button', { name: '3列' }).click();
+await cm.waitForTimeout(300);
+check('カード: 3列に切り替え', (await colsOf()) === 3);
+await cm.screenshot({ path: path.join(OUT, 'p6-columns.png') });
+await cm.reload();
+await cm.waitForTimeout(500);
+check('カード: 列数が記憶される', (await colsOf()) === 3);
+await cm.getByRole('button', { name: 'コンパクト', exact: true }).click();
+await cm.waitForTimeout(300);
+check('コンパクト時は列ボタンが出ない', (await cm.getByRole('button', { name: '3列' }).count()) === 0);
+
 check('JSエラーなし', errs.length === 0, errs.join(' | '));
 
 await ctx.close();

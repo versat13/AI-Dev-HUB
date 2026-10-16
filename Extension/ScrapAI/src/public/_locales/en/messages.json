@@ -703,5 +703,38 @@
   },
   "fragLabel_translation": {
     "message": "Japanese translation"
+  },
+  "columnsLabel": {
+    "message": "Columns"
+  },
+  "columnsAuto": {
+    "message": "Auto"
+  },
+  "columnsN": {
+    "message": "{0} columns"
+  },
+  "cmdSavePage": {
+    "message": "Scrap this page"
+  },
+  "cmdOpenManager": {
+    "message": "Open the ScrapAI manager"
+  },
+  "ctxMenuSave": {
+    "message": "Save to ScrapAI"
+  },
+  "settingsShortcuts": {
+    "message": "Shortcuts and context menu"
+  },
+  "settingsContextMenu": {
+    "message": "Add “Save to ScrapAI” to the right-click menu"
+  },
+  "settingsContextMenuHelp": {
+    "message": "Turning this on asks the browser to allow the context menu permission. If text is selected it is added as a fragment. Off by default."
+  },
+  "settingsShortcutsHelp": {
+    "message": "Keyboard shortcuts work once you assign keys (none are assigned by default). In Chrome’s shortcut settings, assign keys to “Scrap this page” and “Open the ScrapAI manager”. A ✓ appears on the icon after saving."
+  },
+  "settingsShortcutsOpen": {
+    "message": "Open shortcut settings"
   }
 }

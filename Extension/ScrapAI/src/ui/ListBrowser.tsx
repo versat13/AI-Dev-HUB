@@ -13,6 +13,7 @@ export function ScrapList(props: {
   params: ListParams;
   categories: Category[];
   density: 'compact' | 'card';
+  columns?: number; // カード表示の列数（0または未指定 = 1列。管理タブでのみ指定する）
   activeId?: string | null;
   selectable?: boolean;
   selection?: Set<string>;
@@ -36,7 +37,14 @@ export function ScrapList(props: {
       {empty ? (
         <p class="empty">{empty}</p>
       ) : (
-        <ul class="rows">
+        <ul
+          class={`rows${props.density === 'card' && props.columns != null ? ' grid' : ''}`}
+          style={
+            props.density === 'card' && props.columns != null
+              ? { gridTemplateColumns: props.columns > 0 ? `repeat(${props.columns}, minmax(0, 1fr))` : 'repeat(auto-fill, minmax(240px, 1fr))' }
+              : undefined
+          }
+        >
           {data.items.map((s) => (
             <ScrapRow
               key={s.id}

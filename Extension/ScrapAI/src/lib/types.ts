@@ -122,6 +122,8 @@ export interface Settings {
   articleMaxChars: number | null; // 汎用本文の文字数上限（null = 無制限）
   pinnedFirst: boolean; // ピン留めを一覧の先頭に表示する
   listStyle: 'compact' | 'card'; // 管理タブの一覧表示
+  contextMenu: boolean; // 右クリックメニューに「ScrapAIに保存」を出す（既定オフ。contextMenus権限が必要）
+  cardColumns: number; // カード表示の列数（0 = 自動、1〜6）
   aiTemplateId: string; // 最後に使ったAIテンプレート（P4）
 }
 
@@ -130,6 +132,8 @@ export const DEFAULT_SETTINGS: Settings = {
   articleMaxChars: 3000,
   pinnedFirst: true,
   listStyle: 'compact',
+  cardColumns: 0,
+  contextMenu: false,
   aiTemplateId: 'builtin-verify',
 };
 

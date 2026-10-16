@@ -1,3 +1,4 @@
+import { browser } from 'wxt/browser';
 import { useEffect, useState } from 'preact/hooks';
 import {
   archiveScraps,
@@ -129,6 +130,7 @@ export function App({ initial }: { initial: Settings }) {
             clearSelection={() => setSelection(new Set())}
             selectAll={() => setSelection(new Set(data?.items.map((s) => s.id) ?? []))}
             onDensity={(listStyle) => updateSettings({ listStyle })}
+            onColumns={(cardColumns) => updateSettings({ cardColumns })}
           />
         )}
         {section === 'categories' && <CategoryManager categories={categories} />}
@@ -165,6 +167,7 @@ function Library(props: {
   clearSelection: () => void;
   selectAll: () => void;
   onDensity: (d: Settings['listStyle']) => void;
+  onColumns: (n: number) => void;
 }) {
   const { selection, params } = props;
   const ids = [...selection];
@@ -195,6 +198,21 @@ function Library(props: {
             {t('densityCard')}
           </button>
         </div>
+        {props.settings.listStyle === 'card' && (
+          <div class="columns" role="group" aria-label={t('columnsLabel')}>
+            <span class="muted">{t('columnsLabel')}</span>
+            {[0, 1, 2, 3, 4, 5, 6].map((n) => (
+              <button
+                key={n}
+                aria-pressed={props.settings.cardColumns === n}
+                aria-label={n === 0 ? t('columnsAuto') : t('columnsN', n)}
+                onClick={() => props.onColumns(n)}
+              >
+                {n === 0 ? t('columnsAuto') : n}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {selection.size > 0 && (
@@ -252,6 +270,7 @@ function Library(props: {
         params={params}
         categories={props.categories}
         density={props.settings.listStyle}
+        columns={props.settings.cardColumns}
         activeId={props.activeId}
         selectable
         selection={selection}
@@ -417,6 +436,34 @@ function SettingsPane({
         />
         {t('settingsPinnedFirst')}
       </label>
+
+      <div class="shortcuts">
+        <h3>{t('settingsShortcuts')}</h3>
+        <label class="check">
+          <input
+            type="checkbox"
+            checked={settings.contextMenu}
+            onChange={async (e) => {
+              const box = e.target as HTMLInputElement;
+              if (!box.checked) return onChange({ contextMenu: false });
+              let granted = false;
+              try {
+                granted = await browser.permissions.request({ permissions: ['contextMenus'] });
+              } catch {
+                granted = false;
+              }
+              box.checked = granted;
+              await onChange({ contextMenu: granted });
+            }}
+          />
+          {t('settingsContextMenu')}
+        </label>
+        <p class="help">{t('settingsContextMenuHelp')}</p>
+        <p class="help">{t('settingsShortcutsHelp')}</p>
+        <button onClick={() => void browser.tabs.create({ url: 'chrome://extensions/shortcuts' })}>
+          {t('settingsShortcutsOpen')}
+        </button>
+      </div>
 
       <div>
         <h3>{t('settingsData')}</h3>

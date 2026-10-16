@@ -235,3 +235,9 @@ textarea { width: 100%; resize: vertical; }
 .tpl-body { flex-basis: 100%; }
 .tpl-editor { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-width: 760px; }
 .tpl-editor textarea, .tpl-editor input { width: 100%; }
+
+/* ---- カード表示の列（管理タブ） ---- */
+.rows.grid { display: grid; gap: 10px; }
+.rows.grid .row { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.columns { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; }
+.columns button { min-width: 28px; padding: 2px 6px; }

@@ -703,5 +703,38 @@
   },
   "fragLabel_translation": {
     "message": "日本語訳"
+  },
+  "columnsLabel": {
+    "message": "列"
+  },
+  "columnsAuto": {
+    "message": "自動"
+  },
+  "columnsN": {
+    "message": "{0}列"
+  },
+  "cmdSavePage": {
+    "message": "このページをスクラップ"
+  },
+  "cmdOpenManager": {
+    "message": "ScrapAIの管理画面を開く"
+  },
+  "ctxMenuSave": {
+    "message": "ScrapAIに保存"
+  },
+  "settingsShortcuts": {
+    "message": "ショートカットと右クリック"
+  },
+  "settingsContextMenu": {
+    "message": "右クリックメニューに「ScrapAIに保存」を出す"
+  },
+  "settingsContextMenuHelp": {
+    "message": "オンにすると、ブラウザの確認が出て「右クリックメニュー」の権限を許可します。選択範囲があれば断片として追加します。既定はオフです。"
+  },
+  "settingsShortcutsHelp": {
+    "message": "キーボードショートカットは、割り当てると使えます（既定は未割り当て）。Chromeのショートカット設定で「このページをスクラップ」「管理画面を開く」にキーを割り当ててください。保存したときはアイコンに✓が出ます。"
+  },
+  "settingsShortcutsOpen": {
+    "message": "ショートカット設定を開く"
   }
 }
