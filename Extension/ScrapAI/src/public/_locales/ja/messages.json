@@ -625,5 +625,65 @@
   },
   "confirmDeleteTemplate": {
     "message": "テンプレート「{0}」を削除しますか？"
+  },
+  "exportTitle": {
+    "message": "エクスポート"
+  },
+  "exportHelp": {
+    "message": "全データを1つのJSONファイルに書き出します。スクラップと断片は常に含まれます。"
+  },
+  "exportOrganize": {
+    "message": "星・ピン・カテゴリを含める"
+  },
+  "exportAnswers": {
+    "message": "AIの回答を含める"
+  },
+  "exportSites": {
+    "message": "サイト設定を含める"
+  },
+  "exportTemplates": {
+    "message": "自作のAIテンプレートを含める"
+  },
+  "exportSettings": {
+    "message": "表示設定を含める"
+  },
+  "exportButton": {
+    "message": "エクスポート"
+  },
+  "exportDone": {
+    "message": "{0}件を書き出しました。"
+  },
+  "importTitle": {
+    "message": "インポート"
+  },
+  "importDuplicate": {
+    "message": "同じURLのスクラップがあるとき"
+  },
+  "dupSkip": {
+    "message": "スキップ（既定）"
+  },
+  "dupOverwrite": {
+    "message": "上書き"
+  },
+  "dupAdd": {
+    "message": "別の項目として追加"
+  },
+  "importFile": {
+    "message": "JSONファイルを選ぶ（選ぶとすぐ取り込みます）"
+  },
+  "importDone": {
+    "message": "{0}件を取り込みました（スキップ{1}件、断片{2}件）。"
+  },
+  "importError_invalidJson": {
+    "message": "JSONとして読み込めませんでした。何も変更していません。"
+  },
+  "importError_invalidFormat": {
+    "message": "ScrapAIのエクスポートファイルではありません。何も変更していません。"
+  },
+  "importError_unsupportedVersion": {
+    "message": "新しい形式のファイルです。拡張機能を更新してください。何も変更していません。"
+  },
+  "importError_invalidData": {
+    "message": "ファイルの内容が不正です。何も変更していません。"
   }
 }

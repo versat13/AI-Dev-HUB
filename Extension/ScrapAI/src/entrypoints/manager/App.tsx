@@ -15,6 +15,7 @@ import { DEFAULT_PARAMS, type ListParams } from '@/lib/query';
 import { setSettings } from '@/lib/settings';
 import type { Category, Settings } from '@/lib/types';
 import { applyLocale } from '@/ui/boot';
+import { DataSettings } from '@/ui/DataSettings';
 import { DetailView } from '@/ui/DetailView';
 import { FilterPanel, SearchBox } from '@/ui/Filters';
 import { formatBytes } from '@/ui/format';
@@ -421,6 +422,7 @@ function SettingsPane({
         <h3>{t('settingsData')}</h3>
         <p>{t('localOnlyLong')}</p>
         <p class="muted">{t('storageUsage', usage)}</p>
+        <DataSettings settings={settings} onApplySettings={onChange} />
       </div>
     </section>
   );

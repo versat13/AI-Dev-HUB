@@ -1,6 +1,6 @@
 {
   "name": "scrapai",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "postinstall": "wxt prepare",
-    "test:e2e": "wxt build && node e2e/ui.mjs && node e2e/profiles.mjs && node e2e/ai.mjs"
+    "test:e2e": "wxt build && node e2e/ui.mjs && node e2e/profiles.mjs && node e2e/ai.mjs && node e2e/data.mjs"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

@@ -625,5 +625,65 @@
   },
   "confirmDeleteTemplate": {
     "message": "Delete template \"{0}\"?"
+  },
+  "exportTitle": {
+    "message": "Export"
+  },
+  "exportHelp": {
+    "message": "Writes all data to one JSON file. Scraps and fragments are always included."
+  },
+  "exportOrganize": {
+    "message": "Include stars, pins and categories"
+  },
+  "exportAnswers": {
+    "message": "Include AI answers"
+  },
+  "exportSites": {
+    "message": "Include site settings"
+  },
+  "exportTemplates": {
+    "message": "Include custom AI templates"
+  },
+  "exportSettings": {
+    "message": "Include display settings"
+  },
+  "exportButton": {
+    "message": "Export"
+  },
+  "exportDone": {
+    "message": "Exported {0} items."
+  },
+  "importTitle": {
+    "message": "Import"
+  },
+  "importDuplicate": {
+    "message": "When a scrap with the same URL exists"
+  },
+  "dupSkip": {
+    "message": "Skip (default)"
+  },
+  "dupOverwrite": {
+    "message": "Overwrite"
+  },
+  "dupAdd": {
+    "message": "Add as a separate item"
+  },
+  "importFile": {
+    "message": "Choose a JSON file (imports immediately)"
+  },
+  "importDone": {
+    "message": "Imported {0} items ({1} skipped, {2} fragments)."
+  },
+  "importError_invalidJson": {
+    "message": "Could not read the file as JSON. Nothing was changed."
+  },
+  "importError_invalidFormat": {
+    "message": "Not a ScrapAI export file. Nothing was changed."
+  },
+  "importError_unsupportedVersion": {
+    "message": "This file is from a newer version. Please update the extension. Nothing was changed."
+  },
+  "importError_invalidData": {
+    "message": "The file contents are invalid. Nothing was changed."
   }
 }
