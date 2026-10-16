@@ -14,7 +14,9 @@ export type SectionKey =
   | 'prerequisites'
   | 'firstStep'
   | 'nextPrompt'
-  | 'sources';
+  | 'sources'
+  | 'jaTitle'
+  | 'translation';
 
 interface SectionDef {
   key: SectionKey;
@@ -72,9 +74,23 @@ export const SECTIONS: SectionDef[] = [
     hint: { ja: '参照したURL（資料のURLを含む）', en: 'URLs referred to (including the material’s URL)' },
     aliases: ['出典', '参考URL', '参考', '参考文献', 'sources', 'references', 'links'],
   },
+  {
+    key: 'jaTitle',
+    title: { ja: '日本語タイトル', en: 'Japanese title' },
+    hint: { ja: '資料の見出しとして使う、1行の日本語タイトル', en: 'a one-line Japanese title to use as the heading' },
+    aliases: ['日本語の見出し', '日本語見出し', '邦題', 'japanese title'],
+  },
+  {
+    key: 'translation',
+    title: { ja: '日本語訳', en: 'Japanese translation' },
+    hint: { ja: '本文全体の日本語訳（意訳でよい。要約しない）', en: 'Japanese translation of the whole body (free translation is fine; do not summarize)' },
+    aliases: ['本文の日本語訳', '翻訳', '和訳', '日本語訳本文', 'japanese translation', 'translation'],
+  },
 ];
 
-export const ALL_SECTION_KEYS: SectionKey[] = SECTIONS.map((s) => s.key);
+// 翻訳専用の節。「要約と検証」などの既定の見出しには含めない
+export const TRANSLATION_KEYS: SectionKey[] = ['jaTitle', 'translation'];
+export const ALL_SECTION_KEYS: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => !TRANSLATION_KEYS.includes(k));
 
 export function sectionTitle(key: string, lang: Lang): string {
   return SECTIONS.find((s) => s.key === key)?.title[lang] ?? key;
@@ -136,6 +152,33 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
 - Make the first step a concrete action that takes 30 minutes or less.
 - Do not fill gaps with guesses; put them under the unverified section.
 - Answer in English, using the headings below unchanged and in this order.
+
+{{format}}
+
+{{source}}`,
+    },
+  },
+  {
+    id: 'builtin-translate',
+    name: { ja: '日本語に訳す', en: 'Translate to Japanese' },
+    sections: TRANSLATION_KEYS,
+    body: {
+      ja: `次の資料の本文を日本語に訳してください。
+
+- 意訳でかまいませんが、要約や省略はせず、本文全体を訳してください。
+- 固有名詞・コード・URLは原文のままにしてください。
+- 日本語タイトルは、資料の内容が一目で分かる1行にしてください。
+- 回答は、下の見出しを変えずに、この順番で書いてください。
+
+{{format}}
+
+{{source}}`,
+      en: `Translate the body of the following material into Japanese.
+
+- A free translation is fine, but translate the whole body without summarizing or omitting.
+- Keep proper nouns, code and URLs as in the original.
+- Make the Japanese title a single line that conveys the content at a glance.
+- Use the headings below unchanged and in this order.
 
 {{format}}
 

@@ -685,5 +685,23 @@
   },
   "importError_invalidData": {
     "message": "The file contents are invalid. Nothing was changed."
+  },
+  "translationApply": {
+    "message": "Apply Japanese translation"
+  },
+  "translationApplied": {
+    "message": "Title set to Japanese and the translation added as a fragment."
+  },
+  "translationAlready": {
+    "message": "Already applied."
+  },
+  "translationRevert": {
+    "message": "Restore original title"
+  },
+  "originalTitle": {
+    "message": "Original title: {0}"
+  },
+  "fragLabel_translation": {
+    "message": "Japanese translation"
   }
 }

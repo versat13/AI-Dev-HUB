@@ -231,6 +231,24 @@ await mg.waitForTimeout(500);
 db = await dump();
 check('回答の削除: 件数1に戻る', db.scraps.find((s) => s.id === scrapId)?.aiAnswerCount === 1 && db.aiAnswers.length === 1);
 
+// 日本語訳の適用
+await mg.locator('.m-detail .ai-ask select').selectOption({ label: '日本語に訳す' });
+await mg.locator('.m-detail').getByRole('button', { name: 'プロンプトをコピー' }).click();
+clip = await mg.evaluate(() => navigator.clipboard.readText());
+check('日本語訳: プロンプトの見出し', clip.includes('## 日本語タイトル') && clip.includes('## 日本語訳') && !clip.includes('## 要点'));
+await mg.locator('.m-detail .ai-paste textarea').fill('## 日本語タイトル\n**テスト記事の日本語題**\n\n## 日本語訳\nこれは訳文の本文です。');
+await mg.locator('.m-detail').getByRole('button', { name: '回答を保存' }).click();
+await mg.waitForTimeout(500);
+await mg.locator('.m-detail .answer').first().getByRole('button', { name: '日本語訳を適用' }).click();
+await mg.waitForTimeout(600);
+check('日本語訳: タイトルが日本語に', (await mg.locator('.m-detail .title-input').inputValue()) === 'テスト記事の日本語題');
+check('日本語訳: 元のタイトルを表示', (await mg.locator('.m-detail .original-title').innerText()).includes('テスト記事'));
+db = await dump();
+check('日本語訳: 訳文が断片に追加', db.fragments.some((f) => f.scrapId === scrapId && f.source === 'translation' && f.text === 'これは訳文の本文です。'));
+await mg.locator('.m-detail .answer').first().getByRole('button', { name: 'タイトルを元に戻す' }).click();
+await mg.waitForTimeout(600);
+check('日本語訳: 元に戻せる', (await mg.locator('.m-detail .title-input').inputValue()) === 'テスト記事');
+
 // サイドパネルにもAI欄
 const sp = await ctx.newPage();
 await sp.setViewportSize({ width: 400, height: 900 });

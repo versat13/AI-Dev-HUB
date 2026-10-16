@@ -7,7 +7,15 @@ import {
   sectionTitle,
   type AiServiceId,
 } from '@/lib/ai';
-import { addAiAnswer, deleteAiAnswer, listAiAnswers, listCustomTemplates } from '@/lib/ai-db';
+import {
+  addAiAnswer,
+  applyTranslation,
+  deleteAiAnswer,
+  listAiAnswers,
+  listCustomTemplates,
+  revertTitle,
+  translationParts,
+} from '@/lib/ai-db';
 import { getLocale, t } from '@/lib/i18n';
 import { getSettings, setSettings } from '@/lib/settings';
 import type { AiAnswer, Fragment, Scrap } from '@/lib/types';
@@ -17,13 +25,16 @@ import { useLive } from './hooks';
 
 const SERVICE_NAMES: Record<string, string> = Object.fromEntries(AI_SERVICES.map((s) => [s.id, s.name]));
 
-function AnswerCard({ a }: { a: AiAnswer }) {
+function AnswerCard({ a, scrap }: { a: AiAnswer; scrap: Scrap }) {
   const [showRaw, setShowRaw] = useState(a.parseStatus === 'failed');
   const [note, setNote] = useState('');
   const lang = getLocale();
   const next = a.sections.find((s) => s.key === 'nextPrompt')?.body;
   const status =
     a.parseStatus === 'ok' ? t('aiParsedOk') : a.parseStatus === 'partial' ? t('aiParsedPartial') : t('aiParsedFailed');
+
+  const tr = translationParts(a);
+  const canApply = !!(tr.title || tr.body);
 
   const copy = async (text: string) => setNote((await copyText(text)) ? t('copied') : t('copyFailed'));
 
@@ -56,6 +67,19 @@ function AnswerCard({ a }: { a: AiAnswer }) {
         </>
       )}
       <div class="answer-actions">
+        {canApply && (
+          <button
+            onClick={async () => {
+              const r = await applyTranslation(scrap.id, tr);
+              setNote(r.titleChanged || r.fragmentAdded ? t('translationApplied') : t('translationAlready'));
+            }}
+          >
+            {t('translationApply')}
+          </button>
+        )}
+        {canApply && scrap.originalTitle && (
+          <button onClick={() => revertTitle(scrap.id)}>{t('translationRevert')}</button>
+        )}
         {next && <button onClick={() => copy(next)}>{t('aiCopyNextPrompt')}</button>}
         <button onClick={() => copy(a.raw)}>{t('aiCopyRaw')}</button>
         <button
@@ -204,7 +228,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
           <h4>{t('aiAnswers', answers.length)}</h4>
           <ul class="answers">
             {answers.map((a) => (
-              <AnswerCard key={a.id} a={a} />
+              <AnswerCard key={a.id} a={a} scrap={scrap} />
             ))}
           </ul>
         </>

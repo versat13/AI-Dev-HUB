@@ -36,11 +36,18 @@ export function DetailView(props: {
   const pendingMemo = useRef<string | null>(null);
 
   // 項目を切り替えたときだけ入力欄を初期化する（編集中に他タブの更新で上書きしない）
+  const lastTitle = useRef('');
   useEffect(() => {
     if (scrap && loadedFor.current !== scrap.id) {
       loadedFor.current = scrap.id;
+      lastTitle.current = scrap.title;
       setTitle(scrap.title);
       setMemo(scrap.memo);
+    } else if (scrap && scrap.title !== lastTitle.current) {
+      // タイトルが外部（日本語訳の適用など）で変わったとき、編集中でなければ反映する
+      const prev = lastTitle.current;
+      lastTitle.current = scrap.title;
+      setTitle((cur) => (cur === prev ? scrap.title : cur));
     }
   }, [scrap]);
 
@@ -123,6 +130,9 @@ export function DetailView(props: {
           if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
         }}
       />
+      {scrap.originalTitle && (
+        <p class="muted original-title">{t('originalTitle', scrap.originalTitle)}</p>
+      )}
       <p class="detail-meta">
         <a href={scrap.url} target="_blank" rel="noopener noreferrer">{t('openPage')} ↗</a>
         <span class="domain">{scrap.domain}</span>

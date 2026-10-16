@@ -49,7 +49,7 @@ function inView(s: Scrap, view: ViewMode): boolean {
 function matchesQuery(s: Scrap, q: string, fragText?: Map<string, string>): boolean {
   const tokens = q.toLowerCase().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return true;
-  const hay = [s.title, s.url, s.domain, s.memo, s.excerpt, fragText?.get(s.id) ?? '']
+  const hay = [s.title, s.originalTitle ?? '', s.url, s.domain, s.memo, s.excerpt, fragText?.get(s.id) ?? '']
     .join('\n')
     .toLowerCase();
   return tokens.every((t) => hay.includes(t));

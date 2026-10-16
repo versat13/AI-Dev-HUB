@@ -1,6 +1,6 @@
 import { parseAnswer, type SectionKey } from './ai';
 import { db } from './db';
-import type { AiAnswer, PromptTemplate } from './types';
+import type { AiAnswer, Fragment, PromptTemplate } from './types';
 
 // AI回答とユーザー作成テンプレートの保存。原資料（scraps / fragments）は書き換えない。
 
@@ -83,4 +83,80 @@ export async function newTemplate(name: string, body: string): Promise<PromptTem
 
 export async function deleteTemplate(id: string): Promise<void> {
   await db.promptTemplates.delete(id);
+}
+
+// ---- 日本語訳の適用 ----
+
+/** 見出し行の装飾（#、**、「」、先頭の記号）を外して1行のタイトルにする */
+export function cleanTitle(body: string): string {
+  const line = body.split('\n').map((l) => l.trim()).find(Boolean) ?? '';
+  return line
+    .replace(/^#{1,6}\s+/, '')
+    .replace(/^[-*・]\s+/, '')
+    .replace(/^\*\*(.+)\*\*$/, '$1')
+    .replace(/^[「『"“](.+)[」』"”]$/, '$1')
+    .trim()
+    .slice(0, 200);
+}
+
+export interface TranslationParts {
+  title: string; // 空なら適用しない
+  body: string; // 空なら適用しない
+}
+
+export function translationParts(a: Pick<AiAnswer, 'sections'>): TranslationParts {
+  return {
+    title: cleanTitle(a.sections.find((s) => s.key === 'jaTitle')?.body ?? ''),
+    body: (a.sections.find((s) => s.key === 'translation')?.body ?? '').trim(),
+  };
+}
+
+/**
+ * 日本語訳を適用する: タイトルを日本語にし（元のタイトルは originalTitle に残す）、
+ * 訳文を断片として追加する。元の本文の断片は変更しない。同じ訳文は重複して追加しない。
+ */
+export async function applyTranslation(
+  scrapId: string,
+  parts: TranslationParts,
+  now = Date.now(),
+): Promise<{ titleChanged: boolean; fragmentAdded: boolean }> {
+  let titleChanged = false;
+  let fragmentAdded = false;
+  await db.transaction('rw', db.scraps, db.fragments, async () => {
+    const scrap = await db.scraps.get(scrapId);
+    if (!scrap) return;
+    const patch: Partial<typeof scrap> = { updatedAt: now };
+    if (parts.title && parts.title !== scrap.title) {
+      patch.originalTitle = scrap.originalTitle ?? scrap.title;
+      patch.title = parts.title;
+      titleChanged = true;
+    }
+    if (parts.body) {
+      const frags = await db.fragments.where('scrapId').equals(scrapId).toArray();
+      if (!frags.some((f) => f.source === 'translation' && f.text === parts.body)) {
+        const frag: Fragment = {
+          id: crypto.randomUUID(),
+          scrapId,
+          order: frags.reduce((m, f) => Math.max(m, f.order), -1) + 1,
+          source: 'translation',
+          fieldLabel: 'translation',
+          role: 'body',
+          text: parts.body,
+          truncated: false,
+          createdAt: now,
+        };
+        await db.fragments.add(frag);
+        fragmentAdded = true;
+      }
+    }
+    await db.scraps.update(scrapId, patch);
+  });
+  return { titleChanged, fragmentAdded };
+}
+
+/** タイトルを適用前の元のタイトルに戻す（追加した訳文の断片は残す） */
+export async function revertTitle(scrapId: string): Promise<void> {
+  const scrap = await db.scraps.get(scrapId);
+  if (!scrap?.originalTitle) return;
+  await db.scraps.update(scrapId, { title: scrap.originalTitle, originalTitle: undefined, updatedAt: Date.now() });
 }

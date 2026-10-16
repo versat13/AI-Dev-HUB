@@ -7,6 +7,7 @@ export interface Scrap {
   url: string; // 保存時の元URL（書き換えない）
   normalizedUrl: string; // 重複検出キー
   title: string;
+  originalTitle?: string; // 日本語訳を適用する前のタイトル（元に戻す用）
   siteName: string;
   domain: string;
   ogImageUrl?: string;
@@ -24,7 +25,7 @@ export interface Scrap {
   updatedAt: number;
 }
 
-export type FragmentSource = 'rule' | 'selection' | 'picked' | 'readability' | 'meta';
+export type FragmentSource = 'rule' | 'selection' | 'picked' | 'readability' | 'meta' | 'translation';
 export type FragmentRole = 'title' | 'author' | 'date' | 'body' | 'custom';
 
 export interface Fragment {
