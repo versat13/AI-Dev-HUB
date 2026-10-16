@@ -1,0 +1,344 @@
+// ScrapAI 通し確認（e2e）。ビルド済み拡張（dist/chrome-mv3）を実Chromiumに読み込んで操作する。
+// 実行: npm run test:e2e（先に wxt build される）。初回のみ: npx playwright install chromium
+// テスト用の複製 e2e/.ext には localhost 用の host_permissions を足す（本番のビルドには入れない）。
+import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import { chromium } from 'playwright';
+
+const HERE = path.dirname(new URL(import.meta.url).pathname);
+const EXT = path.join(HERE, '.ext');
+const OUT = path.join(HERE, '.out'); // スクリーンショット
+const PROFILE = path.join(HERE, '.profile-' + path.basename(new URL(import.meta.url).pathname, '.mjs'));
+fs.rmSync(EXT, { recursive: true, force: true });
+fs.rmSync(PROFILE, { recursive: true, force: true });
+fs.mkdirSync(OUT, { recursive: true });
+fs.cpSync(path.join(HERE, '../dist/chrome-mv3'), EXT, { recursive: true });
+{
+  const f = path.join(EXT, 'manifest.json');
+  const m = JSON.parse(fs.readFileSync(f, 'utf8'));
+  m.host_permissions = ['http://localhost/*', 'http://127.0.0.1/*'];
+  fs.writeFileSync(f, JSON.stringify(m));
+}
+
+const para = 'これは本文の段落です。拡張機能の動作確認に使う十分な長さの文章を入れておきます。'.repeat(12);
+const pages = {
+  '/article': `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>テスト記事</title>
+    <meta property="og:site_name" content="TestSite"><meta property="og:description" content="OGの概要文です">
+    </head><body><nav>メニュー</nav><article><h1>見出し</h1><p>${para}</p><p>${para}</p><p>${para}</p></article></body></html>`,
+  '/other': `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>別の記事</title>
+    <meta property="og:description" content="別記事の概要"></head><body><article><h1>別</h1><p>${para}</p><p>${para}</p><p>${para}</p></article></body></html>`,
+  '/thread': `<!doctype html><html><head><meta charset="utf-8"><title>AIスレ</title></head><body>
+    <div id="res1"><p>レス1: プロンプトのコツ</p></div><div id="res2"><p>レス2: ローカルLLMの設定</p></div></body></html>`,
+};
+
+const server = http.createServer((req, res) => {
+  const url = new URL(req.url, 'http://localhost');
+  const body = pages[url.pathname];
+  if (!body) { res.writeHead(404); res.end('nf'); return; }
+  res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+  res.end(body);
+});
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
+const port = server.address().port;
+const base = `http://localhost:${port}`;
+
+const results = [];
+const check = (name, ok, detail = '') => {
+  results.push({ name, ok });
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  — ' + detail : ''}`);
+};
+
+const ctx = await chromium.launchPersistentContext(PROFILE, {
+  channel: 'chromium',
+  headless: true,
+  args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
+});
+
+let [sw] = ctx.serviceWorkers();
+if (!sw) sw = await ctx.waitForEvent('serviceworker', { timeout: 15000 });
+const extId = new URL(sw.url()).host;
+console.log('extension id:', extId);
+
+// 拡張ページ（IndexedDB と chrome.* にアクセスする足場）
+const ext = await ctx.newPage();
+await ext.goto(`chrome-extension://${extId}/popup.html`);
+await ext.waitForTimeout(500);
+
+const tabIdOf = (pageUrl) =>
+  ext.evaluate(async (u) => (await chrome.tabs.query({ url: u }))[0]?.id ?? null, pageUrl);
+const save = (tabId, mode) =>
+  ext.evaluate(([id, m]) => chrome.runtime.sendMessage({ type: 'save', tabId: id, mode: m }), [tabId, mode]);
+const dump = () =>
+  ext.evaluate(
+    () =>
+      new Promise((resolve, reject) => {
+        const open = indexedDB.open('scrapai');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const db = open.result;
+          const out = {};
+          const names = ['scraps', 'fragments', 'meta'];
+          const tx = db.transaction(names, 'readonly');
+          let left = names.length;
+          for (const n of names) {
+            const req = tx.objectStore(n).getAll();
+            req.onsuccess = () => { out[n] = req.result; if (--left === 0) resolve(out); };
+          }
+        };
+      }),
+  );
+
+// 1) 記事ページを保存
+const article = await ctx.newPage();
+await article.goto(`${base}/article?utm_source=tw#frag`);
+const aTab = await tabIdOf(`${base}/article*`);
+check('記事タブのIDを取得できる', aTab != null);
+
+let out = await save(aTab, 'auto');
+check('記事: 新規保存 (created)', out?.kind === 'created', JSON.stringify(out));
+check('記事: 抽出成功 (ok)', out?.extractStatus === 'ok');
+let db = await dump();
+let scrap = db.scraps[0];
+check('記事: URLは元のまま保存', scrap?.url === `${base}/article?utm_source=tw#frag`, scrap?.url);
+check('記事: 正規化URLは追跡パラメータ・#を除去', scrap?.normalizedUrl === `https://localhost:${port}/article`, scrap?.normalizedUrl);
+check('記事: タイトル保存', scrap?.title === 'テスト記事');
+check('記事: サイト名はOGP', scrap?.siteName === 'TestSite', scrap?.siteName);
+const sources = db.fragments.map((f) => f.source).sort().join(',');
+check('記事: 断片=本文+概要', sources === 'meta,readability', sources);
+check('記事: 本文は上限3000字以内', db.fragments.find((f) => f.source === 'readability')?.text.length <= 3000);
+check('記事: 概要(excerpt)がOG概要', scrap?.excerpt === 'OGの概要文です', scrap?.excerpt);
+check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 1));
+
+// 2) 同じURLを再度（選択なし）
+out = await save(aTab, 'auto');
+check('同一URL(選択なし): already-saved', out?.kind === 'already-saved', out?.kind);
+db = await dump();
+check('同一URL(選択なし): 項目数は1のまま', db.scraps.length === 1);
+
+// 3) スレッドページで範囲選択 → 複数の断片
+const thread = await ctx.newPage();
+await thread.goto(`${base}/thread`);
+const tTab = await tabIdOf(`${base}/thread*`);
+await thread.evaluate(() => { const s = getSelection(); s.selectAllChildren(document.getElementById('res1')); });
+out = await save(tTab, 'auto');
+check('スレッド: レス1を選択して新規保存', out?.kind === 'created', JSON.stringify(out));
+await thread.evaluate(() => { const s = getSelection(); s.selectAllChildren(document.getElementById('res2')); });
+out = await save(tTab, 'auto');
+check('スレッド: レス2を選択すると既存項目に断片追加', out?.kind === 'fragment-added' && out.fragmentCount === 3, JSON.stringify(out));
+out = await save(tTab, 'auto');
+check('スレッド: 同じレス2は重複しない', out?.kind === 'duplicate-fragment', out?.kind);
+db = await dump();
+const threadScrap = db.scraps.find((s) => s.title === 'AIスレ');
+const threadFrags = db.fragments.filter((f) => f.scrapId === threadScrap?.id);
+check('スレッド: 項目は1つ・断片は3つ(選択2+本文1)', db.scraps.length === 2 && threadFrags.length === 3, `scraps=${db.scraps.length} frags=${threadFrags.length}`);
+check('スレッド: レス1・レス2が選択断片として保存', threadFrags.filter((f) => f.source === 'selection').map((f) => f.text).sort().join('|') === 'レス1: プロンプトのコツ|レス2: ローカルLLMの設定', threadFrags.map((f) => f.source + ':' + f.text.slice(0, 8)).join(' '));
+
+// 4) URLが見えないタブ（activeTab未付与の拡張ページ）: 例外にせず、何も書かずに failed を返す
+const before = (await dump()).scraps.length;
+const ownTab = await ext.evaluate(async () => (await chrome.tabs.getCurrent())?.id);
+out = await save(ownTab, 'auto');
+check('URL不可タブ: failed を返し、DBは変更されない', out?.kind === 'failed' && (await dump()).scraps.length === before, JSON.stringify(out));
+
+// ===== P2 UI =====
+await ext.evaluate(() => chrome.storage.local.set({ settings: { locale: 'ja', articleMaxChars: 3000 } }));
+const other = await ctx.newPage();
+await other.goto(`${base}/other`);
+const oTab = await tabIdOf(`${base}/other*`);
+const errs = [];
+async function openUi(file, w = 380, h = 600, tabId) {
+  const ui = await ctx.newPage();
+  ui.on('pageerror', (e) => errs.push(file + ': ' + e.message));
+  ui.on('dialog', (d) => d.accept());
+  if (tabId) await ui.addInitScript((id) => { chrome.tabs.query = async () => [{ id }]; }, tabId);
+  await ui.setViewportSize({ width: w, height: h });
+  await ui.goto(`chrome-extension://${extId}/${file}`);
+  await ui.waitForTimeout(800);
+  return ui;
+}
+
+// ポップアップ: 開くだけでは保存されず、一覧が見える
+const n0 = (await dump()).scraps.length;
+let pop = await openUi('popup.html', 380, 600, oTab);
+check('ポップアップ: 開いただけでは保存されない', (await dump()).scraps.length === n0);
+check('ポップアップ: 一覧に既存項目が出る', (await pop.locator('main').innerText()).includes('テスト記事'));
+check('ポップアップ: 保存ボタンがある', await pop.getByRole('button', { name: 'このページをスクラップ' }).isVisible());
+await pop.screenshot({ path: path.join(OUT, 'p2-popup-list.png') });
+await pop.getByRole('button', { name: 'このページをスクラップ' }).click();
+await pop.waitForTimeout(1500);
+let txt = await pop.locator('main').innerText();
+check('ポップアップ: ボタンで保存→成功表示', /保存しました/.test(txt), txt.replace(/\n+/g, ' / ').slice(0, 120));
+check('ポップアップ: 保存後DB+1', (await dump()).scraps.length === n0 + 1);
+await pop.screenshot({ path: path.join(OUT, 'p2-popup-saved.png') });
+await pop.getByRole('button', { name: /取り消し/ }).click();
+await pop.waitForTimeout(500);
+check('ポップアップ: 取り消しで削除', (await dump()).scraps.length === n0);
+await pop.getByRole('button', { name: 'このページをスクラップ' }).click();
+await pop.waitForTimeout(1200);
+check('ポップアップ: 再保存OK', (await dump()).scraps.length === n0 + 1);
+await pop.close();
+
+// 管理画面
+const mg = await openUi('manager.html', 1280, 800);
+await mg.screenshot({ path: path.join(OUT, 'p2-manager-list.png') });
+const rows = () => mg.locator('.scrap-row, li.row, [data-scrap-id]');
+let body = await mg.locator('body').innerText();
+check('管理: 一覧に3件以上', ['テスト記事', 'AIスレ', '別の記事'].every((x) => body.includes(x)));
+
+// 検索
+await mg.getByPlaceholder('タイトル・URL・メモ・本文を検索').fill('ローカルLLM');
+await mg.waitForTimeout(500);
+body = await mg.locator('.m-main').innerText();
+check('管理: 本文検索でAIスレのみ', body.includes('AIスレ') && !body.includes('テスト記事'));
+await mg.getByPlaceholder('タイトル・URL・メモ・本文を検索').fill('');
+await mg.waitForTimeout(400);
+
+// 詳細を開く→星・ピン・メモ・カテゴリ
+await mg.locator('.m-main').getByText('テスト記事').first().click();
+await mg.waitForTimeout(600);
+const det = mg.locator('.m-detail');
+check('管理: 詳細ペインが開く', await det.isVisible());
+await det.getByRole('button', { name: '星5' }).click();
+await det.getByRole('button', { name: /ピン留め/ }).click();
+await det.locator('textarea').fill('管理画面メモ');
+await det.locator('textarea').blur();
+await det.getByLabel('新しいカテゴリ').fill('AI活用');
+await det.getByLabel('新しいカテゴリ').press('Enter');
+await mg.waitForTimeout(700);
+db = await dump();
+let s1 = db.scraps.find((x) => x.title === 'テスト記事');
+check('管理: 星5・ピン・メモ保存', s1?.stars === 5 && s1?.pinned === true && s1?.memo === '管理画面メモ', JSON.stringify({ s: s1?.stars, p: s1?.pinned, m: s1?.memo }));
+check('管理: カテゴリ作成・付与', s1?.categoryIds?.length === 1, JSON.stringify(s1?.categoryIds));
+await mg.screenshot({ path: path.join(OUT, 'p2-manager-detail.png') });
+
+// フィルタ
+const side = mg.locator('.m-side');
+await side.locator('.filters select').nth(3).selectOption('5');
+await mg.waitForTimeout(500);
+body = await mg.locator('.m-main').innerText();
+check('管理: 星5以上フィルタ', body.includes('テスト記事') && !body.includes('AIスレ'));
+await side.locator('.filters select').nth(3).selectOption('unrated');
+await mg.waitForTimeout(500);
+body = await mg.locator('.m-main').innerText();
+check('管理: 未評価フィルタ', !body.includes('テスト記事') && body.includes('AIスレ'));
+await side.getByRole('button', { name: '条件をリセット' }).click();
+await side.locator('.filters select').nth(4).selectOption({ label: 'AI活用' });
+await mg.waitForTimeout(500);
+body = await mg.locator('.m-main').innerText();
+check('管理: カテゴリフィルタ', body.includes('テスト記事') && !body.includes('AIスレ'));
+await side.getByRole('button', { name: '条件をリセット' }).click();
+await side.locator('.filters select').nth(2).selectOption('none');
+await mg.waitForTimeout(500);
+check('管理: AI要約なしフィルタ(全件該当)', (await mg.locator('.m-main').innerText()).includes('AIスレ'));
+await side.getByRole('button', { name: '条件をリセット' }).click();
+await side.locator('.filters select').nth(1).selectOption({ index: 1 });
+await mg.waitForTimeout(300);
+await side.getByRole('button', { name: '条件をリセット' }).click();
+
+// 断片: 切り出し・削除
+await mg.locator('.m-main').getByText('AIスレ').first().click();
+await mg.waitForTimeout(600);
+await mg.locator('.m-detail').getByRole('button', { name: '別の項目に切り出す' }).first().click();
+await mg.waitForTimeout(700);
+db = await dump();
+const threads = db.scraps.filter((x) => x.title === 'AIスレ');
+check('管理: 断片の切り出しで項目が増える', threads.length === 2, 'n=' + threads.length);
+const tf = db.fragments.filter((f) => f.scrapId === threadScrap.id);
+check('管理: 元項目の断片が1減る', tf.length === 2, 'n=' + tf.length);
+await mg.locator('.m-detail').getByRole('button', { name: '削除' }).first().click().catch(() => {});
+await mg.waitForTimeout(600);
+db = await dump();
+check('管理: 断片削除(切り出し先の断片が消える)', db.fragments.filter((f) => db.scraps.some((x) => x.id === f.scrapId && x.title === 'AIスレ')).length === 2);
+
+// 一括操作: 全選択→アーカイブ→アーカイブ表示→復元
+await mg.getByRole('button', { name: '表示中をすべて選択' }).click();
+await mg.waitForTimeout(300);
+check('管理: 一括選択バー', /件選択中/.test(await mg.locator('.bulkbar').innerText()));
+await mg.locator('.bulkbar').getByRole('button', { name: 'アーカイブ' }).click();
+await mg.waitForTimeout(700);
+db = await dump();
+check('管理: 一括アーカイブ', db.scraps.every((x) => x.archivedAt != null), JSON.stringify(db.scraps.map((x) => x.archivedAt)));
+check('管理: 通常表示は空', /まだ何も|条件に合う/.test(await mg.locator('.m-main').innerText()));
+await side.locator('.filters select').nth(0).selectOption('archived');
+await mg.waitForTimeout(500);
+check('管理: アーカイブ表示に出る', (await mg.locator('.m-main').innerText()).includes('テスト記事'));
+await mg.screenshot({ path: path.join(OUT, 'p2-manager-archive.png') });
+await mg.getByRole('button', { name: '表示中をすべて選択' }).click();
+await mg.locator('.bulkbar').getByRole('button', { name: '復元' }).click();
+await mg.waitForTimeout(700);
+db = await dump();
+check('管理: 一括復元', db.scraps.every((x) => x.archivedAt == null));
+await side.locator('.filters select').nth(0).selectOption('active');
+
+// 完全削除（アーカイブしてから）
+const cnt = db.scraps.length;
+await mg.locator('.m-main').getByText('別の記事').first().click();
+await mg.waitForTimeout(500);
+await mg.locator('.m-detail').getByRole('button', { name: 'アーカイブ' }).click();
+await mg.waitForTimeout(500);
+await side.locator('.filters select').nth(0).selectOption('archived');
+await mg.waitForTimeout(400);
+await mg.locator('.m-main').getByText('別の記事').first().click();
+await mg.waitForTimeout(500);
+await mg.locator('.m-detail').getByRole('button', { name: '完全に削除' }).click();
+await mg.waitForTimeout(700);
+db = await dump();
+check('管理: 完全削除', db.scraps.length === cnt - 1 && !db.scraps.some((x) => x.title === '別の記事'));
+await side.locator('.filters select').nth(0).selectOption('active');
+
+// カテゴリ管理
+await mg.locator('.m-nav').getByRole('button', { name: 'カテゴリ' }).click();
+await mg.getByLabel('新しいカテゴリ').fill('二つ目');
+await mg.getByRole('button', { name: '追加' }).click();
+await mg.waitForTimeout(500);
+body = await mg.locator('.m-main').innerText();
+check('カテゴリ管理: 追加・使用数表示', body.includes('二つ目') && body.includes('AI活用') && body.includes('1件'));
+await mg.getByRole('button', { name: '二つ目: 上へ' }).click();
+await mg.waitForTimeout(400);
+const first = await mg.locator('.cat-table tr').first().innerText();
+check('カテゴリ管理: 並べ替え', first.includes('二つ目'), first);
+await mg.getByRole('button', { name: '名前変更' }).first().click();
+await mg.getByLabel('名前変更').fill('改名済み');
+await mg.getByRole('button', { name: '保存' }).click();
+await mg.waitForTimeout(400);
+check('カテゴリ管理: 名前変更', (await mg.locator('.m-main').innerText()).includes('改名済み'));
+await mg.screenshot({ path: path.join(OUT, 'p2-manager-cats.png') });
+await mg.getByRole('button', { name: '削除' }).first().click();
+await mg.waitForTimeout(500);
+check('カテゴリ管理: 削除', !(await mg.locator('.m-main').innerText()).includes('改名済み'));
+
+// 設定
+await mg.locator('.m-nav').getByRole('button', { name: '設定', exact: true }).click();
+await mg.locator('input[type=number]').fill('500');
+await mg.locator('input[type=number]').blur();
+await mg.waitForTimeout(400);
+let st = await ext.evaluate(async () => (await chrome.storage.local.get('settings')).settings);
+check('設定: 文字数上限が保存', st?.articleMaxChars === 500, JSON.stringify(st));
+await mg.locator('select').first().selectOption('en');
+await mg.waitForTimeout(600);
+check('設定: 言語を英語に切替', /Settings|Display language/.test(await mg.locator('.m-main').innerText()), (await mg.locator('.m-main').innerText()).slice(0, 60));
+await mg.screenshot({ path: path.join(OUT, 'p2-manager-settings.png') });
+await mg.locator('select').first().selectOption('ja');
+await mg.waitForTimeout(400);
+
+// サイドパネル
+const sp = await openUi('sidepanel.html', 400, 700);
+body = await sp.locator('body').innerText();
+check('サイドパネル: 一覧表示・保存ボタンなし', body.includes('テスト記事') && !body.includes('このページをスクラップ'));
+await sp.screenshot({ path: path.join(OUT, 'p2-sidepanel.png') });
+await sp.getByText('テスト記事').first().click();
+await sp.waitForTimeout(500);
+check('サイドパネル: 項目クリックで詳細', await sp.getByLabel('メモ').isVisible());
+
+// ポップアップ→詳細（sidePanel.open が使えない環境ではフォールバックで管理タブ）
+const pop2 = await openUi('popup.html', 380, 600, oTab);
+check('ポップアップ: サイドパネル/管理画面ボタン', (await pop2.getByRole('button', { name: 'サイドパネル' }).count()) === 1 && (await pop2.getByRole('button', { name: '管理画面' }).count()) === 1);
+await pop2.screenshot({ path: path.join(OUT, 'p2-popup-ja.png') });
+
+check('JSエラーなし', errs.length === 0, errs.join(' | '));
+
+await ctx.close();
+server.close();
+const failed = results.filter((r) => !r.ok);
+console.log(`\n${results.length - failed.length}/${results.length} passed`);
+process.exit(failed.length ? 1 : 0);

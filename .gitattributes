@@ -1,0 +1,17 @@
+# 改行コードの自動変換（Windows と他の環境の混在による差分・破損を防ぐ）
+* text=auto
+*.cs text eol=crlf
+*.shader text eol=crlf
+*.md text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+# バイナリ
+*.png binary
+*.jpg binary
+*.zip binary
+*.unitypackage binary
+*.fbx binary
+*.blend binary
+*.wav binary
+*.mp3 binary

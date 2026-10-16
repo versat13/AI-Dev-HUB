@@ -8,7 +8,8 @@
     "build": "wxt build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "test:e2e": "wxt build && node e2e/ui.mjs && node e2e/profiles.mjs"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
@@ -21,6 +22,7 @@
     "@types/chrome": "*",
     "fake-indexeddb": "*",
     "jsdom": "*",
+    "playwright": "^1.56.1",
     "typescript": "*",
     "vitest": "*"
   }
