@@ -1,0 +1,9 @@
+Library/
+Temp/
+Logs/
+obj/
+.vs/
+*.blend1
+node_modules/
+__pycache__/
+.DS_Store
