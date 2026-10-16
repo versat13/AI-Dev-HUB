@@ -21,9 +21,18 @@ import { formatBytes } from '@/ui/format';
 import { useCategories, useListData, useLive } from '@/ui/hooks';
 import { ScrapList } from '@/ui/ListBrowser';
 import { SiteSettings } from '@/ui/SiteSettings';
+import { TemplateSettings } from '@/ui/TemplateSettings';
 
-type Section = 'library' | 'categories' | 'sites' | 'settings';
-const SECTIONS: Section[] = ['library', 'categories', 'sites', 'settings'];
+type Section = 'library' | 'categories' | 'sites' | 'templates' | 'settings';
+const SECTIONS: Section[] = ['library', 'categories', 'sites', 'templates', 'settings'];
+
+const NAV_LABEL: Record<Section, string> = {
+  library: 'navLibrary',
+  categories: 'navCategories',
+  sites: 'navSites',
+  templates: 'navTemplates',
+  settings: 'navSettings',
+};
 
 function sectionFromHash(): Section | null {
   const m = location.hash.match(/section=(\w+)/);
@@ -84,7 +93,7 @@ export function App({ initial }: { initial: Settings }) {
         <nav class="m-nav" aria-label="ScrapAI">
           {SECTIONS.map((s) => (
             <button key={s} aria-current={section === s ? 'page' : undefined} onClick={() => setSection(s)}>
-              {t(s === 'library' ? 'navLibrary' : s === 'categories' ? 'navCategories' : s === 'sites' ? 'navSites' : 'navSettings')}
+              {t(NAV_LABEL[s])}
             </button>
           ))}
         </nav>
@@ -123,6 +132,7 @@ export function App({ initial }: { initial: Settings }) {
         )}
         {section === 'categories' && <CategoryManager categories={categories} />}
         {section === 'sites' && <SiteSettings />}
+        {section === 'templates' && <TemplateSettings />}
         {section === 'settings' && <SettingsPane settings={settings} onChange={updateSettings} />}
       </main>
 

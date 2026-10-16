@@ -211,3 +211,27 @@ textarea { width: 100%; resize: vertical; }
 .pick-banner { margin-bottom: 12px; }
 .frag-extras { margin: 4px 0 0; font-size: 12px; }
 @media (max-width: 900px) { .sites-layout { grid-template-columns: 1fr; } .field-row { grid-template-columns: 1fr 1fr; } }
+
+/* ---- AI（P4） ---- */
+.ai-panel { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+.ai-panel h3, .ai-panel h4 { margin: 0; }
+.ai-ask, .ai-paste { display: flex; flex-direction: column; gap: 6px; }
+.ai-buttons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ai-paste textarea { width: 100%; resize: vertical; }
+.ai-frags { font-size: 12px; }
+.ai-frags label { display: flex; gap: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ai-preview pre { max-height: 240px; overflow: auto; }
+.answers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.answer { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--bg-soft); }
+.answer-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.answer-sections { margin: 6px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.answer-sections dt { font-weight: 600; font-size: 12px; color: var(--accent); }
+.answer-sections dd { margin: 0; }
+.answer-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.badge.parse-ok { color: var(--ok, #15803d); }
+.badge.parse-partial, .badge.parse-failed { color: var(--warn, #b45309); }
+.tpl-list { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tpl-list li { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+.tpl-body { flex-basis: 100%; }
+.tpl-editor { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-width: 760px; }
+.tpl-editor textarea, .tpl-editor input { width: 100%; }

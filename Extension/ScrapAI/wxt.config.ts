@@ -18,7 +18,7 @@ export default defineConfig({
     name: '__MSG_extName__',
     description: '__MSG_extDescription__',
     default_locale: 'en',
-    version: '1.0.3',
+    version: '1.0.4',
     // 仕様書2章の権限表に従う。host_permissions は宣言しない。
     permissions: ['activeTab', 'scripting', 'storage', 'unlimitedStorage', 'sidePanel'],
   },

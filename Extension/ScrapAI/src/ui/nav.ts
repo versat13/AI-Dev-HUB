@@ -13,7 +13,7 @@ export interface PendingPick {
   at: number;
 }
 
-export type ManagerSection = 'library' | 'categories' | 'sites' | 'settings';
+export type ManagerSection = 'library' | 'categories' | 'sites' | 'templates' | 'settings';
 
 function managerUrl(scrapId?: string, section?: ManagerSection): string {
   const base = browser.runtime.getURL(MANAGER_PATH as never);

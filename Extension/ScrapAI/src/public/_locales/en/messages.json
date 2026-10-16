@@ -505,5 +505,125 @@
   },
   "fragLabel_body": {
     "message": "Body"
+  },
+  "aiSection": {
+    "message": "AI"
+  },
+  "aiTemplate": {
+    "message": "Template"
+  },
+  "aiFragsUsed": {
+    "message": "Fragments sent to AI ({0}/{1})"
+  },
+  "aiCopyPrompt": {
+    "message": "Copy prompt"
+  },
+  "aiCopyAndOpenTitle": {
+    "message": "Copy the prompt and open {0}"
+  },
+  "aiCopiedAndOpen": {
+    "message": "Copied. Paste it into {0}."
+  },
+  "copied": {
+    "message": "Copied"
+  },
+  "copyFailed": {
+    "message": "Could not copy"
+  },
+  "aiPreview": {
+    "message": "Preview prompt ({0} chars)"
+  },
+  "aiPasteLabel": {
+    "message": "AI answer"
+  },
+  "aiPastePlaceholder": {
+    "message": "Paste the AI's answer here and press \"Save answer\". The original text is always kept, even if the headings differ."
+  },
+  "aiService": {
+    "message": "Answered by"
+  },
+  "aiServiceOther": {
+    "message": "Other"
+  },
+  "aiSaveAnswer": {
+    "message": "Save answer"
+  },
+  "aiPasteHint": {
+    "message": "Use the copy button under the answer to keep its headings intact"
+  },
+  "aiAnswerSaved": {
+    "message": "Answer saved"
+  },
+  "aiAnswers": {
+    "message": "AI answers ({0})"
+  },
+  "aiParsedOk": {
+    "message": "Structured"
+  },
+  "aiParsedPartial": {
+    "message": "Some headings only"
+  },
+  "aiParsedFailed": {
+    "message": "Original text only"
+  },
+  "aiShowRaw": {
+    "message": "Show original"
+  },
+  "aiHideRaw": {
+    "message": "Show by heading"
+  },
+  "aiRawOnlyNote": {
+    "message": "The headings could not be read, so the original text is kept as is."
+  },
+  "aiCopyNextPrompt": {
+    "message": "Copy next prompt"
+  },
+  "aiCopyRaw": {
+    "message": "Copy original"
+  },
+  "confirmDeleteAnswer": {
+    "message": "Delete this AI answer?"
+  },
+  "navTemplates": {
+    "message": "AI templates"
+  },
+  "templatesIntro": {
+    "message": "Templates for the prompt sent to the AI. {{source}} is replaced with the material (title, URL, note, fragments) and {{format}} with the required answer headings."
+  },
+  "templatesBuiltIn": {
+    "message": "Built-in"
+  },
+  "templatesCustom": {
+    "message": "Custom"
+  },
+  "templatesNone": {
+    "message": "No custom templates yet."
+  },
+  "templateView": {
+    "message": "View"
+  },
+  "templateDuplicate": {
+    "message": "Duplicate and edit"
+  },
+  "templateEdit": {
+    "message": "Edit"
+  },
+  "templateNew": {
+    "message": "New template"
+  },
+  "templateNewName": {
+    "message": "New template"
+  },
+  "templateCopyName": {
+    "message": "{0} (copy)"
+  },
+  "templateName": {
+    "message": "Name"
+  },
+  "templateBody": {
+    "message": "Body"
+  },
+  "confirmDeleteTemplate": {
+    "message": "Delete template \"{0}\"?"
   }
 }

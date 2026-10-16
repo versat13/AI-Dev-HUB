@@ -12,6 +12,7 @@ import {
   updateScrap,
 } from '@/lib/db';
 import { t } from '@/lib/i18n';
+import { AiPanel } from './AiPanel';
 import { fragLabel, formatDateTime } from './format';
 import { useCategories, useLive } from './hooks';
 
@@ -234,6 +235,8 @@ export function DetailView(props: {
           </li>
         ))}
       </ul>
+
+      <AiPanel scrap={scrap} frags={frags} />
 
       <div class="danger-zone">
         {!archived ? (

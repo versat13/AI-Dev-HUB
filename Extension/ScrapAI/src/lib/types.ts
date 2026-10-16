@@ -121,6 +121,7 @@ export interface Settings {
   articleMaxChars: number | null; // 汎用本文の文字数上限（null = 無制限）
   pinnedFirst: boolean; // ピン留めを一覧の先頭に表示する
   listStyle: 'compact' | 'card'; // 管理タブの一覧表示
+  aiTemplateId: string; // 最後に使ったAIテンプレート（P4）
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -128,6 +129,7 @@ export const DEFAULT_SETTINGS: Settings = {
   articleMaxChars: 3000,
   pinnedFirst: true,
   listStyle: 'compact',
+  aiTemplateId: 'builtin-verify',
 };
 
 // 保存処理の結果（背景ページ → ポップアップ）

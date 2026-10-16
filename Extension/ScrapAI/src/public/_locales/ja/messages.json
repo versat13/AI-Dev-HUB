@@ -505,5 +505,125 @@
   },
   "fragLabel_body": {
     "message": "本文"
+  },
+  "aiSection": {
+    "message": "AI"
+  },
+  "aiTemplate": {
+    "message": "テンプレート"
+  },
+  "aiFragsUsed": {
+    "message": "AIに渡す断片（{0}/{1}）"
+  },
+  "aiCopyPrompt": {
+    "message": "プロンプトをコピー"
+  },
+  "aiCopyAndOpenTitle": {
+    "message": "プロンプトをコピーして {0} を開く"
+  },
+  "aiCopiedAndOpen": {
+    "message": "コピーしました。{0} の入力欄に貼り付けてください。"
+  },
+  "copied": {
+    "message": "コピーしました"
+  },
+  "copyFailed": {
+    "message": "コピーできませんでした"
+  },
+  "aiPreview": {
+    "message": "プロンプトを確認（{0}字）"
+  },
+  "aiPasteLabel": {
+    "message": "AIの回答"
+  },
+  "aiPastePlaceholder": {
+    "message": "AIの回答をここに貼り付けて「回答を保存」。見出しの形式が違っても原文はそのまま保存されます。"
+  },
+  "aiService": {
+    "message": "回答したAI"
+  },
+  "aiServiceOther": {
+    "message": "その他"
+  },
+  "aiSaveAnswer": {
+    "message": "回答を保存"
+  },
+  "aiPasteHint": {
+    "message": "回答の右下などにあるコピーボタンでコピーすると見出しが崩れません"
+  },
+  "aiAnswerSaved": {
+    "message": "回答を保存しました"
+  },
+  "aiAnswers": {
+    "message": "AIの回答（{0}）"
+  },
+  "aiParsedOk": {
+    "message": "構造化済み"
+  },
+  "aiParsedPartial": {
+    "message": "一部の見出しのみ"
+  },
+  "aiParsedFailed": {
+    "message": "原文のみ"
+  },
+  "aiShowRaw": {
+    "message": "原文を表示"
+  },
+  "aiHideRaw": {
+    "message": "見出しごとに表示"
+  },
+  "aiRawOnlyNote": {
+    "message": "見出しを読み取れなかったため、原文のまま保存しています。"
+  },
+  "aiCopyNextPrompt": {
+    "message": "次回の指示をコピー"
+  },
+  "aiCopyRaw": {
+    "message": "原文をコピー"
+  },
+  "confirmDeleteAnswer": {
+    "message": "このAIの回答を削除しますか？"
+  },
+  "navTemplates": {
+    "message": "AIテンプレート"
+  },
+  "templatesIntro": {
+    "message": "AIに渡すプロンプトのひな形です。{{source}} に資料（タイトル・URL・メモ・断片）、{{format}} に回答の見出しの指定が入ります。"
+  },
+  "templatesBuiltIn": {
+    "message": "組み込み"
+  },
+  "templatesCustom": {
+    "message": "自作"
+  },
+  "templatesNone": {
+    "message": "自作のテンプレートはまだありません。"
+  },
+  "templateView": {
+    "message": "内容を見る"
+  },
+  "templateDuplicate": {
+    "message": "複製して編集"
+  },
+  "templateEdit": {
+    "message": "編集"
+  },
+  "templateNew": {
+    "message": "新しいテンプレート"
+  },
+  "templateNewName": {
+    "message": "新しいテンプレート"
+  },
+  "templateCopyName": {
+    "message": "{0}（コピー）"
+  },
+  "templateName": {
+    "message": "名前"
+  },
+  "templateBody": {
+    "message": "本文"
+  },
+  "confirmDeleteTemplate": {
+    "message": "テンプレート「{0}」を削除しますか？"
   }
 }
