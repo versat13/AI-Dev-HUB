@@ -16,6 +16,10 @@ export type SectionKey =
   | 'firstStep'
   | 'nextPrompt'
   | 'sources'
+  | 'pros'
+  | 'risks'
+  | 'alternatives'
+  | 'verdict'
   | 'translation';
 
 interface SectionDef {
@@ -82,6 +86,30 @@ export const SECTIONS: SectionDef[] = [
     aliases: ['出典', '参考URL', '参考', '参考文献', 'sources', 'references', 'links'],
   },
   {
+    key: 'pros',
+    title: { ja: 'メリット', en: 'Benefits' },
+    hint: { ja: '使うと何が良くなるか（具体的に）', en: 'what concretely gets better if I use it' },
+    aliases: ['利点', '長所', 'pros', 'advantages'],
+  },
+  {
+    key: 'risks',
+    title: { ja: 'リスク・注意点', en: 'Risks' },
+    hint: { ja: '費用・手間・安全性・ロックインなど、失うもの', en: 'cost, effort, safety, lock-in — what I give up' },
+    aliases: ['リスク', '注意点', 'デメリット', '短所', 'cons', 'risks and caveats', 'drawbacks'],
+  },
+  {
+    key: 'alternatives',
+    title: { ja: '代わりの手段', en: 'Alternatives' },
+    hint: { ja: '同じ目的を果たせる他の方法と、その違い', en: 'other ways to reach the same goal and how they differ' },
+    aliases: ['代替案', '代替手段', '他の選択肢', 'options'],
+  },
+  {
+    key: 'verdict',
+    title: { ja: '結論', en: 'Verdict' },
+    hint: { ja: '使う / 様子見 / 使わない のどれかと、その理由を2〜3行で', en: 'one of: use it / wait / skip — with 2–3 lines of reasons' },
+    aliases: ['判断', '結論と理由', 'recommendation', 'conclusion'],
+  },
+  {
     key: 'translation',
     title: { ja: '日本語訳', en: 'Translation' },
     hint: { ja: '本文全体の訳（意訳でよい。要約しない）', en: 'translation of the whole body (free translation is fine; do not summarize)' },
@@ -89,9 +117,10 @@ export const SECTIONS: SectionDef[] = [
   },
 ];
 
-// 翻訳テンプレートの節。「日本語訳」は既定の見出しには含めない（見出しは全テンプレート共通）
-export const TRANSLATION_KEYS: SectionKey[] = ['headline', 'translation'];
-export const ALL_SECTION_KEYS: SectionKey[] = SECTIONS.map((s) => s.key).filter((k) => k !== 'translation');
+// 「要約と検証」と自作テンプレートで使う標準の見出し。判断用の節と、旧版の「日本語訳」は含めない
+export const ALL_SECTION_KEYS: SectionKey[] = [
+  'headline', 'summary', 'usefulness', 'facts', 'unverified', 'prerequisites', 'firstStep', 'nextPrompt', 'sources',
+];
 
 export function sectionTitle(key: string, lang: Lang): string {
   if (key === 'jaTitle') key = 'headline'; // v1.0.6 で保存した回答
@@ -107,24 +136,29 @@ export interface BuiltinTemplate {
   sections: SectionKey[]; // {{format}} に入れる見出し
 }
 
+// 指示文は「役割 → 目的 → 守ること」の順に短く書く。回答の形式は {{format}} がまとめて指定する
 export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
     id: 'builtin-verify',
     name: { ja: '要約と検証', en: 'Summarize and verify' },
     sections: ALL_SECTION_KEYS,
     body: {
-      ja: `次の資料について、内容を整理し、確かさを検証してください。
+      ja: `あなたは慎重なリサーチャーです。次の資料を整理し、どこまで確かかを検証してください。
 
-- 資料に書かれていることと、あなたの知識・推測をはっきり区別してください。
-- 確かめられないことは「未確認事項」に入れ、そう判断した根拠を書いてください。
+- 資料に書かれていること、あなたの知識、推測を混ぜないでください。推測には「推測:」と付けてください。
+- 確かめられない主張は「未確認事項・確度の根拠」に入れ、なぜ確かめられないかを書いてください。
+- 数字・固有名詞・日付は資料のとおりに書き、変えないでください。
+- 「次回AIに渡す指示」は、この資料を知らないAIにそのまま貼って通じる文にしてください。
 
 {{format}}
 
 {{source}}`,
-      en: `Please organize the following material and verify how reliable it is.
+      en: `You are a careful researcher. Organize the following material and check how far it can be trusted.
 
-- Clearly separate what the material says from your own knowledge or guesses.
-- Put anything you cannot confirm under the unverified section, with your reasoning.
+- Keep three things apart: what the material says, what you know, and what you guess. Mark guesses with "Guess:".
+- Put claims you cannot confirm under the unverified section and say why they cannot be confirmed.
+- Copy numbers, names and dates exactly as in the material.
+- Write the prompt for the next AI so that it works when pasted into an AI that has never seen this material.
 
 {{format}}
 
@@ -136,20 +170,20 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     name: { ja: '試し方を知りたい', en: 'How do I try this?' },
     sections: ['headline', 'summary', 'prerequisites', 'firstStep', 'unverified', 'nextPrompt', 'sources'],
     body: {
-      ja: `次の資料の内容を、自分で試すための手順にしてください。
+      ja: `あなたは丁寧な技術コーチです。次の資料の内容を、私が自分で試せる手順にしてください。
 
-- 必要な環境・費用・アカウントなどの前提をすべて挙げてください。
-- 最初の一歩は、30分以内に終わる具体的な操作にしてください。
-- 資料から読み取れないことは推測で補わず、「未確認事項」に書いてください。
+- 必要な環境・費用・アカウント・権限を、漏れなく挙げてください。
+- 「最初の一歩」は、30分以内に終わり、終わったかどうかが分かる具体的な操作にしてください。
+- 資料から読み取れない手順は推測で補わず、「未確認事項・確度の根拠」に書いてください。
 
 {{format}}
 
 {{source}}`,
-      en: `Turn the following material into steps I can follow to try it myself.
+      en: `You are a patient technical coach. Turn the following material into steps I can follow to try it myself.
 
-- List every prerequisite (environment, cost, accounts, etc.).
-- Make the first step a concrete action that takes 30 minutes or less.
-- Do not fill gaps with guesses; put them under the unverified section.
+- List every prerequisite: environment, cost, accounts and permissions.
+- Make the first step a concrete action that takes 30 minutes or less and has a clear "done" state.
+- Do not fill missing steps with guesses; put them under the unverified section.
 
 {{format}}
 
@@ -157,22 +191,24 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     },
   },
   {
-    id: 'builtin-translate',
-    name: { ja: '日本語に訳す', en: 'Translate to Japanese' },
-    sections: TRANSLATION_KEYS,
+    id: 'builtin-decide',
+    name: { ja: '使うべきか判断する', en: 'Should I use this?' },
+    sections: ['headline', 'summary', 'pros', 'risks', 'alternatives', 'verdict', 'sources'],
     body: {
-      ja: `次の資料の本文を{{lang}}に訳してください。
+      ja: `あなたは率直な相談相手です。次の資料で紹介されているものを、私が使うべきか判断する材料をください。
 
-- 意訳でかまいませんが、要約や省略はせず、本文全体を訳してください。
-- 固有名詞・コード・URLは原文のままにしてください。
+- 良い点だけでなく、費用・手間・安全性・やめにくさなどの損も同じ重さで書いてください。
+- 代わりの手段は、実在するものだけを挙げてください。
+- 「結論」は「使う」「様子見」「使わない」のどれか1つを選び、理由を短く書いてください。
 
 {{format}}
 
 {{source}}`,
-      en: `Translate the body of the following material into {{lang}}.
+      en: `You are a frank advisor. Give me what I need to decide whether to use what the following material describes.
 
-- A free translation is fine, but translate the whole body without summarizing or omitting.
-- Keep proper nouns, code and URLs as in the original.
+- Weigh the costs (money, effort, safety, lock-in) as seriously as the benefits.
+- Only list alternatives that actually exist.
+- In the verdict, pick exactly one of "use it", "wait" or "skip", with short reasons.
 
 {{format}}
 
@@ -184,12 +220,12 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     name: { ja: '短く要点だけ', en: 'Just the key points' },
     sections: ['headline', 'summary', 'usefulness'],
     body: {
-      ja: `次の資料の要点を短くまとめてください。
+      ja: `次の資料の要点を、忙しい人が10秒で読める長さにまとめてください。資料にないことは足さないでください。
 
 {{format}}
 
 {{source}}`,
-      en: `Briefly summarize the key points of the following material.
+      en: `Summarize the following material so that a busy person can read it in 10 seconds. Do not add anything that is not in the material.
 
 {{format}}
 
@@ -250,8 +286,10 @@ export function languageName(code: string, inLang: Lang): string {
 
 /** 表示言語の設定から、プロンプトの言語の組み合わせを決める */
 export function promptLangs(uiLang: Lang, mode: 'en' | 'native', uiLanguageCode: string = uiLang): PromptLangs {
+  // EN方式は見出しも英語にそろえる（指示の言語と見出しの言語が混ざると形式が崩れやすい）。
+  // 見出しの下の本文だけ利用者の言語で書かせ、画面では見出しを利用者の言語で表示する
   const bodyLang: Lang = mode === 'en' ? 'en' : uiLang;
-  return { bodyLang, headLang: uiLang, answerLang: languageName(uiLanguageCode, bodyLang) };
+  return { bodyLang, headLang: bodyLang, answerLang: languageName(uiLanguageCode, bodyLang) };
 }
 
 const asLangs = (l: Lang | PromptLangs): PromptLangs =>
@@ -267,7 +305,7 @@ const RULES = {
 - 回答は${lang}で書いてください。`,
   en: (lang: string) => `## Answer format (follow strictly)
 - Put the entire answer inside ONE fenced code block (start with \`\`\`markdown and end with \`\`\`), so the "##" marks survive copying.
-- Use the headings below exactly as written — do not rename, translate or number them — in this order, each on its own line starting with "## ".
+- Use the headings below exactly as written, in English — do not rename, translate or number them — in this order, each on its own line starting with "## ". Only the text under each heading is written in the answer language.
 - Do not add headings. If a heading has nothing to say, write "None".
 - If you show code inside the answer, fence it with ~~~ instead of \`\`\`.
 - Write nothing outside the code block.
@@ -429,16 +467,25 @@ export function parseAnswer(raw: string, expected: SectionKey[] = ALL_SECTION_KE
 
 /** 一覧などで使う回答の短い説明 */
 export function answerExcerpt(a: Pick<AiAnswer, 'sections' | 'raw'>): string {
-  const s = a.sections.find((x) => x.key === 'summary') ?? a.sections.find((x) => x.key !== 'intro');
+  const s =
+    a.sections.find((x) => x.key === 'summary') ??
+    a.sections.find((x) => x.key !== 'intro' && x.key !== 'headline' && x.key !== 'jaTitle');
   return makeExcerpt(s?.body ?? a.raw);
 }
 
 // ---- AIサービス ----
 
 export const AI_SERVICES = [
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/' },
-  { id: 'claude', name: 'Claude', url: 'https://claude.ai/new' },
-  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app' },
+  // tempUrl: 一時チャット（履歴に残らない・過去の会話や記憶の影響を受けにくい）で開くURL。
+  // Gemini はURLで一時チャットを指定する方法が見つからないため通常のチャットで開く
+  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', tempUrl: 'https://chatgpt.com/?temporary-chat=true' },
+  { id: 'claude', name: 'Claude', url: 'https://claude.ai/new', tempUrl: 'https://claude.ai/new?incognito' },
+  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app', tempUrl: undefined as string | undefined },
 ] as const;
 
 export type AiServiceId = (typeof AI_SERVICES)[number]['id'] | 'other';
+
+/** AIサイトを開くURL。一時チャットを選んでいて、そのサービスが対応していれば一時チャットのURL */
+export function serviceUrl(s: (typeof AI_SERVICES)[number], temporary: boolean): string {
+  return (temporary && s.tempUrl) || s.url;
+}

@@ -1,4 +1,4 @@
-import { getLocale, t } from '@/lib/i18n';
+import { getLocale, t, tIn, type Locale } from '@/lib/i18n';
 
 const tag = () => (getLocale() === 'ja' ? 'ja-JP' : 'en-US');
 
@@ -25,9 +25,9 @@ export function formatRelative(ts: number, now = Date.now()): string {
 }
 
 /** 組み込みの断片ラベル（selection / article / description）は翻訳し、ユーザー定義のラベルはそのまま出す */
-export function fragLabel(label: string): string {
+export function fragLabel(label: string, locale?: Locale): string {
   const key = `fragLabel_${label}`;
-  const v = t(key);
+  const v = locale ? tIn(locale, key) : t(key);
   return v === key ? label : v;
 }
 

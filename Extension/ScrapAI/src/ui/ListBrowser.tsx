@@ -1,3 +1,4 @@
+import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { t } from '@/lib/i18n';
 import type { ListData } from '@/lib/list';
@@ -5,6 +6,7 @@ import { DEFAULT_PARAMS, isFiltered, type ListParams } from '@/lib/query';
 import type { Category, Settings } from '@/lib/types';
 import { ActiveFilters, FilterPanel, SearchBox } from './Filters';
 import { Icon } from './icons';
+import { setSettings } from '@/lib/settings';
 import { useCategories, useListData } from './hooks';
 import { ScrapRow } from './ScrapRow';
 
@@ -15,7 +17,8 @@ export function ScrapList(props: {
   categories: Category[];
   density: 'compact' | 'card';
   columns?: number;
-  hideCount?: boolean; // 件数を呼び出し側で出す（管理タブ） // カード表示の列数（0または未指定 = 1列。管理タブでのみ指定する）
+  hideCount?: boolean; // 件数を呼び出し側で出す（管理タブ）
+  face?: Settings['listFace']; // カード表示の列数（0または未指定 = 1列。管理タブでのみ指定する）
   activeId?: string | null;
   selectable?: boolean;
   selection?: Set<string>;
@@ -53,6 +56,7 @@ export function ScrapList(props: {
               scrap={s}
               categories={catMap}
               density={props.density}
+              face={props.face}
               active={props.activeId === s.id}
               selectable={props.selectable}
               selected={props.selection?.has(s.id)}
@@ -69,6 +73,7 @@ export function ScrapList(props: {
 /** ポップアップ／サイドパネル用: 検索欄 + 折りたたみ式の絞り込み + 一覧 */
 export function ListBrowser(props: {
   settings: Settings;
+  barExtra?: ComponentChildren; // 検索欄の右に並べるボタン（サイドパネル）
   onOpen: (id: string) => void;
   activeId?: string | null;
 }) {
@@ -77,6 +82,7 @@ export function ListBrowser(props: {
     pinnedFirst: props.settings.pinnedFirst,
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [face, setFace] = useState<Settings['listFace']>(props.settings.listFace);
   const categories = useCategories();
   const data = useListData(params);
 
@@ -93,8 +99,19 @@ export function ListBrowser(props: {
         >
           <Icon name="filter" />
         </button>
+        {props.barExtra}
       </div>
-      <ActiveFilters params={params} onChange={setParams} categories={categories} />
+      <div class="list-head">
+        <ActiveFilters params={params} onChange={setParams} categories={categories} />
+        <span class="spacer" />
+        <FaceToggle
+          value={face}
+          onChange={(v) => {
+            setFace(v);
+            void setSettings({ listFace: v });
+          }}
+        />
+      </div>
       {showFilters && (
         <FilterPanel
           params={params}
@@ -109,10 +126,21 @@ export function ListBrowser(props: {
           params={params}
           categories={categories}
           density="compact"
+          face={face}
           activeId={props.activeId}
           onOpen={props.onOpen}
         />
       </div>
     </section>
+  );
+}
+
+/** 一覧全体の表示切り替え: AI要約を主役にするか、元の内容（切り抜いたもの）か */
+export function FaceToggle({ value, onChange }: { value: Settings['listFace']; onChange: (v: Settings['listFace']) => void }) {
+  return (
+    <div class="seg face-toggle" role="group" aria-label={t('listFace')}>
+      <button aria-pressed={value === 'ai'} onClick={() => onChange('ai')}>✦ {t('faceAi')}</button>
+      <button aria-pressed={value === 'original'} onClick={() => onChange('original')}>{t('faceOriginal')}</button>
+    </div>
   );
 }

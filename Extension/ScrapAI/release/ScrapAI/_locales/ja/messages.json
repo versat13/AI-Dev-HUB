@@ -336,7 +336,7 @@
     "message": "使用容量: {0}"
   },
   "localOnlyLong": {
-    "message": "データはこのPCのこのブラウザにのみ保存され、他のPCとは同期されません。データの移行用に、エクスポート／インポートを実装予定です。"
+    "message": "データはこのPCのこのブラウザの中にだけ保存され、他のPCとは同期されません。別のPCやブラウザへ移すときは、下のエクスポートとインポートを使います。"
   },
   "navSites": {
     "message": "サイト設定"
@@ -588,7 +588,7 @@
     "message": "AIテンプレート"
   },
   "templatesIntro": {
-    "message": "AIに渡すプロンプトのひな形です。{{source}} に資料（タイトル・URL・メモ・断片）、{{format}} に回答の見出しの指定が入ります。"
+    "message": "AIに渡すプロンプトのひな形です。組み込みは複製すると自由に書き換えられます。本文で使える差し込み:"
   },
   "templatesBuiltIn": {
     "message": "組み込み"
@@ -630,7 +630,7 @@
     "message": "エクスポート"
   },
   "exportHelp": {
-    "message": "全データを1つのJSONファイルに書き出します。スクラップと断片は常に含まれます。"
+    "message": "選んだ内容を1つのJSONファイルに書き出します。スクラップと断片は常に含まれます。"
   },
   "exportOrganize": {
     "message": "星・ピン・カテゴリを含める"
@@ -776,9 +776,6 @@
   "filterRemove": {
     "message": "{0} を解除"
   },
-  "confirmDeleteYes": {
-    "message": "削除する"
-  },
   "sortDomain": {
     "message": "ドメイン順"
   },
@@ -856,5 +853,89 @@
   },
   "fragLabel_votes": {
     "message": "票"
+  },
+  "deleteAgain": {
+    "message": "もう一度押すと削除"
+  },
+  "panelKeepOpen": {
+    "message": "開いたままにする"
+  },
+  "panelKeepOpenHelp": {
+    "message": "オフのときは、ページをクリックするとサイドパネルが自動で閉じます"
+  },
+  "listFace": {
+    "message": "一覧の表示"
+  },
+  "faceAi": {
+    "message": "AI要約"
+  },
+  "faceOriginal": {
+    "message": "原文"
+  },
+  "translate": {
+    "message": "翻訳する"
+  },
+  "showOriginal": {
+    "message": "原文に戻す"
+  },
+  "translated": {
+    "message": "翻訳"
+  },
+  "translateUnavailable": {
+    "message": "このブラウザでは翻訳できません（Chrome 138以降が必要です）"
+  },
+  "translateSame": {
+    "message": "すでに表示言語です"
+  },
+  "translating": {
+    "message": "翻訳中…"
+  },
+  "setDisplay": {
+    "message": "表示"
+  },
+  "setSaving": {
+    "message": "保存"
+  },
+  "setPromptEn": {
+    "message": "英語（推奨・回答は表示言語）"
+  },
+  "setPromptNative": {
+    "message": "表示言語"
+  },
+  "setTemporaryChat": {
+    "message": "AIサイトは一時チャットで開く"
+  },
+  "setTemporaryChatHelp": {
+    "message": "履歴に残らず、過去の会話の影響を受けにくくなります。ChatGPT・Claudeに対応。Geminiは指定できないため通常のチャットで開きます。"
+  },
+  "importHelp": {
+    "message": "エクスポートしたJSONファイルを読み込みます。不正なファイルは何も変更せずに拒否します。"
+  },
+  "importButton": {
+    "message": "ファイルを選んで取り込む"
+  },
+  "templateHeads": {
+    "message": "回答の見出し"
+  },
+  "tplVar_source": {
+    "message": "資料ひとまとめ（タイトル・URL・メモ・断片）"
+  },
+  "tplVar_format": {
+    "message": "回答の形式と見出しの指定"
+  },
+  "tplVar_title": {
+    "message": "タイトル"
+  },
+  "tplVar_url": {
+    "message": "URL"
+  },
+  "tplVar_site": {
+    "message": "サイト名"
+  },
+  "tplVar_memo": {
+    "message": "あなたのメモ"
+  },
+  "tplVar_fragments": {
+    "message": "断片だけ"
   }
 }

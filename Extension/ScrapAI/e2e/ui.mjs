@@ -108,7 +108,7 @@ const sources = db.fragments.map((f) => f.source).sort().join(',');
 check('記事: 断片=本文+概要', sources === 'meta,readability', sources);
 check('記事: 本文は上限3000字以内', db.fragments.find((f) => f.source === 'readability')?.text.length <= 3000);
 check('記事: 概要(excerpt)がOG概要', scrap?.excerpt === 'OGの概要文です', scrap?.excerpt);
-check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 2));
+check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 3));
 
 // 2) 同じURLを再度（選択なし）
 out = await save(aTab, 'auto');
@@ -302,9 +302,9 @@ await mg.locator('.m-main').getByText('別の記事').first().click();
 await mg.waitForTimeout(500);
 await mg.locator('.m-detail .menu summary').click();
 await mg.locator('.m-detail .menu-list').getByRole('button', { name: '削除', exact: true }).click();
-check('管理: 削除は確認が出る', await mg.locator('.m-detail .confirm').isVisible() && (await dump()).scraps.length === cnt);
+check('管理: 1回目はボタンが変わるだけ', (await mg.locator('.m-detail .menu-list').getByRole('button', { name: 'もう一度押すと削除' }).count()) === 1 && (await dump()).scraps.length === cnt);
 await mg.screenshot({ path: path.join(OUT, 'p9-delete-confirm.png') });
-await mg.locator('.m-detail .confirm').getByRole('button', { name: '削除する' }).click();
+await mg.locator('.m-detail .menu-list').getByRole('button', { name: 'もう一度押すと削除' }).click();
 await mg.waitForTimeout(700);
 db = await dump();
 check('管理: 完全削除', db.scraps.length === cnt - 1 && !db.scraps.some((x) => x.title === '別の記事'));
@@ -355,7 +355,7 @@ await sp.waitForTimeout(500);
 check('サイドパネル: 項目クリックで詳細', await sp.getByLabel('メモ').isVisible());
 await sp.getByRole('button', { name: '戻る' }).click();
 await sp.waitForTimeout(400);
-check('サイドパネル: 戻っても見出しは1つ', (await sp.locator('.popup-head').count()) === 1, String(await sp.locator('.popup-head').count()));
+check('サイドパネル: 戻っても見出しを出さない（Chromeが出す）・検索欄は1つ', (await sp.locator('.popup-head').count()) === 0 && (await sp.locator('input[type=search]').count()) === 1);
 await sp.screenshot({ path: path.join(OUT, 'p9-sidepanel.png') });
 
 // ポップアップ→詳細（sidePanel.open が使えない環境ではフォールバックで管理タブ）
@@ -410,8 +410,8 @@ const nBefore = (await dump()).scraps.length;
 await cm.getByRole('button', { name: '表示中をすべて選択' }).click();
 await cm.locator('.bulkbar .bulk-more summary').click();
 await cm.locator('.bulkbar').getByRole('button', { name: /選択した\d+件を削除/ }).click();
-check('一括削除: 確認が出る（まだ消えない）', (await dump()).scraps.length === nBefore && (await cm.locator('.bulkbar .confirm').isVisible()));
-await cm.locator('.bulkbar .confirm').getByRole('button', { name: '削除する' }).click();
+check('一括削除: 1回目では消えない', (await dump()).scraps.length === nBefore);
+await cm.locator('.bulkbar').getByRole('button', { name: 'もう一度押すと削除' }).click();
 await cm.waitForTimeout(700);
 check('一括削除: 表示中の項目が消える', (await dump()).scraps.filter((x) => x.archivedAt == null).length === 0, String((await dump()).scraps.length));
 

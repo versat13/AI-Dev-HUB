@@ -15,6 +15,7 @@ import { t } from '@/lib/i18n';
 import { AiPanel } from './AiPanel';
 import { ConfirmDelete } from './ConfirmDelete';
 import { Snapshots } from './Snapshots';
+import { canTranslate, looksForeign, translateTexts } from './translate';
 import { revertTitle } from '@/lib/ai-db';
 import { fragLabel, formatDateTime } from './format';
 import { Icon, SourceMark } from './icons';
@@ -39,6 +40,10 @@ export function DetailView(props: {
   const [memo, setMemo] = useState('');
   const [newCat, setNewCat] = useState('');
   const [addingCat, setAddingCat] = useState(false);
+  // 本文の翻訳（表示だけ。保存しない）
+  const [trFrags, setTrFrags] = useState<Map<string, string> | null>(null);
+  const [trBusy, setTrBusy] = useState(false);
+  const [trNote, setTrNote] = useState('');
   const [tab, setTab] = useState<'body' | 'ai'>(lastTab);
   const chooseTab = (v: 'body' | 'ai') => {
     lastTab = v;
@@ -119,6 +124,21 @@ export function DetailView(props: {
     props.onClose?.();
   }
 
+  async function toggleTranslate() {
+    setTrNote('');
+    if (trFrags) return setTrFrags(null);
+    setTrBusy(true);
+    try {
+      const out = await translateTexts(frags.map((f) => f.text));
+      if (!out) setTrNote(t('translateSame'));
+      else setTrFrags(new Map(frags.map((f, i) => [f.id, out[i] ?? f.text])));
+    } catch {
+      setTrNote(t('translateUnavailable'));
+    } finally {
+      setTrBusy(false);
+    }
+  }
+
   async function split(fragId: string) {
     const newId = await splitFragment(fragId);
     if (newId) props.onOpenOther?.(newId);
@@ -152,7 +172,7 @@ export function DetailView(props: {
             onClick={(e) => {
               // 操作したらメニューを閉じる
               const d = (e.currentTarget as HTMLElement).closest('details');
-              if (d && (e.target as HTMLElement).closest('button') && !(e.target as HTMLElement).closest('.danger:not(.solid)')) d.open = false;
+              if (d && (e.target as HTMLElement).closest('button:not(.danger)')) d.open = false;
             }}
           >
             {!archived ? (
@@ -161,7 +181,7 @@ export function DetailView(props: {
               <button onClick={() => restoreScraps([scrapId])}>{t('restore')}</button>
             )}
             <hr />
-            <ConfirmDelete label={t('deleteForever')} question={t('confirmDeleteForever')} onConfirm={removeForever} />
+            <ConfirmDelete label={t('deleteForever')} onConfirm={removeForever} />
           </div>
         </details>
       </div>
@@ -193,6 +213,12 @@ export function DetailView(props: {
             {scrap.domain} <Icon name="external" size={12} />
           </a>
           <time title={formatDateTime(scrap.createdAt)}>{t('savedAt', formatDateTime(scrap.createdAt))}</time>
+          {(trFrags || (canTranslate() && looksForeign(`${scrap.title} ${frags[0]?.text.slice(0, 300) ?? ''}`))) && (
+            <button class="link" disabled={trBusy} onClick={toggleTranslate}>
+              <Icon name="translate" size={13} /> {trFrags ? t('showOriginal') : trBusy ? t('translating') : t('translate')}
+            </button>
+          )}
+          {trNote && <span class="warn">{trNote}</span>}
           {archived && <span class="badge">{t('archivedBadge')}</span>}
         </p>
 
@@ -292,7 +318,7 @@ export function DetailView(props: {
                   </button>
                 </div>
                 {/* 抽出結果は常にプレーンテキストとして表示する（HTMLとして解釈しない） */}
-                <pre class="frag-text">{f.text}</pre>
+                <pre class="frag-text">{trFrags?.get(f.id) ?? f.text}</pre>
                 {(f.extras?.length || f.permalink) && (
                   <p class="frag-extras">
                     {f.extras?.map((x) => (

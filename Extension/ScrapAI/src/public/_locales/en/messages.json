@@ -336,7 +336,7 @@
     "message": "Storage used: {0}"
   },
   "localOnlyLong": {
-    "message": "All data is stored only in this browser on this computer and is not synced to other PCs. Export/import for moving data is planned."
+    "message": "Data is stored only in this browser on this computer and is not synced. To move it to another computer or browser, use Export and Import below."
   },
   "navSites": {
     "message": "Sites"
@@ -588,7 +588,7 @@
     "message": "AI templates"
   },
   "templatesIntro": {
-    "message": "Templates for the prompt sent to the AI. {{source}} is replaced with the material (title, URL, note, fragments) and {{format}} with the required answer headings."
+    "message": "Prompt templates for the AI. Duplicate a built-in one to edit it freely. Placeholders you can use:"
   },
   "templatesBuiltIn": {
     "message": "Built-in"
@@ -630,7 +630,7 @@
     "message": "Export"
   },
   "exportHelp": {
-    "message": "Writes all data to one JSON file. Scraps and fragments are always included."
+    "message": "Writes what you choose into one JSON file. Scraps and fragments are always included."
   },
   "exportOrganize": {
     "message": "Include stars, pins and categories"
@@ -776,9 +776,6 @@
   "filterRemove": {
     "message": "Remove {0}"
   },
-  "confirmDeleteYes": {
-    "message": "Delete"
-  },
   "sortDomain": {
     "message": "By domain"
   },
@@ -856,5 +853,89 @@
   },
   "fragLabel_votes": {
     "message": "Votes"
+  },
+  "deleteAgain": {
+    "message": "Click again to delete"
+  },
+  "panelKeepOpen": {
+    "message": "Keep open"
+  },
+  "panelKeepOpenHelp": {
+    "message": "When off, the side panel closes when you click back on the page"
+  },
+  "listFace": {
+    "message": "List view"
+  },
+  "faceAi": {
+    "message": "AI summary"
+  },
+  "faceOriginal": {
+    "message": "Original"
+  },
+  "translate": {
+    "message": "Translate"
+  },
+  "showOriginal": {
+    "message": "Show original"
+  },
+  "translated": {
+    "message": "Translated"
+  },
+  "translateUnavailable": {
+    "message": "Translation is not available in this browser (Chrome 138+ required)"
+  },
+  "translateSame": {
+    "message": "Already in your language"
+  },
+  "translating": {
+    "message": "Translating…"
+  },
+  "setDisplay": {
+    "message": "Display"
+  },
+  "setSaving": {
+    "message": "Saving"
+  },
+  "setPromptEn": {
+    "message": "English (recommended; answers in your language)"
+  },
+  "setPromptNative": {
+    "message": "Your language"
+  },
+  "setTemporaryChat": {
+    "message": "Open AI sites in a temporary chat"
+  },
+  "setTemporaryChatHelp": {
+    "message": "Not kept in history and less affected by past conversations. Works for ChatGPT and Claude. Gemini cannot be set this way, so it opens a normal chat."
+  },
+  "importHelp": {
+    "message": "Reads an exported JSON file. Invalid files are rejected without changing anything."
+  },
+  "importButton": {
+    "message": "Choose a file to import"
+  },
+  "templateHeads": {
+    "message": "Answer headings"
+  },
+  "tplVar_source": {
+    "message": "All material (title, URL, note, fragments)"
+  },
+  "tplVar_format": {
+    "message": "Answer format and headings"
+  },
+  "tplVar_title": {
+    "message": "Title"
+  },
+  "tplVar_url": {
+    "message": "URL"
+  },
+  "tplVar_site": {
+    "message": "Site name"
+  },
+  "tplVar_memo": {
+    "message": "Your note"
+  },
+  "tplVar_fragments": {
+    "message": "Fragments only"
   }
 }

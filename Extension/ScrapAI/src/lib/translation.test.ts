@@ -1,6 +1,8 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ALL_SECTION_KEYS, buildPrompt, parseAnswer, resolveTemplates, TRANSLATION_KEYS } from './ai';
+import { ALL_SECTION_KEYS, buildPrompt, parseAnswer, resolveTemplates, type SectionKey } from './ai';
+
+const TRANSLATION_KEYS: SectionKey[] = ['headline', 'translation']; // v1.0.6〜1.0.9 の翻訳回答
 import { addAiAnswer, applyAnswer, cleanTitle, revertTitle, answerParts } from './ai-db';
 import { db, listFragments } from './db';
 import type { ExtractResult } from './extract-page';
@@ -22,14 +24,10 @@ const ANSWER = `## 見出し
 describe('日本語訳', () => {
   beforeEach(async () => { for (const t of db.tables) await t.clear(); });
 
-  it('翻訳テンプレートの見出しは2つで、既定の見出しには含まれない', () => {
-    const tpl = resolveTemplates([], 'ja').find((x) => x.id === 'builtin-translate')!;
-    expect(tpl.sections).toEqual(TRANSLATION_KEYS);
+  it('既定の見出しに旧版の「日本語訳」は含まれない', () => {
     expect(ALL_SECTION_KEYS).not.toContain('translation');
     expect(ALL_SECTION_KEYS[0]).toBe('headline');
-    const p = buildPrompt(tpl, { title: 'T', url: 'u', siteName: '', memo: '', createdAt: 0 }, [], 'ja');
-    expect(p).toContain('## 見出し');
-    expect(p).toContain('## 日本語訳');
+    expect(resolveTemplates([], 'ja').some((x) => x.id === 'builtin-translate')).toBe(false);
   });
 
   it('回答を読み取り、タイトルの装飾を外す', () => {

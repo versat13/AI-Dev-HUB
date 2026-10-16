@@ -66,7 +66,7 @@ export async function buildExport(opts: ExportOptions, now = Date.now()): Promis
     file.categories = categories;
   }
   if (opts.aiAnswers) file.aiAnswers = await db.aiAnswers.toArray();
-  else file.scraps = file.scraps.map((s) => ({ ...s, aiAnswerCount: 0 }));
+  else file.scraps = file.scraps.map((s) => ({ ...s, aiAnswerCount: 0, aiExcerpt: undefined }));
   if (opts.sites) file.siteProfiles = await db.siteProfiles.toArray();
   if (opts.templates) file.promptTemplates = (await db.promptTemplates.toArray()).filter((x) => !x.builtIn);
   if (opts.settings) file.settings = opts.settings;

@@ -44,6 +44,7 @@ describe('export / import', () => {
     expect(s.stars).toBe(4);
     expect(s.pinned).toBe(true);
     expect(s.aiAnswerCount).toBe(1);
+    expect(s.aiExcerpt).toBe('- テスト');
     expect(s.categoryIds).toHaveLength(1);
     expect((await listFragments(s.id))[0]!.text).toBe('あいう');
     expect(await db.aiAnswers.count()).toBe(1);
@@ -55,7 +56,7 @@ describe('export / import', () => {
     const file = await buildExport({ ...OPTS, organize: false, aiAnswers: false });
     expect(file.categories).toEqual([]);
     expect(file.aiAnswers).toBeUndefined();
-    expect(file.scraps.every((s) => s.stars === null && !s.pinned && s.categoryIds.length === 0 && s.aiAnswerCount === 0)).toBe(true);
+    expect(file.scraps.every((s) => s.stars === null && !s.pinned && s.categoryIds.length === 0 && s.aiAnswerCount === 0 && s.aiExcerpt === undefined)).toBe(true);
   });
 
   it('設定は指定したときだけ含まれる', async () => {

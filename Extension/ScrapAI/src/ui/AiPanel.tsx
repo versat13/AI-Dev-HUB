@@ -4,6 +4,7 @@ import {
   AI_SERVICES,
   buildPrompt,
   promptLangs,
+  serviceUrl,
   resolveTemplates,
   sectionTitle,
   type AiServiceId,
@@ -115,6 +116,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
   const answers = useLive(() => listAiAnswers(scrap.id), [scrap.id]) ?? [];
   const lang = getLocale();
   const [promptMode, setPromptMode] = useState<'en' | 'native'>('en');
+  const [temporaryChat, setTemporaryChat] = useState(true);
   const [uiCode, setUiCode] = useState<string>(lang);
   const langs = promptLangs(lang, promptMode, uiCode);
   const templates = useMemo(() => resolveTemplates(custom, lang, langs.bodyLang), [custom, lang, langs.bodyLang]);
@@ -129,9 +131,10 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
   const [applyHeadline, setApplyHeadline] = useState(true);
   useEffect(() => {
     void getSettings().then((s) => {
-      setTemplateId(s.aiTemplateId);
+      setTemplateId((cur) => cur ?? s.aiTemplateId); // 読み込み前に選んだものは上書きしない
       setApplyHeadline(s.aiApplyHeadline);
       setPromptMode(s.aiPromptLang);
+      setTemporaryChat(s.aiTemporaryChat);
       // 回答の言語: 表示言語を固定していればそれ、自動ならブラウザの言語（日英以外も可）
       setUiCode(s.locale === 'auto' ? browser.i18n.getUILanguage() : lang);
     });
@@ -140,7 +143,8 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
 
   const tpl = templates.find((x) => x.id === templateId) ?? templates[0]!;
   const used = frags.filter((f) => !excluded.has(f.id));
-  const prompt = buildPrompt(tpl, scrap, used, langs, fragLabel);
+  // 資料の項目名（本文・投稿者など）もプロンプトの言語にそろえる
+  const prompt = buildPrompt(tpl, scrap, used, langs, (l) => fragLabel(l, langs.bodyLang));
 
   async function chooseTemplate(id: string) {
     setTemplateId(id);
@@ -153,7 +157,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
     if (open) {
       setService(open.id);
       setLastService(open.id);
-      await browser.tabs.create({ url: open.url });
+      await browser.tabs.create({ url: serviceUrl(open, temporaryChat) });
     }
   }
 

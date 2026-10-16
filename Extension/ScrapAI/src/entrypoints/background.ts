@@ -193,7 +193,7 @@ const MENU_ID = 'scrapai-save';
 // contextMenus は任意権限のため、型定義に頼らず必要な部分だけ宣言する
 interface MenuApi {
   removeAll(): Promise<void>;
-  create(p: { id: string; title: string; contexts: string[] }): void;
+  create(p: { id: string; title: string; contexts: string[] }, cb?: () => void): void;
   onClicked: { addListener(cb: (info: { menuItemId: string | number }, tab?: { id?: number }) => void): void };
 }
 const menuApi = () => (browser as unknown as { contextMenus?: MenuApi }).contextMenus;
@@ -205,7 +205,9 @@ async function syncContextMenu(): Promise<void> {
   const settings = await getSettings();
   if (!settings.contextMenu) return;
   setLocale(resolveLocale(settings.locale, browser.i18n.getUILanguage()));
-  cm.create({ id: MENU_ID, title: t('ctxMenuSave'), contexts: ['page', 'selection'] });
+  cm.create({ id: MENU_ID, title: t('ctxMenuSave'), contexts: ['page', 'selection'] }, () => {
+    void browser.runtime.lastError; // 読んでおくと「Unchecked runtime.lastError」を出さない
+  });
 }
 
 let menuListening = false;
@@ -218,9 +220,17 @@ function listenContextMenu(): void {
   });
 }
 
-async function setupContextMenu(): Promise<void> {
-  listenContextMenu();
-  await syncContextMenu();
+// 起動・インストール・権限・設定の変更が重なると removeAll と create が交錯して
+// 「duplicate id」になるため、作り直しは1つずつ順番に行う
+let menuQueue: Promise<void> = Promise.resolve();
+function setupContextMenu(): Promise<void> {
+  menuQueue = menuQueue
+    .then(() => {
+      listenContextMenu();
+      return syncContextMenu();
+    })
+    .catch(() => undefined);
+  return menuQueue;
 }
 
 export default defineBackground(() => {

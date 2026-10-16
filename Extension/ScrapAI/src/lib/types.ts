@@ -21,8 +21,17 @@ export interface Scrap {
   memo: string;
   excerpt: string; // 一覧用概要（最大120字）
   aiAnswerCount: number; // 「AI要約 あり／なし」表示用
+  aiExcerpt?: string; // 最新のAI回答の要点（一覧で「AI要約」を主役にするとき使う）
+  translation?: ScrapTranslation; // カードの翻訳（Chrome内蔵の翻訳機能。元の文は書き換えない）
   createdAt: number;
   updatedAt: number;
+}
+
+export interface ScrapTranslation {
+  lang: string; // 訳した先の言語
+  title: string;
+  excerpt: string;
+  on: boolean; // 訳文を表示しているか
 }
 
 export type FragmentSource = 'rule' | 'selection' | 'picked' | 'readability' | 'meta' | 'translation';
@@ -144,6 +153,9 @@ export interface Settings {
   pinnedFirst: boolean; // ピン留めを一覧の先頭に表示する
   listStyle: 'compact' | 'card'; // 管理タブの一覧表示
   contextMenu: boolean; // 右クリックメニューに「ScrapAIに保存」を出す（既定オフ。contextMenus権限が必要）
+  panelKeepOpen: boolean; // サイドパネルを自動で閉じない
+  aiTemporaryChat: boolean; // AIサイトは一時チャットで開く
+  listFace: 'ai' | 'original'; // 一覧の表示: AI要約を主役にするか、元の内容か
   cardColumns: number; // カード表示の列数（0 = 自動、1〜6）
   aiTemplateId: string; // 最後に使ったAIテンプレート（P4）
   aiPromptLang: 'en' | 'native'; // プロンプトの指示文: 英語（回答は表示言語）か、表示言語そのまま
@@ -156,6 +168,9 @@ export const DEFAULT_SETTINGS: Settings = {
   pinnedFirst: true,
   listStyle: 'compact',
   cardColumns: 0,
+  panelKeepOpen: false,
+  aiTemporaryChat: true,
+  listFace: 'ai',
   contextMenu: false,
   aiTemplateId: 'builtin-verify',
   aiApplyHeadline: true,

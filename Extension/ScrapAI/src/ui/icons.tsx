@@ -11,6 +11,8 @@ const P: Record<string, string> = {
   sites: 'M10 3a7 7 0 100 14 7 7 0 000-14zM3 10h14M10 3c2 2 3 4.5 3 7s-1 5-3 7c-2-2-3-4.5-3-7s1-5 3-7z',
   copy: 'M7 7h9v9H7zM4 13V4h9',
   undo: 'M7 7H4V4M4.5 7A7 7 0 1110 17',
+  pin: 'M8 3h4l-1 5 3 3H6l3-3-1-5zM10 11v6',
+  translate: 'M3 5h8M7 3v2M5 5c0 3 2 5 5 6M9 5c-1 3-3 5-6 6M12 17l3-8 3 8M13 14.5h4',
 };
 
 export function Icon({ name, size = 16 }: { name: keyof typeof P | string; size?: number }) {

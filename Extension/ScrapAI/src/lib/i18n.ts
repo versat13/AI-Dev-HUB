@@ -29,3 +29,8 @@ export function t(key: string, ...args: (string | number)[]): string {
   const msg = dicts[current][key]?.message ?? dicts.en[key]?.message ?? key;
   return msg.replace(/\{(\d+)\}/g, (_, i) => String(args[Number(i)] ?? ''));
 }
+
+/** 表示言語に関係なく、指定した言語で訳す（英語のプロンプトに英語の項目名を入れるときなど） */
+export function tIn(locale: Locale, key: string): string {
+  return dicts[locale][key]?.message ?? dicts.en[key]?.message ?? key;
+}

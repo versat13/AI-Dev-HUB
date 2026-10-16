@@ -1,7 +1,9 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  AI_SERVICES,
   ALL_SECTION_KEYS,
+  serviceUrl,
   BUILTIN_TEMPLATES,
   buildPrompt,
   formatBlock,
@@ -66,30 +68,48 @@ describe('プロンプト生成', () => {
     expect(buildPrompt({ body: '{{title}} {{unknown}}', sections: [] }, scrap, [], 'ja')).toBe('Claude Codeの小技 {{unknown}}');
   });
 
+  it('判断用テンプレートは専用の見出しを使う', () => {
+    const tpl = resolveTemplates([], 'ja').find((t) => t.id === 'builtin-decide')!;
+    expect(tpl.sections).toEqual(['headline', 'summary', 'pros', 'risks', 'alternatives', 'verdict', 'sources']);
+    expect(parseAnswer('## Verdict\nwait\n## Risks\nx', ['verdict', 'risks']).parseStatus).toBe('ok');
+  });
+
   it('英語のテンプレートもある', () => {
     for (const b of BUILTIN_TEMPLATES) expect(b.body.en).toContain('{{source}}');
     expect(resolveTemplates([], 'en')[0]!.name).toBe('Summarize and verify');
   });
 });
 
+describe('AIサイトのURL', () => {
+  it('一時チャット: ChatGPT・Claudeは専用URL、Geminiは通常', () => {
+    const [gpt, claude, gemini] = AI_SERVICES;
+    expect(serviceUrl(gpt, true)).toBe('https://chatgpt.com/?temporary-chat=true');
+    expect(serviceUrl(claude, true)).toBe('https://claude.ai/new?incognito');
+    expect(serviceUrl(gemini, true)).toBe('https://gemini.google.com/app');
+    expect(serviceUrl(gpt, false)).toBe('https://chatgpt.com/');
+  });
+});
+
 describe('プロンプトの言語', () => {
-  it('EN方式: 指示は英語、見出しは表示言語、回答言語を指定する', () => {
+  it('EN方式: 指示も見出しも英語、回答言語だけ指定する', () => {
     const langs = promptLangs('ja', 'en', 'ja');
-    expect(langs).toEqual({ bodyLang: 'en', headLang: 'ja', answerLang: 'Japanese' });
+    expect(langs).toEqual({ bodyLang: 'en', headLang: 'en', answerLang: 'Japanese' });
     const tpl = resolveTemplates([], 'ja', langs.bodyLang).find((t) => t.id === 'builtin-verify')!;
     expect(tpl.name).toBe('要約と検証'); // 一覧の名前は表示言語
     const p = buildPrompt(tpl, scrap, frags, langs, label);
-    expect(p).toContain('Please organize the following material');
+    expect(p).toContain('You are a careful researcher.');
     expect(p).toContain('Write the answer in Japanese.');
-    expect(p).toContain('## 要点\n(3–5 bullet points)');
+    expect(p).toContain('## Key points\n(3–5 bullet points)');
     expect(p).toContain('# Material');
+    expect(p).not.toMatch(/## [ぁ-んァ-ヶ一-龠]/); // 日本語の見出しが混ざらない
   });
 
   it('日本語方式: 指示も見出しも日本語', () => {
     const langs = promptLangs('ja', 'native', 'ja');
-    const tpl = resolveTemplates([], 'ja', langs.bodyLang).find((t) => t.id === 'builtin-translate')!;
+    const tpl = resolveTemplates([], 'ja', langs.bodyLang).find((t) => t.id === 'builtin-verify')!;
     const p = buildPrompt(tpl, scrap, frags, langs, label);
-    expect(p).toContain('次の資料の本文を日本語に訳してください');
+    expect(p).toContain('あなたは慎重なリサーチャーです');
+    expect(p).toContain('## 要点');
     expect(p).toContain('回答は日本語で書いてください');
   });
 

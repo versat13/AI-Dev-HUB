@@ -1,12 +1,18 @@
-import { parseAnswer, type SectionKey } from './ai';
+import { answerExcerpt, parseAnswer, type SectionKey } from './ai';
 import { db } from './db';
 import type { AiAnswer, Fragment, PromptTemplate } from './types';
 
 // AI回答とユーザー作成テンプレートの保存。原資料（scraps / fragments）は書き換えない。
 
+/** 回答の件数と、最新の回答の要点を項目に写す（一覧の表示用） */
 async function refreshCount(scrapId: string, now: number): Promise<void> {
-  const n = await db.aiAnswers.where('scrapId').equals(scrapId).count();
-  await db.scraps.update(scrapId, { aiAnswerCount: n, updatedAt: now });
+  const list = await db.aiAnswers.where('scrapId').equals(scrapId).toArray();
+  const latest = list.reduce<AiAnswer | undefined>((a, b) => (!a || b.createdAt > a.createdAt ? b : a), undefined);
+  await db.scraps.update(scrapId, {
+    aiAnswerCount: list.length,
+    aiExcerpt: latest && latest.parseStatus !== 'failed' ? answerExcerpt(latest) : undefined,
+    updatedAt: now,
+  });
 }
 
 export async function listAiAnswers(scrapId: string): Promise<AiAnswer[]> {

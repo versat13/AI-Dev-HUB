@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import { answerExcerpt } from './ai';
 import { excerptOf, makeExcerpt } from './text';
 import type {
   AiAnswer,
@@ -10,7 +11,7 @@ import type {
   Snapshot,
 } from './types';
 
-export const SCHEMA_VERSION = 2; // 2: snapshots を追加
+export const SCHEMA_VERSION = 3; // 2: snapshots を追加 / 3: scraps.aiExcerpt を埋める
 
 class ScrapDB extends Dexie {
   scraps!: Table<Scrap, string>;
@@ -38,6 +39,21 @@ class ScrapDB extends Dexie {
     this.version(2)
       .stores({ snapshots: 'id, scrapId' })
       .upgrade((tx) => tx.table('meta').put({ key: 'schemaVersion', value: 2 }));
+    // 3: 既存のAI回答から一覧用の要点（aiExcerpt）を作る
+    this.version(3)
+      .stores({})
+      .upgrade(async (tx) => {
+        const answers = (await tx.table('aiAnswers').toArray()) as AiAnswer[];
+        const latest = new Map<string, AiAnswer>();
+        for (const a of answers) {
+          const cur = latest.get(a.scrapId);
+          if (!cur || a.createdAt > cur.createdAt) latest.set(a.scrapId, a);
+        }
+        for (const [scrapId, a] of latest) {
+          if (a.parseStatus !== 'failed') await tx.table('scraps').update(scrapId, { aiExcerpt: answerExcerpt(a) });
+        }
+        await tx.table('meta').put({ key: 'schemaVersion', value: 3 });
+      });
     this.on('populate', (tx) => {
       tx.table('meta').add({ key: 'schemaVersion', value: SCHEMA_VERSION });
     });

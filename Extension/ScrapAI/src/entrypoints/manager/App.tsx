@@ -23,7 +23,7 @@ import { ConfirmDelete } from '@/ui/ConfirmDelete';
 import { Icon } from '@/ui/icons';
 import { formatBytes } from '@/ui/format';
 import { useCategories, useListData, useLive } from '@/ui/hooks';
-import { ScrapList } from '@/ui/ListBrowser';
+import { FaceToggle, ScrapList } from '@/ui/ListBrowser';
 import { SiteSettings } from '@/ui/SiteSettings';
 import { TemplateSettings } from '@/ui/TemplateSettings';
 
@@ -178,6 +178,7 @@ export function App({ initial }: { initial: Settings }) {
             selectAll={() => setSelection(new Set(data?.items.map((s) => s.id) ?? []))}
             onDensity={(listStyle) => updateSettings({ listStyle })}
             onColumns={(cardColumns) => updateSettings({ cardColumns })}
+            onFace={(listFace) => updateSettings({ listFace })}
           />
         )}
         {section === 'categories' && <CategoryManager categories={categories} />}
@@ -215,6 +216,7 @@ function Library(props: {
   selectAll: () => void;
   onDensity: (d: Settings['listStyle']) => void;
   onColumns: (n: number) => void;
+  onFace: (v: Settings['listFace']) => void;
 }) {
   const { selection, params } = props;
   const ids = [...selection];
@@ -283,6 +285,7 @@ function Library(props: {
         <span class="count" aria-live="polite">{props.data ? t('itemCount', props.data.items.length) : ''}</span>
         <ActiveFilters params={params} onChange={props.setParams} categories={props.categories} hide={['view', 'category']} />
         <span class="spacer" />
+        <FaceToggle value={props.settings.listFace} onChange={(listFace) => props.onFace(listFace)} />
         <button class="link" onClick={props.selectAll}>{t('selectAll')}</button>
       </div>
 
@@ -326,7 +329,6 @@ function Library(props: {
             <div class="menu-list">
               <ConfirmDelete
                 label={t('bulkDelete', selection.size)}
-                question={t('confirmBulkDelete', selection.size)}
                 onConfirm={async () => {
                   const hadActive = props.activeId && selection.has(props.activeId);
                   await bulk(deleteScraps);
@@ -345,6 +347,7 @@ function Library(props: {
         density={props.settings.listStyle}
         columns={props.settings.cardColumns}
         hideCount
+        face={props.settings.listFace}
         activeId={props.activeId}
         selectable
         selection={selection}
@@ -476,44 +479,80 @@ function SettingsPane({
     <section class="settings">
       <h2>{t('navSettings')}</h2>
 
-      <label class="block">
-        <span>{t('settingsLanguage')}</span>
-        <select
-          value={settings.locale}
-          onChange={(e) => onChange({ locale: (e.target as HTMLSelectElement).value as Settings['locale'] })}
-        >
-          <option value="auto">{t('langAuto')}</option>
-          <option value="ja">日本語</option>
-          <option value="en">English</option>
-        </select>
-      </label>
+      <div class="set-card">
+        <h3>{t('setDisplay')}</h3>
+        <label class="set-row">
+          <span>{t('settingsLanguage')}</span>
+          <select
+            value={settings.locale}
+            onChange={(e) => onChange({ locale: (e.target as HTMLSelectElement).value as Settings['locale'] })}
+          >
+            <option value="auto">{t('langAuto')}</option>
+            <option value="ja">日本語</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <label class="set-row check">
+          <input
+            type="checkbox"
+            checked={settings.pinnedFirst}
+            onChange={(e) => onChange({ pinnedFirst: (e.target as HTMLInputElement).checked })}
+          />
+          {t('settingsPinnedFirst')}
+        </label>
+      </div>
 
-      <label class="block">
-        <span>{t('settingsMaxChars')}</span>
-        <input
-          type="number"
-          min={100}
-          step={100}
-          value={maxChars}
-          placeholder="∞"
-          onInput={(e) => setMaxChars((e.target as HTMLInputElement).value)}
-          onBlur={commitMaxChars}
-        />
+      <div class="set-card">
+        <h3>{t('setSaving')}</h3>
+        <label class="set-row">
+          <span>{t('settingsMaxChars')}</span>
+          <input
+            type="number"
+            min={100}
+            step={100}
+            value={maxChars}
+            placeholder="∞"
+            onInput={(e) => setMaxChars((e.target as HTMLInputElement).value)}
+            onBlur={commitMaxChars}
+          />
+        </label>
         <p class="help">{t('maxCharsHelp')}</p>
-      </label>
+      </div>
 
-      <label class="check">
-        <input
-          type="checkbox"
-          checked={settings.pinnedFirst}
-          onChange={(e) => onChange({ pinnedFirst: (e.target as HTMLInputElement).checked })}
-        />
-        {t('settingsPinnedFirst')}
-      </label>
+      <div class="set-card">
+        <h3>✦ AI</h3>
+        <label class="set-row">
+          <span>{t('aiPromptLang')}</span>
+          <select
+            value={settings.aiPromptLang}
+            onChange={(e) => onChange({ aiPromptLang: (e.target as HTMLSelectElement).value as Settings['aiPromptLang'] })}
+          >
+            <option value="en">{t('setPromptEn')}</option>
+            <option value="native">{t('setPromptNative')}</option>
+          </select>
+        </label>
+        <label class="set-row check">
+          <input
+            type="checkbox"
+            checked={settings.aiTemporaryChat}
+            onChange={(e) => onChange({ aiTemporaryChat: (e.target as HTMLInputElement).checked })}
+          />
+          {t('setTemporaryChat')}
+        </label>
+        <p class="help">{t('setTemporaryChatHelp')}</p>
+        <label class="set-row check">
+          <input
+            type="checkbox"
+            checked={settings.aiApplyHeadline}
+            onChange={(e) => onChange({ aiApplyHeadline: (e.target as HTMLInputElement).checked })}
+          />
+          {t('aiApplyHeadline')}
+        </label>
+      </div>
 
-      <div class="shortcuts">
+      <div class="set-card shortcuts">
         <h3>{t('settingsShortcuts')}</h3>
-        <label class="check">
+        <label class="set-row check">
           <input
             type="checkbox"
             checked={settings.contextMenu}
@@ -533,16 +572,18 @@ function SettingsPane({
           {t('settingsContextMenu')}
         </label>
         <p class="help">{t('settingsContextMenuHelp')}</p>
-        <p class="help">{t('settingsShortcutsHelp')}</p>
-        <button onClick={() => void browser.tabs.create({ url: 'chrome://extensions/shortcuts' })}>
-          {t('settingsShortcutsOpen')}
-        </button>
+        <div class="set-row">
+          <p class="help">{t('settingsShortcutsHelp')}</p>
+          <button onClick={() => void browser.tabs.create({ url: 'chrome://extensions/shortcuts' })}>
+            {t('settingsShortcutsOpen')}
+          </button>
+        </div>
       </div>
 
-      <div>
+      <div class="set-card">
         <h3>{t('settingsData')}</h3>
-        <p>{t('localOnlyLong')}</p>
-        <p class="muted">{t('storageUsage', usage)}</p>
+        <p class="help">{t('localOnlyLong')}</p>
+        <p class="usage">{t('storageUsage', usage)}</p>
         <DataSettings settings={settings} onApplySettings={onChange} />
       </div>
     </section>

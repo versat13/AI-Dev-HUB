@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { BUILTIN_TEMPLATES, type Lang } from '@/lib/ai';
+import { ALL_SECTION_KEYS, BUILTIN_TEMPLATES, sectionTitle, type Lang, type SectionKey } from '@/lib/ai';
 import { deleteTemplate, listCustomTemplates, newTemplate, saveTemplate } from '@/lib/ai-db';
 import { getLocale, t } from '@/lib/i18n';
 import type { PromptTemplate } from '@/lib/types';
@@ -28,18 +28,29 @@ export function TemplateSettings() {
     <section class="templates">
       <h2>{t('navTemplates')}</h2>
       <p class="help">{t('templatesIntro')}</p>
-      <p class="help mono">{'{{source}} {{format}} {{title}} {{url}} {{site}} {{memo}} {{fragments}}'}</p>
+      <dl class="tpl-vars">
+        {VARS.map((v) => (
+          <div key={v}>
+            <dt class="mono">{`{{${v}}}`}</dt>
+            <dd>{t(`tplVar_${v}`)}</dd>
+          </div>
+        ))}
+      </dl>
 
       <h3>{t('templatesBuiltIn')}</h3>
       <ul class="tpl-list">
         {BUILTIN_TEMPLATES.map((b) => (
-          <li key={b.id}>
-            <strong>{b.name[lang]}</strong>
-            <span class="spacer" />
-            <button class="link" onClick={() => setViewing(viewing === b.id ? null : b.id)} aria-expanded={viewing === b.id}>
-              {viewing === b.id ? t('close') : t('templateView')}
-            </button>
-            <button onClick={() => duplicate(b.name[lang], b.body[lang])}>{t('templateDuplicate')}</button>
+          <li key={b.id} class="tpl-card">
+            <div class="tpl-head">
+              <strong>{b.name[lang]}</strong>
+              <span class="spacer" />
+              <button class="link" onClick={() => setViewing(viewing === b.id ? null : b.id)} aria-expanded={viewing === b.id}>
+                {viewing === b.id ? t('close') : t('templateView')}
+              </button>
+              <button onClick={() => duplicate(b.name[lang], b.body[lang])}>{t('templateDuplicate')}</button>
+            </div>
+            <p class="tpl-lead">{firstLine(b.body[lang])}</p>
+            <Heads keys={b.sections} lang={lang} />
             {viewing === b.id && <pre class="frag-text tpl-body">{b.body[lang]}</pre>}
           </li>
         ))}
@@ -49,7 +60,8 @@ export function TemplateSettings() {
       {custom.length === 0 && <p class="muted">{t('templatesNone')}</p>}
       <ul class="tpl-list">
         {custom.map((c) => (
-          <li key={c.id}>
+          <li key={c.id} class="tpl-card">
+            <div class="tpl-head">
             <strong>{c.name}</strong>
             <span class="spacer" />
             <button onClick={() => setDraft({ ...c })}>{t('templateEdit')}</button>
@@ -64,6 +76,9 @@ export function TemplateSettings() {
             >
               {t('deleteCategory')}
             </button>
+            </div>
+            <p class="tpl-lead">{firstLine(c.body)}</p>
+            {c.body.includes('{{format}}') && <Heads keys={ALL_SECTION_KEYS} lang={lang} />}
           </li>
         ))}
       </ul>
@@ -91,5 +106,20 @@ export function TemplateSettings() {
         </div>
       )}
     </section>
+  );
+}
+
+const VARS = ['source', 'format', 'title', 'url', 'site', 'memo', 'fragments'] as const;
+
+function firstLine(body: string): string {
+  return body.split('\n').map((l) => l.trim()).find((l) => l && !l.startsWith('{{')) ?? '';
+}
+
+/** そのテンプレートで回答に求める見出しの並び */
+function Heads({ keys, lang }: { keys: SectionKey[]; lang: Lang }) {
+  return (
+    <ol class="tpl-heads" aria-label={t('templateHeads')}>
+      {keys.map((k) => <li key={k}>{sectionTitle(k, lang)}</li>)}
+    </ol>
   );
 }

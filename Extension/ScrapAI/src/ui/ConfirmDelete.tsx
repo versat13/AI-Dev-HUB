@@ -1,30 +1,32 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { t } from '@/lib/i18n';
 
 /**
- * 削除ボタン（赤字）。押すとその場に確認が出て、「削除する」でだけ実行する。
- * window.confirm を使わないので、メニューやバーの中でも流れが途切れない。
+ * 2回押して消す削除ボタン。1回目でボタンが赤く塗られ「もう一度押すと削除」に変わる。
+ * 3秒たつか、ボタンからフォーカスが外れると元に戻る。
  */
-export function ConfirmDelete({ label, question, onConfirm }: {
-  label: string;
-  question: string;
-  onConfirm: () => void | Promise<void>;
-}) {
-  const [asking, setAsking] = useState(false);
-  if (!asking) {
-    return (
-      <button class="danger" onClick={(e) => { e.stopPropagation(); setAsking(true); }}>
-        {label}
-      </button>
-    );
-  }
+export function ConfirmDelete({ label, onConfirm }: { label: string; onConfirm: () => void | Promise<void> }) {
+  const [armed, setArmed] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
   return (
-    <div class="confirm" role="alertdialog" aria-label={question} onClick={(e) => e.stopPropagation()}>
-      <p>{question}</p>
-      <div class="confirm-actions">
-        <button class="danger solid" onClick={() => void onConfirm()}>{t('confirmDeleteYes')}</button>
-        <button onClick={() => setAsking(false)}>{t('cancel')}</button>
-      </div>
-    </div>
+    <button
+      class={`danger${armed ? ' solid' : ''}`}
+      aria-live="polite"
+      onBlur={() => setArmed(false)}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (armed) {
+          window.clearTimeout(timer.current);
+          void onConfirm();
+          return;
+        }
+        setArmed(true);
+        timer.current = window.setTimeout(() => setArmed(false), 3000);
+      }}
+    >
+      {armed ? t('deleteAgain') : label}
+    </button>
   );
 }

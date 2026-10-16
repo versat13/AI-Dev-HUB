@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { browser } from 'wxt/browser';
 import { t } from '@/lib/i18n';
+import { setSettings } from '@/lib/settings';
 import type { Settings } from '@/lib/types';
 import { DetailView } from '@/ui/DetailView';
 import { ListBrowser } from '@/ui/ListBrowser';
@@ -18,6 +19,34 @@ interface OpenRequest {
  */
 export function App({ settings }: { settings: Settings }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [keepOpen, setKeepOpen] = useState(settings.panelKeepOpen);
+  const keepRef = useRef(keepOpen);
+  keepRef.current = keepOpen;
+
+  async function toggleKeepOpen() {
+    const v = !keepRef.current;
+    setKeepOpen(v);
+    await setSettings({ panelKeepOpen: v });
+  }
+
+  // 読み終えてページをクリックしたら（パネルからフォーカスが外れたら）自動で閉じる。
+  // 「開いたままにする」がオンのときは閉じない
+  useEffect(() => {
+    let timer: number | undefined;
+    const onBlur = () => {
+      if (keepRef.current) return;
+      timer = window.setTimeout(() => {
+        if (!document.hasFocus() && !keepRef.current) void closePanel();
+      }, 400);
+    };
+    const onFocus = () => window.clearTimeout(timer);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, []);
 
   useEffect(() => {
     // パネルを開いた時点で既に依頼がある場合（直前にポップアップから開かれた）
@@ -47,16 +76,44 @@ export function App({ settings }: { settings: Settings }) {
         />
       ) : (
         <div class="panel-list" key="list">
-          <header class="popup-head">
-            <span class="brand"><img src="/icon/32.png" width="18" height="18" alt="" />ScrapAI</span>
-            <span class="spacer" />
-            <button class="icon-btn" aria-label={t('openManager')} title={t('openManager')} onClick={() => openManager()}>
-              <Icon name="manager" />
-            </button>
-          </header>
-          <ListBrowser settings={settings} onOpen={setSelectedId} />
+          {/* パネルの名前は Chrome が上に出すので、ここでは見出しを出さない */}
+          <ListBrowser
+            settings={settings}
+            onOpen={setSelectedId}
+            barExtra={
+              <>
+                <button
+                  class="icon-btn keep-open"
+                  aria-pressed={keepOpen}
+                  aria-label={t('panelKeepOpen')}
+                  title={t('panelKeepOpenHelp')}
+                  onClick={toggleKeepOpen}
+                >
+                  <Icon name="pin" />
+                </button>
+                <button class="icon-btn" aria-label={t('openManager')} title={t('openManager')} onClick={() => openManager()}>
+                  <Icon name="manager" />
+                </button>
+              </>
+            }
+          />
         </div>
       )}
     </main>
   );
+}
+
+async function closePanel(): Promise<void> {
+  try {
+    // Chrome 141 以降は sidePanel.close がある。なければ window.close で閉じる
+    const sp = browser.sidePanel as unknown as { close?: (o: { windowId: number }) => Promise<void> };
+    if (sp.close) {
+      const win = await browser.windows.getCurrent();
+      await sp.close({ windowId: win.id! });
+      return;
+    }
+  } catch {
+    // 下で閉じる
+  }
+  window.close();
 }

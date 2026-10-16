@@ -55,29 +55,40 @@ export function DataSettings({ settings, onApplySettings }: {
 
   return (
     <div class="data-settings">
-      <h3>{t('exportTitle')}</h3>
-      <p class="help">{t('exportHelp')}</p>
-      <label class="check"><input type="checkbox" checked={opts.organize} onChange={toggle('organize')} />{t('exportOrganize')}</label>
-      <label class="check"><input type="checkbox" checked={opts.aiAnswers} onChange={toggle('aiAnswers')} />{t('exportAnswers')}</label>
-      <label class="check"><input type="checkbox" checked={opts.sites} onChange={toggle('sites')} />{t('exportSites')}</label>
-      <label class="check"><input type="checkbox" checked={opts.templates} onChange={toggle('templates')} />{t('exportTemplates')}</label>
-      <label class="check"><input type="checkbox" checked={opts.snapshots} onChange={toggle('snapshots')} />{t('exportSnapshots')}</label>
-      <label class="check"><input type="checkbox" checked={opts.includeSettings} onChange={toggle('includeSettings')} />{t('exportSettings')}</label>
-      <p><button onClick={doExport}>{t('exportButton')}</button></p>
+      <div class="data-pair">
+        <section class="data-card">
+          <h4>⬇ {t('exportTitle')}</h4>
+          <p class="help">{t('exportHelp')}</p>
+          <div class="data-opts">
+            <label class="check"><input type="checkbox" checked={opts.organize} onChange={toggle('organize')} />{t('exportOrganize')}</label>
+            <label class="check"><input type="checkbox" checked={opts.aiAnswers} onChange={toggle('aiAnswers')} />{t('exportAnswers')}</label>
+            <label class="check"><input type="checkbox" checked={opts.snapshots} onChange={toggle('snapshots')} />{t('exportSnapshots')}</label>
+            <label class="check"><input type="checkbox" checked={opts.sites} onChange={toggle('sites')} />{t('exportSites')}</label>
+            <label class="check"><input type="checkbox" checked={opts.templates} onChange={toggle('templates')} />{t('exportTemplates')}</label>
+            <label class="check"><input type="checkbox" checked={opts.includeSettings} onChange={toggle('includeSettings')} />{t('exportSettings')}</label>
+          </div>
+          <button class="primary data-action" onClick={doExport}>{t('exportButton')}</button>
+        </section>
 
-      <h3>{t('importTitle')}</h3>
-      <label class="block">
-        <span>{t('importDuplicate')}</span>
-        <select value={mode} onChange={(e) => setMode((e.target as HTMLSelectElement).value as DuplicateMode)}>
-          <option value="skip">{t('dupSkip')}</option>
-          <option value="overwrite">{t('dupOverwrite')}</option>
-          <option value="add">{t('dupAdd')}</option>
-        </select>
-      </label>
-      <label class="block">
-        <span>{t('importFile')}</span>
-        <input type="file" accept="application/json,.json" onChange={doImport} />
-      </label>
+        <section class="data-card">
+          <h4>⬆ {t('importTitle')}</h4>
+          <p class="help">{t('importHelp')}</p>
+          <div class="data-opts">
+            <label class="field">
+              <span>{t('importDuplicate')}</span>
+              <select value={mode} onChange={(e) => setMode((e.target as HTMLSelectElement).value as DuplicateMode)}>
+                <option value="skip">{t('dupSkip')}</option>
+                <option value="overwrite">{t('dupOverwrite')}</option>
+                <option value="add">{t('dupAdd')}</option>
+              </select>
+            </label>
+          </div>
+          <label class="primary data-action file-button">
+            {t('importButton')}
+            <input type="file" accept="application/json,.json" onChange={doImport} />
+          </label>
+        </section>
+      </div>
       {msg && <p role="status" class="ok">{msg}</p>}
       {err && <p role="alert" class="error">{err}</p>}
     </div>
