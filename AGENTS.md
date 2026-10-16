@@ -28,4 +28,4 @@
 
 ## 優先順位
 作業対象の `HANDOFF.md` に `## 作品ルール` があれば、このファイルより優先する。
-種別ごとの `RULES.md`（`vrchat/avatar/RULES.md` など）があれば併せて従う。
+種別ごとの `RULES.md`（`VRChats/avatar/RULES.md` など）があれば併せて従う。

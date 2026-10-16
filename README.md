@@ -2,9 +2,9 @@
 複数のAI（モデル）を切り替えながら開発するための共有ハブ。**Private推奨**。
 
 ## 構成
-- `vrchat/avatar/` アバターギミック
-- `vrchat/world/` ワールド
-- `extension/` Chrome拡張機能など
+- `VRChats/avatar/` アバターギミック
+- `VRChats/world/` ワールド
+- `Extension/` Chrome拡張機能など
 - `_template/` 新規作品用の雛形
 - `log/` 作業ログ
 
