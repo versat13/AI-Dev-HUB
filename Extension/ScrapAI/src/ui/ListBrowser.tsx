@@ -3,11 +3,12 @@ import { useState } from 'preact/hooks';
 import { t } from '@/lib/i18n';
 import type { ListData } from '@/lib/list';
 import { DEFAULT_PARAMS, isFiltered, type ListParams } from '@/lib/query';
-import type { Category, Settings } from '@/lib/types';
+import { db } from '@/lib/db';
+import type { Category, Density, Settings } from '@/lib/types';
 import { ActiveFilters, FilterPanel, SearchBox } from './Filters';
 import { Icon } from './icons';
 import { setSettings } from '@/lib/settings';
-import { useCategories, useListData } from './hooks';
+import { useCategories, useListData, useLive } from './hooks';
 import { ScrapRow } from './ScrapRow';
 
 /** 一覧の本体（件数・空表示・行）。選択UIが要る管理タブでも使う */
@@ -15,7 +16,7 @@ export function ScrapList(props: {
   data: ListData | undefined;
   params: ListParams;
   categories: Category[];
-  density: 'compact' | 'card';
+  density: Density;
   columns?: number;
   hideCount?: boolean; // 件数を呼び出し側で出す（管理タブ）
   face?: Settings['listFace']; // カード表示の列数（0または未指定 = 1列。管理タブでのみ指定する）
@@ -26,7 +27,22 @@ export function ScrapList(props: {
   onOpen: (id: string) => void;
 }) {
   const { data, params } = props;
+  // カード（大）の「原文」表示では、最初の断片の冒頭を長めに出す
+  const wantPreview = props.density === 'large' && props.face === 'original';
+  const ids = data?.items.map((s) => s.id).join(',') ?? '';
+  const previews = useLive(async () => {
+    if (!wantPreview || !ids) return null;
+    const frags = await db.fragments.where('scrapId').anyOf(ids.split(',')).toArray();
+    const first = new Map<string, { order: number; text: string }>();
+    for (const f of frags) {
+      const cur = first.get(f.scrapId);
+      if (!cur || f.order < cur.order) first.set(f.scrapId, { order: f.order, text: f.text });
+    }
+    return new Map([...first].map(([k, v]) => [k, v.text.replace(/\s+/g, ' ').slice(0, 600)]));
+  }, [wantPreview, ids]);
   if (!data) return <p class="empty" role="status">…</p>;
+  // ドメインの欄は、表示中で最も長いドメインに幅を合わせる（カードごとに位置がずれないように）
+  const domW = Math.min(24, Math.max(6, ...data.items.map((s) => s.domain.length)));
 
   const catMap = new Map(props.categories.map((c) => [c.id, c]));
   let empty: string | null = null;
@@ -43,12 +59,19 @@ export function ScrapList(props: {
         <p class="empty">{empty}</p>
       ) : (
         <ul
-          class={`rows${props.density === 'card' && props.columns != null ? ' grid' : ''}`}
-          style={
-            props.density === 'card' && props.columns != null
-              ? { gridTemplateColumns: props.columns > 0 ? `repeat(${props.columns}, minmax(0, 1fr))` : 'repeat(auto-fill, minmax(240px, 1fr))' }
-              : undefined
-          }
+          data-density={props.density}
+          class={`rows${props.density !== 'compact' && props.columns != null ? ' grid' : ''}`}
+          style={{
+            '--dom-w': `${domW}ch`,
+            ...(props.density !== 'compact' && props.columns != null
+              ? {
+                  gridTemplateColumns:
+                    props.columns > 0
+                      ? `repeat(${props.columns}, minmax(0, 1fr))`
+                      : `repeat(auto-fill, minmax(${props.density === 'large' ? 320 : 240}px, 1fr))`,
+                }
+              : {}),
+          }}
         >
           {data.items.map((s) => (
             <ScrapRow
@@ -57,6 +80,7 @@ export function ScrapList(props: {
               categories={catMap}
               density={props.density}
               face={props.face}
+              preview={previews?.get(s.id)}
               active={props.activeId === s.id}
               selectable={props.selectable}
               selected={props.selection?.has(s.id)}

@@ -95,8 +95,12 @@ describe('見出しの自動反映', () => {
 
   it('applyToScrapなしでは置き換えない。旧形式(jaTitle)も読める', async () => {
     const o = await saveFromPage({ url: ex.url, title: ex.title }, async () => ex, { articleMaxChars: 3000 });
-    await addAiAnswer({ scrapId: o.scrapId!, raw: '## 見出し\n変えない' });
-    expect((await db.scraps.get(o.scrapId!))!.title).toBe('Hello World');
+    await addAiAnswer({ scrapId: o.scrapId!, raw: '## 見出し\n変えない\n## 要点\n- 一つ目\n- 二つ目' });
+    const s = (await db.scraps.get(o.scrapId!))!;
+    expect(s.title).toBe('Hello World');
+    // 一覧の「AI要約」表示用には、タイトルを変えなくても見出しと要点を持つ
+    expect(s.aiHeadline).toBe('変えない');
+    expect(s.aiExcerpt).toBe('一つ目 / 二つ目');
     expect(answerParts({ sections: [{ key: 'jaTitle', body: '旧' }] }).title).toBe('旧');
   });
 

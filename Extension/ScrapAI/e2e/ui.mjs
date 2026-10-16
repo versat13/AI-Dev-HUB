@@ -108,7 +108,7 @@ const sources = db.fragments.map((f) => f.source).sort().join(',');
 check('記事: 断片=本文+概要', sources === 'meta,readability', sources);
 check('記事: 本文は上限3000字以内', db.fragments.find((f) => f.source === 'readability')?.text.length <= 3000);
 check('記事: 概要(excerpt)がOG概要', scrap?.excerpt === 'OGの概要文です', scrap?.excerpt);
-check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 3));
+check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 4));
 
 // 2) 同じURLを再度（選択なし）
 out = await save(aTab, 'auto');
@@ -360,6 +360,7 @@ await sp.screenshot({ path: path.join(OUT, 'p9-sidepanel.png') });
 
 // ポップアップ→詳細（sidePanel.open が使えない環境ではフォールバックで管理タブ）
 const pop2 = await openUi('popup.html', 380, 600, oTab);
+check('ポップアップ: 注意書きを出さない', !(await pop2.locator('body').innerText()).includes('ブラウザ内にのみ保存'));
 check('ポップアップ: サイドパネル/管理画面ボタン', (await pop2.getByRole('button', { name: 'サイドパネル' }).count()) === 1 && (await pop2.getByRole('button', { name: '管理画面' }).count()) === 1);
 await pop2.screenshot({ path: path.join(OUT, 'p2-popup-ja.png') });
 
@@ -399,6 +400,22 @@ check('カード: 列数が記憶される', (await colsOf()) === 3);
 await cm.getByRole('button', { name: 'コンパクト', exact: true }).click();
 await cm.waitForTimeout(300);
 check('コンパクト時は列ボタンが出ない', (await cm.getByRole('button', { name: '3列' }).count()) === 0);
+
+// カード（大）と、下段の位置そろえ
+await cm.getByRole('button', { name: 'カード（大）', exact: true }).click();
+await cm.waitForTimeout(400);
+check('カード（大）: 切り替えられる', (await cm.locator('.rows .row.large').count()) > 0);
+await cm.screenshot({ path: path.join(OUT, 'p11-large.png') });
+await cm.getByRole('button', { name: 'コンパクト', exact: true }).click();
+await cm.waitForTimeout(300);
+const pos = await cm.locator('.rows .row').evaluateAll((rows) => rows.map((r) => ({
+  flags: Math.round(r.querySelector('.meta-flags').getBoundingClientRect().left),
+  stars: Math.round(r.querySelector('.stars').getBoundingClientRect().right),
+  time: !!r.querySelector('.row-meta time'),
+})));
+check('下段: 状態の欄と星の位置がどのカードでもそろう', new Set(pos.map((p) => p.flags)).size === 1 && new Set(pos.map((p) => p.stars)).size === 1, JSON.stringify(pos));
+check('下段: 保存日時は一覧に出さない', pos.every((p) => !p.time));
+await cm.screenshot({ path: path.join(OUT, 'p11-compact.png') });
 
 // 並び順: ドメイン順
 await cm.getByLabel('並び順').selectOption('domain-asc');

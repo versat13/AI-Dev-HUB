@@ -44,7 +44,7 @@ describe('export / import', () => {
     expect(s.stars).toBe(4);
     expect(s.pinned).toBe(true);
     expect(s.aiAnswerCount).toBe(1);
-    expect(s.aiExcerpt).toBe('- テスト');
+    expect(s.aiExcerpt).toBe('テスト');
     expect(s.categoryIds).toHaveLength(1);
     expect((await listFragments(s.id))[0]!.text).toBe('あいう');
     expect(await db.aiAnswers.count()).toBe(1);

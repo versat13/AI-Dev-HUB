@@ -106,7 +106,6 @@ export function App({ settings }: { settings: Settings }) {
         <button class="link" onClick={startPicker}><Icon name="pick" size={13} /> {t('pickElement')}</button>
         <button class="link" onClick={() => openManager(undefined, 'sites')}><Icon name="sites" size={13} /> {t('navSites')}</button>
       </footer>
-      <p class="note">{t('localOnly')}</p>
     </main>
   );
 }

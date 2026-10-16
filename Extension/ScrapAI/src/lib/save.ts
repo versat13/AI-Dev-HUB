@@ -1,7 +1,7 @@
 import { db, findScrapByNormalizedUrl, listFragments } from './db';
 import type { ExtractResult } from './extract-page';
 import type { ProfileDraft } from './profile-extract';
-import { excerptOf, normalizeText, truncate } from './text';
+import { cleanPageTitle, excerptOf, normalizeText, truncate } from './text';
 import type {
   ExtractStatus,
   Fragment,
@@ -160,7 +160,12 @@ export async function saveFromPage(
     const ex = await safeExtract(extract);
     const drafts = buildDrafts(ex, settings, { selection: true, article: true, description: true });
     const extractStatus = statusOf(drafts);
-    const title = tab.title?.trim() || ex?.ogTitle || ex?.articleTitle || url;
+    const rawTitle = tab.title?.trim() || ex?.ogTitle || ex?.articleTitle || url;
+    const title = cleanPageTitle(rawTitle, {
+      siteName: ex?.siteName,
+      domain,
+      body: drafts.find((d) => d.role === 'body' && d.source !== 'readability')?.text,
+    });
 
     await db.transaction('rw', db.scraps, db.fragments, async () => {
       if (drafts.length > 0) {

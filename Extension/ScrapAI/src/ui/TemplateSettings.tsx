@@ -82,7 +82,7 @@ export function TemplateSettings() {
           </li>
         ))}
       </ul>
-      <button onClick={() => duplicate(t('templateNewName'), '{{format}}\n\n{{source}}')}>{t('templateNew')}</button>
+      <button onClick={() => duplicate(t('templateNewName'), '{{source}}\n\n{{format}}')}>{t('templateNew')}</button>
 
       {draft && (
         <div class="tpl-editor">

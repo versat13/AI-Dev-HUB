@@ -510,7 +510,7 @@
     "message": "AI"
   },
   "aiTemplate": {
-    "message": "Template"
+    "message": "Prompt"
   },
   "aiFragsUsed": {
     "message": "Fragments sent to AI ({0}/{1})"
@@ -585,10 +585,10 @@
     "message": "Delete this AI answer?"
   },
   "navTemplates": {
-    "message": "AI templates"
+    "message": "Prompts"
   },
   "templatesIntro": {
-    "message": "Prompt templates for the AI. Duplicate a built-in one to edit it freely. Placeholders you can use:"
+    "message": "Prompts to give the AI, chosen by what you want to do. Duplicate a built-in one to edit it freely. Placeholders you can use:"
   },
   "templatesBuiltIn": {
     "message": "Built-in"
@@ -597,7 +597,7 @@
     "message": "Custom"
   },
   "templatesNone": {
-    "message": "No custom templates yet."
+    "message": "No custom prompts yet."
   },
   "templateView": {
     "message": "View"
@@ -609,10 +609,10 @@
     "message": "Edit"
   },
   "templateNew": {
-    "message": "New template"
+    "message": "New prompt"
   },
   "templateNewName": {
-    "message": "New template"
+    "message": "New prompt"
   },
   "templateCopyName": {
     "message": "{0} (copy)"
@@ -624,7 +624,7 @@
     "message": "Body"
   },
   "confirmDeleteTemplate": {
-    "message": "Delete template \"{0}\"?"
+    "message": "Delete prompt \"{0}\"?"
   },
   "exportTitle": {
     "message": "Export"
@@ -642,7 +642,7 @@
     "message": "Include site settings"
   },
   "exportTemplates": {
-    "message": "Include custom AI templates"
+    "message": "Include custom prompts"
   },
   "exportSettings": {
     "message": "Include display settings"
@@ -857,9 +857,6 @@
   "deleteAgain": {
     "message": "Click again to delete"
   },
-  "panelKeepOpen": {
-    "message": "Keep open"
-  },
   "panelKeepOpenHelp": {
     "message": "When off, the side panel closes when you click back on the page"
   },
@@ -937,5 +934,14 @@
   },
   "tplVar_fragments": {
     "message": "Fragments only"
+  },
+  "setPanelKeepOpen": {
+    "message": "Keep the side panel open"
+  },
+  "densityLarge": {
+    "message": "Large cards"
+  },
+  "densityLabel": {
+    "message": "List layout"
   }
 }

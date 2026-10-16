@@ -510,7 +510,7 @@
     "message": "AI"
   },
   "aiTemplate": {
-    "message": "テンプレート"
+    "message": "プロンプト"
   },
   "aiFragsUsed": {
     "message": "AIに渡す断片（{0}/{1}）"
@@ -585,10 +585,10 @@
     "message": "このAIの回答を削除しますか？"
   },
   "navTemplates": {
-    "message": "AIテンプレート"
+    "message": "プロンプト"
   },
   "templatesIntro": {
-    "message": "AIに渡すプロンプトのひな形です。組み込みは複製すると自由に書き換えられます。本文で使える差し込み:"
+    "message": "AIに渡すプロンプトです。目的に合わせて選びます。組み込みのものは複製すると自由に書き換えられます。本文で使える差し込み:"
   },
   "templatesBuiltIn": {
     "message": "組み込み"
@@ -597,7 +597,7 @@
     "message": "自作"
   },
   "templatesNone": {
-    "message": "自作のテンプレートはまだありません。"
+    "message": "自作のプロンプトはまだありません。"
   },
   "templateView": {
     "message": "内容を見る"
@@ -609,10 +609,10 @@
     "message": "編集"
   },
   "templateNew": {
-    "message": "新しいテンプレート"
+    "message": "新しいプロンプト"
   },
   "templateNewName": {
-    "message": "新しいテンプレート"
+    "message": "新しいプロンプト"
   },
   "templateCopyName": {
     "message": "{0}（コピー）"
@@ -624,7 +624,7 @@
     "message": "本文"
   },
   "confirmDeleteTemplate": {
-    "message": "テンプレート「{0}」を削除しますか？"
+    "message": "プロンプト「{0}」を削除しますか？"
   },
   "exportTitle": {
     "message": "エクスポート"
@@ -642,7 +642,7 @@
     "message": "サイト設定を含める"
   },
   "exportTemplates": {
-    "message": "自作のAIテンプレートを含める"
+    "message": "自作のプロンプトを含める"
   },
   "exportSettings": {
     "message": "表示設定を含める"
@@ -857,9 +857,6 @@
   "deleteAgain": {
     "message": "もう一度押すと削除"
   },
-  "panelKeepOpen": {
-    "message": "開いたままにする"
-  },
   "panelKeepOpenHelp": {
     "message": "オフのときは、ページをクリックするとサイドパネルが自動で閉じます"
   },
@@ -937,5 +934,14 @@
   },
   "tplVar_fragments": {
     "message": "断片だけ"
+  },
+  "setPanelKeepOpen": {
+    "message": "サイドパネルを自動で閉じない"
+  },
+  "densityLarge": {
+    "message": "カード（大）"
+  },
+  "densityLabel": {
+    "message": "一覧の表示"
   }
 }

@@ -106,6 +106,7 @@ export async function importData(file: ExportFile, mode: DuplicateMode): Promise
         categoryIds: (s.categoryIds ?? []).map((c) => catMap.get(c)).filter((c): c is string => !!c),
         aiAnswerCount: answers.length,
         aiExcerpt: answers.length ? s.aiExcerpt : undefined, // 回答を取り込まないときは要約も出さない
+        aiHeadline: answers.length ? s.aiHeadline : undefined,
       };
       scrapIdMap.set(s.id, newId);
       await db.scraps.add(scrap);

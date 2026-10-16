@@ -34,3 +34,40 @@ export function excerptOf(frags: { source: string; text: string; role?: string }
     frags[0];
   return pick ? makeExcerpt(pick.text) : '';
 }
+
+const TITLE_SEPS = [' / ', ' - ', ' | ', '｜', ' — ', ' – ', ' :: '];
+const GENERIC_SITE_NAMES = ['x', 'twitter', 'youtube', 'bluesky', 'threads', 'reddit', 'note'];
+
+/** 本文の最初の一文（句点・改行まで）。長ければ max 字で切る */
+export function firstSentence(text: string, max = 60): string {
+  const flat = text.replace(/\s+/g, ' ').trim();
+  const m = flat.match(/^(.+?(?:[。．！？]|[.!?](?=\s|$)))/);
+  return truncate(m ? m[1]! : flat, max).text;
+}
+
+/**
+ * ページのタイトルを、一覧で読みやすい形に整える（どのサイトにも効く2つの規則）。
+ * 1. 末尾の「 / X」「 - YouTube」のような、サイト名だけの付け足しを外す
+ * 2. タイトルが本文をそのまま含む（SNSの「◯◯さん:「本文」」形式など）なら、本文の最初の一文にする
+ */
+export function cleanPageTitle(raw: string, opts: { siteName?: string; domain?: string; body?: string }): string {
+  let title = raw.replace(/\s+/g, ' ').trim();
+  const names = new Set(
+    [opts.siteName, opts.domain?.replace(/^www\./, '').split('.')[0], ...GENERIC_SITE_NAMES]
+      .filter((x): x is string => !!x)
+      .map((x) => x.toLowerCase()),
+  );
+  for (const sep of TITLE_SEPS) {
+    const i = title.lastIndexOf(sep);
+    if (i > 0 && names.has(title.slice(i + sep.length).trim().toLowerCase())) {
+      title = title.slice(0, i).trim();
+      break;
+    }
+  }
+  const body = opts.body?.replace(/\s+/g, ' ').trim() ?? '';
+  const probe = body.slice(0, 20);
+  if (probe.length >= 8 && title.includes(probe) && title.length > probe.length + 4) {
+    return firstSentence(body);
+  }
+  return title || raw;
+}

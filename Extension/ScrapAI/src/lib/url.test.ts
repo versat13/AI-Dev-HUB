@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { domainOf, normalizeUrl } from './url';
+import { cleanPageTitle } from './text';
 
 describe('normalizeUrl: 汎用', () => {
   it('# 以降と追跡パラメータを除去する', () => {
@@ -93,5 +94,18 @@ describe('domainOf', () => {
   });
   it('不正なURLは空文字', () => {
     expect(domainOf('???')).toBe('');
+  });
+});
+
+describe('cleanPageTitle', () => {
+  it('Xの「◯◯さん:「本文」/ X」は本文の最初の一文にする', () => {
+    const raw = 'Xユーザーのジャヴァノ🍀ボカロP@初音ミク「w/39」10/12アルバムリリースさん: 「わちはMiniMax-H3でほとんどLoRAを使わなくなったんだけど、これは入れとけ案件。「走る・歩く」モーションが抜群に改善する。」 / X';
+    const body = 'わちはMiniMax-H3でほとんどLoRAを使わなくなったんだけど、これは入れとけ案件。「走る・歩く」モーションが抜群に改善する。';
+    expect(cleanPageTitle(raw, { domain: 'x.com', body })).toBe('わちはMiniMax-H3でほとんどLoRAを使わなくなったんだけど、これは入れとけ案件。');
+  });
+  it('末尾のサイト名だけを外す。本文と関係ないタイトルはそのまま', () => {
+    expect(cleanPageTitle('動画のタイトル - YouTube', { domain: 'www.youtube.com' })).toBe('動画のタイトル');
+    expect(cleanPageTitle('記事の題 | Qiita', { siteName: 'Qiita', domain: 'qiita.com', body: '全く別の本文がここに続きます。' })).toBe('記事の題');
+    expect(cleanPageTitle('A - B - C', { domain: 'example.com' })).toBe('A - B - C');
   });
 });

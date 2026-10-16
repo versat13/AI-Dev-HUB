@@ -124,7 +124,7 @@ check('詳細にAI欄がある', await det.locator('.ai-panel').isVisible());
 await det.getByRole('button', { name: 'プロンプトをコピー' }).click();
 await mg.waitForTimeout(300);
 let clip = await mg.evaluate(() => navigator.clipboard.readText());
-check('プロンプト: 形式と資料が入る', clip.includes('## Key points') && clip.includes('## Prompt for the next AI') && !/## [ぁ-んァ-ヶ一-龠]/.test(clip) && clip.includes('## Fragment1: Article text') && clip.includes('Title: テスト記事') && clip.includes('Write the answer in Japanese.') && clip.includes('```markdown') && clip.includes('これは本文の段落です'), clip.slice(0, 80));
+check('プロンプト: 形式と資料が入る', clip.includes('## Key points') && clip.includes('## Prompt for the next AI') && !/## [ぁ-んァ-ヶ一-龠]/.test(clip) && clip.includes('<fragment index="1" label="Article text">') && clip.indexOf('</material>') < clip.indexOf('## Answer format') && clip.includes('Title: テスト記事') && clip.includes('Write the answer in Japanese.') && clip.includes('```markdown') && clip.includes('これは本文の段落です'), clip.slice(0, 80));
 check('プロンプト: コピーしました表示', /コピーしました/.test(await det.locator('.ai-ask').innerText()));
 
 // プロンプトの言語: EN（既定）⇔ 日本語
@@ -132,19 +132,19 @@ await det.locator('.seg').getByRole('button', { name: '日本語' }).click();
 await det.getByRole('button', { name: 'プロンプトをコピー' }).click();
 await mg.waitForTimeout(300);
 clip = await mg.evaluate(() => navigator.clipboard.readText());
-check('プロンプト: 日本語に切り替え', clip.includes('あなたは慎重なリサーチャーです') && clip.includes('## 要点') && clip.includes('タイトル: テスト記事') && clip.includes('回答は日本語で書いてください'), clip.slice(0, 40));
+check('プロンプト: 日本語に切り替え', clip.includes('あなたは、あとで読み返す人のために') && clip.includes('## 要点') && clip.includes('タイトル: テスト記事') && clip.includes('回答は日本語で書いてください'), clip.slice(0, 40));
 check('プロンプト: 言語の選択が記憶される', (await ext.evaluate(async () => (await chrome.storage.local.get('settings')).settings))?.aiPromptLang === 'native');
 await det.locator('.seg').getByRole('button', { name: 'EN' }).click();
 
-// テンプレート切り替え（短く要点だけ）→ 形式が変わる、設定に記憶される
-await det.getByLabel('テンプレート').selectOption({ label: '短く要点だけ' });
+// プロンプト切り替え（要点抽出）→ 形式が変わる、設定に記憶される
+await det.locator('.ai-ask select').selectOption({ label: '要点抽出' });
 await det.getByRole('button', { name: 'プロンプトをコピー' }).click();
 await mg.waitForTimeout(300);
 clip = await mg.evaluate(() => navigator.clipboard.readText());
-check('テンプレート切替: 要点・有用性だけ', clip.includes('## Usefulness') && !clip.includes('## First step'), clip.slice(0, 60));
+check('プロンプト切替: 見出しと要点だけ', clip.includes('## Key points') && !clip.includes('## Usefulness'), clip.slice(0, 60));
 const st = await ext.evaluate(async () => (await chrome.storage.local.get('settings')).settings);
 check('テンプレート切替: 記憶される', st?.aiTemplateId === 'builtin-brief', st?.aiTemplateId);
-await det.getByLabel('テンプレート').selectOption({ label: '要約と検証' });
+await det.locator('.ai-ask select').selectOption({ label: '要約' });
 
 // 断片の除外
 await det.locator('.ai-frags summary').click();
@@ -224,7 +224,7 @@ check('検索: AIの回答の本文で見つかる', main.includes('テスト記
 await mg.getByPlaceholder('タイトル・URL・メモ・本文を検索').fill('');
 
 // テンプレート管理: 複製→編集→保存→詳細で選べる
-await mg.locator('.m-nav').getByRole('button', { name: 'AIテンプレート' }).click();
+await mg.locator('.m-nav').getByRole('button', { name: 'プロンプト', exact: true }).click();
 await mg.waitForTimeout(300);
 await mg.getByRole('button', { name: '複製して編集' }).first().click();
 await mg.waitForTimeout(300);
@@ -256,10 +256,12 @@ await mg.locator('.m-detail').getByRole('button', { name: /閉じる/ }).click()
 await mg.waitForTimeout(400);
 let rowText = await mg.locator('.m-main .row', { hasText: 'テスト記事' }).first().innerText();
 check('一覧: AI要約を主役に表示', rowText.includes('段落が12回繰り返される') && !rowText.includes('OGの概要文です'), rowText.replace(/\n/g, ' / '));
+check('一覧: AI要約表示では見出しもAIのものに', rowText.includes('テスト記事を整理した見出し'), rowText.replace(/\n/g, ' / '));
+await mg.screenshot({ path: path.join(OUT, 'p11-ai-face.png') });
 await mg.locator('.face-toggle').getByRole('button', { name: '原文' }).click();
 await mg.waitForTimeout(400);
 rowText = await mg.locator('.m-main .row', { hasText: 'テスト記事' }).first().innerText();
-check('一覧: 原文に切り替え（全体）', rowText.includes('OGの概要文です') && !rowText.includes('段落が12回'), rowText.replace(/\n/g, ' / '));
+check('一覧: 原文に切り替え（全体）', rowText.includes('OGの概要文です') && !rowText.includes('整理した見出し') && !rowText.includes('段落が12回'), rowText.replace(/\n/g, ' / '));
 check('一覧: 表示の選択が記憶される', (await ext.evaluate(async () => (await chrome.storage.local.get('settings')).settings))?.listFace === 'original');
 await mg.locator('.face-toggle').getByRole('button', { name: /AI要約/ }).click();
 

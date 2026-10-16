@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { browser } from 'wxt/browser';
 import { t } from '@/lib/i18n';
-import { setSettings } from '@/lib/settings';
 import type { Settings } from '@/lib/types';
 import { DetailView } from '@/ui/DetailView';
 import { ListBrowser } from '@/ui/ListBrowser';
@@ -19,15 +18,16 @@ interface OpenRequest {
  */
 export function App({ settings }: { settings: Settings }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [keepOpen, setKeepOpen] = useState(settings.panelKeepOpen);
-  const keepRef = useRef(keepOpen);
-  keepRef.current = keepOpen;
-
-  async function toggleKeepOpen() {
-    const v = !keepRef.current;
-    setKeepOpen(v);
-    await setSettings({ panelKeepOpen: v });
-  }
+  // 「サイドパネルを自動で閉じない」（設定画面）。パネルを開いたまま設定を変えても反映する
+  const keepRef = useRef(settings.panelKeepOpen);
+  useEffect(() => {
+    const onChanged = (c: Record<string, { newValue?: unknown }>, area: string) => {
+      const next = c.settings?.newValue as Settings | undefined;
+      if (area === 'local' && next) keepRef.current = next.panelKeepOpen;
+    };
+    browser.storage.onChanged.addListener(onChanged);
+    return () => browser.storage.onChanged.removeListener(onChanged);
+  }, []);
 
   // 読み終えてページをクリックしたら（パネルからフォーカスが外れたら）自動で閉じる。
   // 「開いたままにする」がオンのときは閉じない
@@ -82,15 +82,6 @@ export function App({ settings }: { settings: Settings }) {
             onOpen={setSelectedId}
             barExtra={
               <>
-                <button
-                  class="icon-btn keep-open"
-                  aria-pressed={keepOpen}
-                  aria-label={t('panelKeepOpen')}
-                  title={t('panelKeepOpenHelp')}
-                  onClick={toggleKeepOpen}
-                >
-                  <Icon name="pin" />
-                </button>
                 <button class="icon-btn" aria-label={t('openManager')} title={t('openManager')} onClick={() => openManager()}>
                   <Icon name="manager" />
                 </button>

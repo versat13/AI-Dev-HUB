@@ -13,6 +13,7 @@ export type SectionKey =
   | 'facts'
   | 'unverified'
   | 'prerequisites'
+  | 'steps'
   | 'firstStep'
   | 'nextPrompt'
   | 'sources'
@@ -33,7 +34,10 @@ export const SECTIONS: SectionDef[] = [
   {
     key: 'headline',
     title: { ja: '見出し', en: 'Headline' },
-    hint: { ja: '内容が一目で分かる1行のタイトル（40字以内）', en: 'a one-line title that conveys the content at a glance (under 40 characters if Japanese, 80 otherwise)' },
+    hint: {
+      ja: '一覧に並べる短い見出し。内容が一目で分かる名詞句で、全角30字以内。投稿者名・サイト名・かぎかっこは入れない',
+      en: 'a short title for a list view: a noun phrase that tells what it is about, at most 30 Japanese characters or 60 Latin characters; no author or site names, no quotation marks',
+    },
     // 旧「日本語タイトル」もここに寄せる
     aliases: ['日本語タイトル', '日本語の見出し', '日本語見出し', '邦題', 'japanese title', 'headline'],
   },
@@ -66,6 +70,12 @@ export const SECTIONS: SectionDef[] = [
     title: { ja: '前提条件', en: 'Prerequisites' },
     hint: { ja: '試す・使うのに必要な環境、費用、アカウントなど', en: 'environment, cost, accounts etc. needed to try or use it' },
     aliases: ['前提', '必要なもの', 'requirements'],
+  },
+  {
+    key: 'steps',
+    title: { ja: '手順', en: 'Steps' },
+    hint: { ja: '番号付きの手順。1手順に1つの操作。コマンドや設定値は資料のとおりに', en: 'numbered steps, one action each; copy commands and values exactly from the material' },
+    aliases: ['やり方', '手順の一覧', 'how to', 'procedure'],
   },
   {
     key: 'firstStep',
@@ -136,105 +146,141 @@ export interface BuiltinTemplate {
   sections: SectionKey[]; // {{format}} に入れる見出し
 }
 
-// 指示文は「役割 → 目的 → 守ること」の順に短く書く。回答の形式は {{format}} がまとめて指定する
+// 構成は「役割 → 資料 → やること → 回答の形式」。長い資料を先に置き、指示と形式を最後に置くと守られやすい
+// （Anthropic: 長文は上・質問は末尾で品質が最大30%向上 / OpenAI GPT-4.1: 指示は資料の前後に置くのが最良）
 export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
   {
-    id: 'builtin-verify',
-    name: { ja: '要約と検証', en: 'Summarize and verify' },
-    sections: ALL_SECTION_KEYS,
+    id: 'builtin-summary',
+    name: { ja: '要約', en: 'Summarize' },
+    sections: ['headline', 'summary', 'usefulness', 'nextPrompt', 'sources'],
     body: {
-      ja: `あなたは慎重なリサーチャーです。次の資料を整理し、どこまで確かかを検証してください。
+      ja: `あなたは、あとで読み返す人のために資料を要約する編集者です。
 
-- 資料に書かれていること、あなたの知識、推測を混ぜないでください。推測には「推測:」と付けてください。
-- 確かめられない主張は「未確認事項・確度の根拠」に入れ、なぜ確かめられないかを書いてください。
-- 数字・固有名詞・日付は資料のとおりに書き、変えないでください。
+{{source}}
+
+上の資料を、あとで見返したときに5秒で中身を思い出せるように要約してください。
+- 要点は、資料の結論と、その根拠になる具体的な事実（数字・名前・手段）を優先してください。
+- 「有用性」には、誰がどんな作業で使えるかを書いてください。
 - 「次回AIに渡す指示」は、この資料を知らないAIにそのまま貼って通じる文にしてください。
 
-{{format}}
+{{format}}`,
+      en: `You are an editor who summarizes material for someone who will look it up again later.
 
-{{source}}`,
-      en: `You are a careful researcher. Organize the following material and check how far it can be trusted.
+{{source}}
 
-- Keep three things apart: what the material says, what you know, and what you guess. Mark guesses with "Guess:".
-- Put claims you cannot confirm under the unverified section and say why they cannot be confirmed.
-- Copy numbers, names and dates exactly as in the material.
+Summarize the material above so that it can be recalled in five seconds when looked up again.
+- In the key points, put the conclusion first, then the concrete facts behind it (numbers, names, methods).
+- Under usefulness, say who could use it and for what work.
 - Write the prompt for the next AI so that it works when pasted into an AI that has never seen this material.
 
-{{format}}
-
-{{source}}`,
-    },
-  },
-  {
-    id: 'builtin-try',
-    name: { ja: '試し方を知りたい', en: 'How do I try this?' },
-    sections: ['headline', 'summary', 'prerequisites', 'firstStep', 'unverified', 'nextPrompt', 'sources'],
-    body: {
-      ja: `あなたは丁寧な技術コーチです。次の資料の内容を、私が自分で試せる手順にしてください。
-
-- 必要な環境・費用・アカウント・権限を、漏れなく挙げてください。
-- 「最初の一歩」は、30分以内に終わり、終わったかどうかが分かる具体的な操作にしてください。
-- 資料から読み取れない手順は推測で補わず、「未確認事項・確度の根拠」に書いてください。
-
-{{format}}
-
-{{source}}`,
-      en: `You are a patient technical coach. Turn the following material into steps I can follow to try it myself.
-
-- List every prerequisite: environment, cost, accounts and permissions.
-- Make the first step a concrete action that takes 30 minutes or less and has a clear "done" state.
-- Do not fill missing steps with guesses; put them under the unverified section.
-
-{{format}}
-
-{{source}}`,
-    },
-  },
-  {
-    id: 'builtin-decide',
-    name: { ja: '使うべきか判断する', en: 'Should I use this?' },
-    sections: ['headline', 'summary', 'pros', 'risks', 'alternatives', 'verdict', 'sources'],
-    body: {
-      ja: `あなたは率直な相談相手です。次の資料で紹介されているものを、私が使うべきか判断する材料をください。
-
-- 良い点だけでなく、費用・手間・安全性・やめにくさなどの損も同じ重さで書いてください。
-- 代わりの手段は、実在するものだけを挙げてください。
-- 「結論」は「使う」「様子見」「使わない」のどれか1つを選び、理由を短く書いてください。
-
-{{format}}
-
-{{source}}`,
-      en: `You are a frank advisor. Give me what I need to decide whether to use what the following material describes.
-
-- Weigh the costs (money, effort, safety, lock-in) as seriously as the benefits.
-- Only list alternatives that actually exist.
-- In the verdict, pick exactly one of "use it", "wait" or "skip", with short reasons.
-
-{{format}}
-
-{{source}}`,
+{{format}}`,
     },
   },
   {
     id: 'builtin-brief',
-    name: { ja: '短く要点だけ', en: 'Just the key points' },
-    sections: ['headline', 'summary', 'usefulness'],
+    name: { ja: '要点抽出', en: 'Key points' },
+    sections: ['headline', 'summary'],
     body: {
-      ja: `次の資料の要点を、忙しい人が10秒で読める長さにまとめてください。資料にないことは足さないでください。
+      ja: `{{source}}
 
-{{format}}
+上の資料から、要点を3つだけ抜き出してください。
+- 1項目1行で、資料の言葉をなるべく使ってください。
+- 資料にないことは足さないでください。
 
-{{source}}`,
-      en: `Summarize the following material so that a busy person can read it in 10 seconds. Do not add anything that is not in the material.
+{{format}}`,
+      en: `{{source}}
 
-{{format}}
+Pull exactly three key points out of the material above.
+- One line each, using the material's own wording where possible.
+- Add nothing that is not in the material.
 
-{{source}}`,
+{{format}}`,
+    },
+  },
+  {
+    id: 'builtin-verify',
+    name: { ja: '情報の精査', en: 'Fact-check' },
+    sections: ['headline', 'summary', 'facts', 'unverified', 'sources'],
+    body: {
+      ja: `あなたは慎重なファクトチェッカーです。
+
+{{source}}
+
+上の資料の主張を、どこまで信じてよいか精査してください。
+- 「確認済みの事実」には、資料の中で根拠が示されている主張だけを入れ、それぞれに資料からの短い引用を「」で添えてください。
+- 根拠が示されていない主張、あなたの知識と食い違う主張は「未確認事項・確度の根拠」に入れ、なぜそう判断したかを書いてください。
+- あなた自身の知識を使ったときは「（一般知識）」と付けて、資料の内容と区別してください。
+
+{{format}}`,
+      en: `You are a careful fact-checker.
+
+{{source}}
+
+Check how far the claims in the material above can be trusted.
+- Under verified facts, include only claims the material backs up, each with a short quote from the material in quotation marks.
+- Put claims without support, or that conflict with what you know, under the unverified section and explain your reasoning.
+- When you use your own knowledge, mark it "(general knowledge)" to keep it apart from the material.
+
+{{format}}`,
+    },
+  },
+  {
+    id: 'builtin-try',
+    name: { ja: '手順確認', en: 'Steps to try' },
+    sections: ['headline', 'prerequisites', 'steps', 'firstStep', 'unverified', 'sources'],
+    body: {
+      ja: `あなたは丁寧な技術コーチです。
+
+{{source}}
+
+上の資料の内容を、私が自分で試せる手順に直してください。
+- 必要な環境・費用・アカウント・権限を、漏れなく「前提条件」に挙げてください。
+- 「最初の一歩」は、30分以内に終わり、終わったかどうかが分かる操作にしてください。
+- 資料から読み取れない手順は推測で補わず、「未確認事項・確度の根拠」に書いてください。
+
+{{format}}`,
+      en: `You are a patient technical coach.
+
+{{source}}
+
+Turn the material above into steps I can follow to try it myself.
+- List every prerequisite (environment, cost, accounts, permissions).
+- Make the first step something that takes 30 minutes or less and has a clear "done" state.
+- Do not fill missing steps with guesses; put them under the unverified section.
+
+{{format}}`,
+    },
+  },
+  {
+    id: 'builtin-decide',
+    name: { ja: '導入判断', en: 'Decide' },
+    sections: ['headline', 'summary', 'pros', 'risks', 'alternatives', 'verdict', 'sources'],
+    body: {
+      ja: `あなたは率直な相談相手です。
+
+{{source}}
+
+上の資料で紹介されているものを、私が使うべきか判断する材料をください。
+- 良い点だけでなく、費用・手間・安全性・やめにくさなどの損も同じ重さで書いてください。
+- 代わりの手段は、実在するものだけを挙げてください。
+- 「結論」は「使う」「様子見」「使わない」のどれか1つを選び、理由を短く書いてください。
+
+{{format}}`,
+      en: `You are a frank advisor.
+
+{{source}}
+
+Give me what I need to decide whether to use what the material above describes.
+- Weigh the costs (money, effort, safety, lock-in) as seriously as the benefits.
+- Only list alternatives that actually exist.
+- In the verdict, pick exactly one of "use it", "wait" or "skip", with short reasons.
+
+{{format}}`,
     },
   },
 ];
 
-export const DEFAULT_TEMPLATE_ID = 'builtin-verify';
+export const DEFAULT_TEMPLATE_ID = 'builtin-summary';
 
 /** 選択肢として使うテンプレート（組み込みは表示言語に合わせて展開する） */
 export interface ResolvedTemplate {
@@ -260,8 +306,8 @@ export function resolveTemplates(custom: PromptTemplate[], nameLang: Lang, bodyL
 export const PROMPT_SOURCE_MAX = 30_000; // 資料部分の上限（文字）。超えたら末尾を省略する
 
 const L = {
-  ja: { material: '# 資料', title: 'タイトル', url: 'URL', site: 'サイト', saved: '保存日時', memo: '私のメモ', frag: '断片', omitted: '（文字数が多いため、以降は省略しました）' },
-  en: { material: '# Material', title: 'Title', url: 'URL', site: 'Site', saved: 'Saved', memo: 'My note', frag: 'Fragment', omitted: '(The rest was omitted because it is too long.)' },
+  ja: { title: 'タイトル', url: 'URL', site: 'サイト', saved: '保存日時', memo: '私のメモ', frag: '断片', omitted: '（文字数が多いため、以降は省略しました）' },
+  en: { title: 'Title', url: 'URL', site: 'Site', saved: 'Saved', memo: 'My note', frag: 'Fragment', omitted: '(The rest was omitted because it is too long.)' },
 };
 
 /**
@@ -299,14 +345,16 @@ const RULES = {
   ja: (lang: string) => `## 回答の形式（厳守）
 - 回答全体を、1つのコードブロック（\`\`\`markdown で始め \`\`\` で終える）の中に書いてください。コピーしたときに「##」が消えないようにするためです。
 - 下の見出しを、名前を変えず・訳さず・番号を付けず、この順番で使ってください。各見出しは「## 」で始まる1行にしてください。
-- 見出しを増やさないでください。書くことがない見出しは「なし」と書いてください。
+- 回答は見出しごとに分けて保存し、一覧に表示します。そのため見出しを増やさず、名前と順番も変えないでください。書くことがない見出しは「なし」と書いてください。
+- 資料に書かれていないことを推測で埋めないでください。資料から分からないときは「資料に記載なし」と書いてください。
 - 回答の中でコードを示すときは、\`\`\` ではなく ~~~ で囲んでください。
 - コードブロックの外には何も書かないでください。
 - 回答は${lang}で書いてください。`,
   en: (lang: string) => `## Answer format (follow strictly)
 - Put the entire answer inside ONE fenced code block (start with \`\`\`markdown and end with \`\`\`), so the "##" marks survive copying.
 - Use the headings below exactly as written, in English — do not rename, translate or number them — in this order, each on its own line starting with "## ". Only the text under each heading is written in the answer language.
-- Do not add headings. If a heading has nothing to say, write "None".
+- The answer is split by these headings, saved and shown in a list, so do not add, rename or reorder headings. If a heading has nothing to say, write "None".
+- Do not fill gaps with guesses. If the material does not say, write "Not in the material".
 - If you show code inside the answer, fence it with ~~~ instead of \`\`\`.
 - Write nothing outside the code block.
 - Write the answer in ${lang}.`,
@@ -324,6 +372,43 @@ export function formatBlock(keys: SectionKey[], langs: Lang | PromptLangs): stri
   return `${RULES[bodyLang](answerLang)}\n\n\`\`\`markdown\n${heads}\n\`\`\``;
 }
 
+const esc = (v: string) => v.replace(/"/g, "'");
+
+/** 断片だけの部分。各断片を <fragment> で囲み、境界をはっきりさせる */
+export function fragmentsBlock(
+  scrapUrl: string,
+  frags: Pick<Fragment, 'fieldLabel' | 'text' | 'anchor' | 'permalink' | 'extras'>[],
+  lang: Lang,
+  labelOf: (label: string) => string = (x) => x,
+  max = PROMPT_SOURCE_MAX,
+): string {
+  const l = L[lang];
+  const parts: string[] = [];
+  let used = 0;
+  let omitted = false;
+  frags.forEach((f, i) => {
+    if (omitted) return;
+    const label = [labelOf(f.fieldLabel), f.anchor].filter(Boolean).join(' / ');
+    const meta = [
+      ...(f.extras ?? []).map((x) => `${labelOf(x.label)}: ${x.text}`),
+      f.permalink && f.permalink !== scrapUrl ? `URL: ${f.permalink}` : '',
+    ].filter(Boolean);
+    let text = f.text;
+    if (used + text.length > max) {
+      text = text.slice(0, Math.max(0, max - used));
+      omitted = true;
+    }
+    used += text.length;
+    const body = [...meta, ...(meta.length ? [''] : []), text].join('\n').trimEnd();
+    parts.push(`<fragment index="${i + 1}" label="${esc(label)}">\n${body}\n</fragment>`);
+  });
+  if (omitted) parts.push(l.omitted);
+  return parts.join('\n\n');
+}
+
+/**
+ * 資料の部分。全体を <material> で囲む（資料と指示の境界をはっきりさせると、指示の取り違えが減る）
+ */
 export function sourceBlock(
   scrap: Pick<Scrap, 'title' | 'url' | 'siteName' | 'memo' | 'createdAt'>,
   frags: Pick<Fragment, 'fieldLabel' | 'text' | 'anchor' | 'permalink' | 'extras'>[],
@@ -333,34 +418,14 @@ export function sourceBlock(
 ): string {
   const l = L[lang];
   const head = [
-    l.material,
     `${l.title}: ${scrap.title}`,
     `${l.url}: ${scrap.url}`,
     scrap.siteName ? `${l.site}: ${scrap.siteName}` : '',
     `${l.saved}: ${new Date(scrap.createdAt).toISOString().slice(0, 10)}`,
     scrap.memo.trim() ? `${l.memo}: ${scrap.memo.trim()}` : '',
   ].filter(Boolean);
-
-  const parts: string[] = [];
-  let used = 0;
-  let omitted = false;
-  frags.forEach((f, i) => {
-    if (omitted) return;
-    const tags = [labelOf(f.fieldLabel), f.anchor].filter(Boolean).join(' / ');
-    const meta = [
-      ...(f.extras ?? []).map((x) => `${labelOf(x.label)}: ${x.text}`),
-      f.permalink && f.permalink !== scrap.url ? `URL: ${f.permalink}` : '',
-    ].filter(Boolean);
-    let text = f.text;
-    if (used + text.length > max) {
-      text = text.slice(0, Math.max(0, max - used));
-      omitted = true;
-    }
-    used += text.length;
-    parts.push([`## ${l.frag}${i + 1}: ${tags}`, ...meta, '', text].join('\n').trimEnd());
-  });
-  if (omitted) parts.push(l.omitted);
-  return [head.join('\n'), ...parts].join('\n\n');
+  const body = fragmentsBlock(scrap.url, frags, lang, labelOf, max);
+  return ['<material>', head.join('\n'), '', body, '</material>'].join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
 export function buildPrompt(
@@ -380,7 +445,7 @@ export function buildPrompt(
     url: scrap.url,
     site: scrap.siteName,
     memo: scrap.memo,
-    fragments: source.split('\n\n').slice(1).join('\n\n'),
+    fragments: fragmentsBlock(scrap.url, frags, l.bodyLang, labelOf),
   };
   // 未知の {{...}} はそのまま残す
   return tpl.body.replace(/\{\{(\w+)\}\}/g, (m, k: string) => vars[k] ?? m).trim();
@@ -465,12 +530,36 @@ export function parseAnswer(raw: string, expected: SectionKey[] = ALL_SECTION_KE
   return { sections, parseStatus: complete ? 'ok' : 'partial' };
 }
 
-/** 一覧などで使う回答の短い説明 */
+/** 見出し行の装飾（#、**、「」、先頭の記号）を外して1行のタイトルにする */
+export function cleanTitle(body: string): string {
+  const line = body.split('\n').map((l) => l.trim()).find(Boolean) ?? '';
+  return line
+    .replace(/^#{1,6}\s+/, '')
+    .replace(/^[-*・]\s+/, '')
+    .replace(/^\*\*(.+)\*\*$/, '$1')
+    .replace(/^[「『"“](.+)[」』"”]$/, '$1')
+    .trim()
+    .slice(0, 200);
+}
+
+/** 回答の「見出し」（旧版の「日本語タイトル」も）を1行のタイトルにする */
+export function answerHeadline(a: Pick<AiAnswer, 'sections'>): string {
+  return cleanTitle(a.sections.find((s) => s.key === 'headline' || s.key === 'jaTitle')?.body ?? '');
+}
+
+/** 一覧で使う回答の要点。カード（大）で全文に近く見せられるよう長めに持つ（表示側で行数を切る） */
+export const AI_EXCERPT_MAX = 600;
 export function answerExcerpt(a: Pick<AiAnswer, 'sections' | 'raw'>): string {
   const s =
     a.sections.find((x) => x.key === 'summary') ??
     a.sections.find((x) => x.key !== 'intro' && x.key !== 'headline' && x.key !== 'jaTitle');
-  return makeExcerpt(s?.body ?? a.raw);
+  // 箇条書きの記号は外し、行の区切りは「 / 」にして1行に収める
+  const body = (s?.body ?? a.raw)
+    .split('\n')
+    .map((l) => l.trim().replace(/^([-*・•]|\d+[.)])\s*/, ''))
+    .filter(Boolean)
+    .join(' / ');
+  return makeExcerpt(body, AI_EXCERPT_MAX);
 }
 
 // ---- AIサービス ----

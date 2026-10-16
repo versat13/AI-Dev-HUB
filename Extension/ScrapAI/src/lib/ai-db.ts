@@ -1,4 +1,4 @@
-import { answerExcerpt, parseAnswer, type SectionKey } from './ai';
+import { answerExcerpt, answerHeadline, parseAnswer, type SectionKey } from './ai';
 import { db } from './db';
 import type { AiAnswer, Fragment, PromptTemplate } from './types';
 
@@ -11,6 +11,7 @@ async function refreshCount(scrapId: string, now: number): Promise<void> {
   await db.scraps.update(scrapId, {
     aiAnswerCount: list.length,
     aiExcerpt: latest && latest.parseStatus !== 'failed' ? answerExcerpt(latest) : undefined,
+    aiHeadline: latest && latest.parseStatus !== 'failed' ? answerHeadline(latest) || undefined : undefined,
     updatedAt: now,
   });
 }
@@ -95,17 +96,7 @@ export async function deleteTemplate(id: string): Promise<void> {
 
 // ---- 見出し・日本語訳の反映 ----
 
-/** 見出し行の装飾（#、**、「」、先頭の記号）を外して1行のタイトルにする */
-export function cleanTitle(body: string): string {
-  const line = body.split('\n').map((l) => l.trim()).find(Boolean) ?? '';
-  return line
-    .replace(/^#{1,6}\s+/, '')
-    .replace(/^[-*・]\s+/, '')
-    .replace(/^\*\*(.+)\*\*$/, '$1')
-    .replace(/^[「『"“](.+)[」』"”]$/, '$1')
-    .trim()
-    .slice(0, 200);
-}
+export { cleanTitle } from './ai';
 
 export interface AnswerParts {
   title: string; // 空なら適用しない
@@ -114,7 +105,7 @@ export interface AnswerParts {
 
 export function answerParts(a: Pick<AiAnswer, 'sections'>): AnswerParts {
   return {
-    title: cleanTitle(a.sections.find((s) => s.key === 'headline' || s.key === 'jaTitle')?.body ?? ''),
+    title: answerHeadline(a),
     body: (a.sections.find((s) => s.key === 'translation')?.body ?? '').trim(),
   };
 }

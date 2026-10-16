@@ -45,8 +45,9 @@ describe('プロンプト生成', () => {
     expect(s).toContain('タイトル: Claude Codeの小技');
     expect(s).toContain('URL: https://x.com/u/status/1');
     expect(s).toContain('私のメモ: あとで試す');
-    expect(s).toContain('## 断片1: 投稿\n投稿者: delost @thedelost\n\n本文です');
-    expect(s).toContain('## 断片2: レス / No.5\n\nレスです');
+    expect(s.startsWith('<material>') && s.endsWith('</material>')).toBe(true);
+    expect(s).toContain('<fragment index="1" label="投稿">\n投稿者: delost @thedelost\n\n本文です\n</fragment>');
+    expect(s).toContain('<fragment index="2" label="レス / No.5">\nレスです\n</fragment>');
     expect(s).not.toContain('URL: https://x.com/u/status/1\n\n本文'); // 項目と同じURLは重ねない
   });
 
@@ -60,10 +61,12 @@ describe('プロンプト生成', () => {
   });
 
   it('組み込みテンプレートを展開できる（未知の変数は残す）', () => {
-    const tpl = resolveTemplates([], 'ja').find((t) => t.id === 'builtin-verify')!;
+    const tpl = resolveTemplates([], 'ja').find((t) => t.id === 'builtin-summary')!;
     const p = buildPrompt(tpl, scrap, frags, 'ja', label);
     expect(p).toContain('## 次回AIに渡す指示');
-    expect(p).toContain('# 資料');
+    expect(p).toContain('<material>');
+    // 長い資料を先に、やることと回答の形式を最後に置く
+    expect(p.indexOf('</material>')).toBeLessThan(p.indexOf('## 回答の形式'));
     expect(p).not.toContain('{{');
     expect(buildPrompt({ body: '{{title}} {{unknown}}', sections: [] }, scrap, [], 'ja')).toBe('Claude Codeの小技 {{unknown}}');
   });
@@ -76,7 +79,7 @@ describe('プロンプト生成', () => {
 
   it('英語のテンプレートもある', () => {
     for (const b of BUILTIN_TEMPLATES) expect(b.body.en).toContain('{{source}}');
-    expect(resolveTemplates([], 'en')[0]!.name).toBe('Summarize and verify');
+    expect(resolveTemplates([], 'en').map((x) => x.name)).toEqual(['Summarize', 'Key points', 'Fact-check', 'Steps to try', 'Decide']);
   });
 });
 
@@ -94,13 +97,14 @@ describe('プロンプトの言語', () => {
   it('EN方式: 指示も見出しも英語、回答言語だけ指定する', () => {
     const langs = promptLangs('ja', 'en', 'ja');
     expect(langs).toEqual({ bodyLang: 'en', headLang: 'en', answerLang: 'Japanese' });
-    const tpl = resolveTemplates([], 'ja', langs.bodyLang).find((t) => t.id === 'builtin-verify')!;
-    expect(tpl.name).toBe('要約と検証'); // 一覧の名前は表示言語
+    const tpl = resolveTemplates([], 'ja', langs.bodyLang).find((t) => t.id === 'builtin-summary')!;
+    expect(tpl.name).toBe('要約'); // 一覧の名前は表示言語
     const p = buildPrompt(tpl, scrap, frags, langs, label);
-    expect(p).toContain('You are a careful researcher.');
+    expect(p).toContain('You are an editor who summarizes');
+    expect(p).toContain('Not in the material');
     expect(p).toContain('Write the answer in Japanese.');
     expect(p).toContain('## Key points\n(3–5 bullet points)');
-    expect(p).toContain('# Material');
+    expect(p).toContain('<material>');
     expect(p).not.toMatch(/## [ぁ-んァ-ヶ一-龠]/); // 日本語の見出しが混ざらない
   });
 
@@ -108,7 +112,9 @@ describe('プロンプトの言語', () => {
     const langs = promptLangs('ja', 'native', 'ja');
     const tpl = resolveTemplates([], 'ja', langs.bodyLang).find((t) => t.id === 'builtin-verify')!;
     const p = buildPrompt(tpl, scrap, frags, langs, label);
-    expect(p).toContain('あなたは慎重なリサーチャーです');
+    expect(tpl.name).toBe('情報の精査');
+    expect(p).toContain('あなたは慎重なファクトチェッカーです');
+    expect(p).toContain('資料に記載なし');
     expect(p).toContain('## 要点');
     expect(p).toContain('回答は日本語で書いてください');
   });

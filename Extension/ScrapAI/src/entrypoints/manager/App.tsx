@@ -240,21 +240,14 @@ function Library(props: {
         </button>
         <SortSelect value={params.sort} onChange={(sort) => props.setParams({ ...params, sort })} />
         <span class="spacer" />
-        <div role="group" aria-label={`${t('densityCompact')} / ${t('densityCard')}`}>
-          <button
-            aria-pressed={props.settings.listStyle === 'compact'}
-            onClick={() => props.onDensity('compact')}
-          >
-            {t('densityCompact')}
-          </button>{' '}
-          <button
-            aria-pressed={props.settings.listStyle === 'card'}
-            onClick={() => props.onDensity('card')}
-          >
-            {t('densityCard')}
-          </button>
+        <div class="seg density" role="group" aria-label={t('densityLabel')}>
+          {(['compact', 'card', 'large'] as const).map((d) => (
+            <button key={d} aria-pressed={props.settings.listStyle === d} onClick={() => props.onDensity(d)}>
+              {t(d === 'compact' ? 'densityCompact' : d === 'card' ? 'densityCard' : 'densityLarge')}
+            </button>
+          ))}
         </div>
-        {props.settings.listStyle === 'card' && (
+        {props.settings.listStyle !== 'compact' && (
           <div class="columns" role="group" aria-label={t('columnsLabel')}>
             <span class="muted">{t('columnsLabel')}</span>
             {[0, 1, 2, 3, 4, 5, 6].map((n) => (
@@ -500,6 +493,15 @@ function SettingsPane({
           />
           {t('settingsPinnedFirst')}
         </label>
+        <label class="set-row check">
+          <input
+            type="checkbox"
+            checked={settings.panelKeepOpen}
+            onChange={(e) => onChange({ panelKeepOpen: (e.target as HTMLInputElement).checked })}
+          />
+          {t('setPanelKeepOpen')}
+        </label>
+        <p class="help">{t('panelKeepOpenHelp')}</p>
       </div>
 
       <div class="set-card">

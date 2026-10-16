@@ -22,6 +22,7 @@ export interface Scrap {
   excerpt: string; // 一覧用概要（最大120字）
   aiAnswerCount: number; // 「AI要約 あり／なし」表示用
   aiExcerpt?: string; // 最新のAI回答の要点（一覧で「AI要約」を主役にするとき使う）
+  aiHeadline?: string; // 最新のAI回答の見出し（同上。タイトル自体は書き換えない）
   translation?: ScrapTranslation; // カードの翻訳（Chrome内蔵の翻訳機能。元の文は書き換えない）
   createdAt: number;
   updatedAt: number;
@@ -147,11 +148,15 @@ export interface PromptTemplate {
   updatedAt: number;
 }
 
+/** 一覧の表示: コンパクト（1行）/ カード（3行）/ カード（大、10行まで） */
+export type Density = 'compact' | 'card' | 'large';
+
 export interface Settings {
   locale: 'auto' | 'ja' | 'en';
   articleMaxChars: number | null; // 汎用本文の文字数上限（null = 無制限）
   pinnedFirst: boolean; // ピン留めを一覧の先頭に表示する
-  listStyle: 'compact' | 'card'; // 管理タブの一覧表示
+  listStyle: Density; // 管理タブの一覧表示
+
   contextMenu: boolean; // 右クリックメニューに「ScrapAIに保存」を出す（既定オフ。contextMenus権限が必要）
   panelKeepOpen: boolean; // サイドパネルを自動で閉じない
   aiTemporaryChat: boolean; // AIサイトは一時チャットで開く
@@ -172,7 +177,7 @@ export const DEFAULT_SETTINGS: Settings = {
   aiTemporaryChat: true,
   listFace: 'ai',
   contextMenu: false,
-  aiTemplateId: 'builtin-verify',
+  aiTemplateId: 'builtin-summary',
   aiApplyHeadline: true,
   aiPromptLang: 'en',
 };
