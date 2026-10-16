@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # AI-dev-hub
 複数のAI（モデル）を切り替えながら開発するための共有ハブ。**Private 必須**（アバターID・PCのパスを含むため）。
 
@@ -6,6 +7,15 @@
 - `VRChats/avatar/` アバターギミック：AlyxLiquid / JustShield / QuadViewStudio / Sandevistan
 - `VRChats/world/` ワールド：EarWorld / GimmickShowcase
 - `Extension/` Chrome拡張機能：ScrapAI（ソース一式あり）
+=======
+# AI-Dev-HUB
+複数のAI（モデル）を切り替えながら開発するための共有ハブ。**Private推奨**。
+
+## 構成
+- `VRChat/avatar/` アバターギミック
+- `VRChat/world/` ワールド
+- `Extension/` Chrome拡張機能など
+>>>>>>> Stashed changes
 - `_template/` 新規作品用の雛形
 - `log/` 作業ログ（`YYYY-MM-DD_<モデル名>.md`）
 
