@@ -141,7 +141,7 @@ const sources = db.fragments.map((f) => f.source).sort().join(',');
 check('記事: 断片=本文+概要', sources === 'meta,readability', sources);
 check('記事: 本文は上限3000字以内', db.fragments.find((f) => f.source === 'readability')?.text.length <= 3000);
 check('記事: 概要(excerpt)がOG概要', scrap?.excerpt === 'OGの概要文です', scrap?.excerpt);
-check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 5));
+check('メタ: schemaVersion が記録される', db.meta.some((m) => m.key === 'schemaVersion' && m.value === 6));
 
 // 2) 同じURLを再度（選択なし）
 out = await save(aTab, 'auto');

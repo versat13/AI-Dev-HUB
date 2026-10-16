@@ -1,4 +1,4 @@
-import { db } from './db';
+import { bury, db } from './db';
 import type { Snapshot } from './types';
 
 // スナップショット（ページの一部を切り抜いた画像）の保存と取得。画像はこの端末の IndexedDB にだけ置く。
@@ -43,5 +43,8 @@ export async function listSnapshots(scrapId: string): Promise<Snapshot[]> {
 }
 
 export async function deleteSnapshot(id: string): Promise<void> {
-  await db.snapshots.delete(id);
+  await db.transaction('rw', db.snapshots, db.tombstones, async () => {
+    await bury('snapshots', [id]);
+    await db.snapshots.delete(id);
+  });
 }

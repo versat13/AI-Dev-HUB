@@ -117,6 +117,8 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
   const lang = getLocale();
   const [promptMode, setPromptMode] = useState<'en' | 'native'>('en');
   const [temporaryChat, setTemporaryChat] = useState(true);
+  const [direct, setDirect] = useState(true);
+  const [autoSend, setAutoSend] = useState(false);
   const [uiCode, setUiCode] = useState<string>(lang);
   const langs = promptLangs(lang, promptMode, uiCode);
   const templates = useMemo(() => resolveTemplates(custom, lang, langs.bodyLang), [custom, lang, langs.bodyLang]);
@@ -136,6 +138,8 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
       setApplyHeadline(s.aiApplyHeadline);
       setPromptMode(s.aiPromptLang);
       setTemporaryChat(s.aiTemporaryChat);
+      setDirect(s.aiDirect);
+      setAutoSend(s.aiAutoSend);
       // 回答の言語: 表示言語を固定していればそれ、自動ならブラウザの言語（日英以外も可）
       setUiCode(s.locale === 'auto' ? browser.i18n.getUILanguage() : lang);
     });
@@ -153,6 +157,43 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
   }
 
   async function copyPrompt(open?: (typeof AI_SERVICES)[number]) {
+    // ボタン一つ方式: そのサイトへのアクセスを（初回だけ）許可してもらい、入力と取り込みを自動にする。
+    // 許可の確認はクリックの直後に出す必要があるので、コピーより先に行う
+    if (open && direct) {
+      const origins = [new URL(open.url).origin + '/*'];
+      let granted = false;
+      try {
+        granted = (await browser.permissions.contains({ origins })) || (await browser.permissions.request({ origins }));
+      } catch {
+        granted = false;
+      }
+      if (granted) {
+        void copyText(prompt); // 予備としてクリップボードにも入れておく
+        setService(open.id);
+        setLastService(open.id);
+        setNote(t('aiDirectOpened', open.name));
+        await browser.runtime.sendMessage({
+          type: 'ai-open',
+          url: serviceUrl(open, temporaryChat),
+          bridge: {
+            prompt,
+            autoSend,
+            scrapId: scrap.id,
+            service: open.id,
+            templateId: tpl.id,
+            expected: tpl.sections,
+            labels: {
+              capture: t('bridgeCapture'),
+              saved: t('bridgeSaved'),
+              notFound: t('bridgeNotFound'),
+              failed: t('bridgeFailed'),
+              filled: autoSend ? t('bridgeSent') : t('bridgeFilled'),
+            },
+          },
+        });
+        return;
+      }
+    }
     const ok = await copyText(prompt);
     setNote(ok ? (open ? t('aiCopiedAndOpen', open.name) : t('copied')) : t('copyFailed'));
     if (open) {

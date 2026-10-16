@@ -967,5 +967,119 @@
   },
   "themeAuto": {
     "message": "システムに合わせる"
+  },
+  "navSync": {
+    "message": "同期"
+  },
+  "syncIntro": {
+    "message": "複数のPCで同じスクラップを使えるようにします。サーバーは使わず、Google Drive・Dropbox・OneDrive などのデスクトップアプリが同期しているフォルダに、PCごとのファイルを書き出して読み合います。"
+  },
+  "syncFolder": {
+    "message": "同期フォルダ"
+  },
+  "syncStep1": {
+    "message": "Google Drive・Dropbox・OneDrive などのデスクトップアプリで、PCと同期しているフォルダを用意します（例: マイドライブの中に「ScrapAI」フォルダを作る）。"
+  },
+  "syncStep2": {
+    "message": "下のボタンでそのフォルダを選び、「編集を許可」します。"
+  },
+  "syncStep3": {
+    "message": "ほかのPCでも同じフォルダを選ぶと、お互いの保存が合わさります。"
+  },
+  "syncChoose": {
+    "message": "フォルダを選ぶ"
+  },
+  "syncFolderName": {
+    "message": "フォルダ"
+  },
+  "syncConnected": {
+    "message": "接続中"
+  },
+  "syncNotAllowed": {
+    "message": "許可が必要"
+  },
+  "syncReallowHelp": {
+    "message": "Chromeを起動し直すと、フォルダへのアクセスを許可し直す必要があります。"
+  },
+  "syncAllow": {
+    "message": "アクセスを許可"
+  },
+  "syncNow": {
+    "message": "今すぐ同期"
+  },
+  "syncing": {
+    "message": "同期中…"
+  },
+  "syncChange": {
+    "message": "フォルダを変える"
+  },
+  "syncStop": {
+    "message": "同期をやめる"
+  },
+  "syncDone": {
+    "message": "同期しました（ほかのPC {0}台を読み込み、追加・更新 {1}件、削除 {2}件）。"
+  },
+  "syncFailed": {
+    "message": "同期できませんでした。フォルダが使えるか確かめて、もう一度お試しください。"
+  },
+  "syncNeedPermission": {
+    "message": "フォルダへのアクセスが許可されていません。「アクセスを許可」を押してください。"
+  },
+  "syncUnsupported": {
+    "message": "このブラウザではフォルダを選べません（Chrome / Edge のパソコン版が必要です）。"
+  },
+  "syncThisPc": {
+    "message": "このPC"
+  },
+  "syncPcName": {
+    "message": "PCの名前"
+  },
+  "syncPcNamePlaceholder": {
+    "message": "例: 自宅のPC"
+  },
+  "syncLast": {
+    "message": "最後に同期: {0}"
+  },
+  "syncNever": {
+    "message": "まだ同期していません。"
+  },
+  "syncAuto": {
+    "message": "管理画面を開いている間は、1分ごとと、画面に戻ったときに自動で同期します。"
+  },
+  "syncDevices": {
+    "message": "同期フォルダの中のPC"
+  },
+  "syncMine": {
+    "message": "このPC"
+  },
+  "aiDirectOpened": {
+    "message": "{0} を開いて、プロンプトを入れました。回答が出たら、画面右下の「ScrapAIに取り込む」を押してください。"
+  },
+  "bridgeCapture": {
+    "message": "ScrapAIに取り込む"
+  },
+  "bridgeSaved": {
+    "message": "ScrapAIに保存しました"
+  },
+  "bridgeNotFound": {
+    "message": "回答が見つかりません。回答が出終わってから押してください（うまくいかないときはコピーしてScrapAIに貼り付けてください）"
+  },
+  "bridgeFailed": {
+    "message": "保存できませんでした。コピーしてScrapAIに貼り付けてください"
+  },
+  "bridgeFilled": {
+    "message": "ScrapAIのプロンプトを入れました。内容を確かめて送信してください"
+  },
+  "bridgeSent": {
+    "message": "ScrapAIのプロンプトを送信しました"
+  },
+  "setAiDirect": {
+    "message": "ボタン一つでAIに渡し、回答を取り込む"
+  },
+  "setAiDirectHelp": {
+    "message": "AIサイトを開いたとき入力欄にプロンプトを入れ、回答の取り込みボタンを出します。最初に使うときだけ、そのサイト（ChatGPT・Claude・Gemini）へのアクセスの許可を求めます。サイトの作りが変わっても入力欄や回答を自動で探しますが、うまくいかないときはコピー＆貼り付けで使えます。"
+  },
+  "setAiAutoSend": {
+    "message": "入れたあと自動で送信する"
   }
 }

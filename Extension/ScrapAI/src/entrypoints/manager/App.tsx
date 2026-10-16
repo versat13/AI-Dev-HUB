@@ -25,16 +25,18 @@ import { formatBytes } from '@/ui/format';
 import { useCategories, useListData, useLive } from '@/ui/hooks';
 import { FaceToggle, ScrapList } from '@/ui/ListBrowser';
 import { SiteSettings } from '@/ui/SiteSettings';
+import { SyncSettings, useAutoSync } from '@/ui/SyncSettings';
 import { TemplateSettings } from '@/ui/TemplateSettings';
 
-type Section = 'library' | 'categories' | 'sites' | 'templates' | 'settings';
-const SECTIONS: Section[] = ['library', 'categories', 'sites', 'templates', 'settings'];
+type Section = 'library' | 'categories' | 'sites' | 'templates' | 'sync' | 'settings';
+const SECTIONS: Section[] = ['library', 'categories', 'sites', 'templates', 'sync', 'settings'];
 
 const NAV_LABEL: Record<Section, string> = {
   library: 'navLibrary',
   categories: 'navCategories',
   sites: 'navSites',
   templates: 'navTemplates',
+  sync: 'navSync',
   settings: 'navSettings',
 };
 
@@ -50,6 +52,7 @@ function scrapIdFromHash(): string | null {
 
 export function App({ initial }: { initial: Settings }) {
   const [settings, setSettingsState] = useState(initial);
+  useAutoSync();
   const [section, setSection] = useState<Section>(sectionFromHash() ?? 'library');
   const [activeId, setActiveId] = useState<string | null>(scrapIdFromHash());
   const [params, setParams] = useState<ListParams>({ ...DEFAULT_PARAMS, pinnedFirst: initial.pinnedFirst });
@@ -185,6 +188,7 @@ export function App({ initial }: { initial: Settings }) {
         {section === 'categories' && <CategoryManager categories={categories} />}
         {section === 'sites' && <SiteSettings />}
         {section === 'templates' && <TemplateSettings />}
+        {section === 'sync' && <SyncSettings />}
         {section === 'settings' && <SettingsPane settings={settings} onChange={updateSettings} />}
       </main>
 
@@ -551,6 +555,25 @@ function SettingsPane({
           {t('setTemporaryChat')}
         </label>
         <p class="help">{t('setTemporaryChatHelp')}</p>
+        <label class="set-row check">
+          <input
+            type="checkbox"
+            checked={settings.aiDirect}
+            onChange={(e) => onChange({ aiDirect: (e.target as HTMLInputElement).checked })}
+          />
+          {t('setAiDirect')}
+        </label>
+        <p class="help">{t('setAiDirectHelp')}</p>
+        {settings.aiDirect && (
+          <label class="set-row check">
+            <input
+              type="checkbox"
+              checked={settings.aiAutoSend}
+              onChange={(e) => onChange({ aiAutoSend: (e.target as HTMLInputElement).checked })}
+            />
+            {t('setAiAutoSend')}
+          </label>
+        )}
         <label class="set-row check">
           <input
             type="checkbox"

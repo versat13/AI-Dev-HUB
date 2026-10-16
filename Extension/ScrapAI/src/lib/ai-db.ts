@@ -1,11 +1,11 @@
 import { answerExcerpt, answerHeadline, parseAnswer, type SectionKey } from './ai';
-import { db } from './db';
+import { bury, db } from './db';
 import type { AiAnswer, Fragment, PromptTemplate } from './types';
 
 // AI回答とユーザー作成テンプレートの保存。原資料（scraps / fragments）は書き換えない。
 
 /** 回答の件数と、最新の回答の要点を項目に写す（一覧の表示用） */
-async function refreshCount(scrapId: string, now: number): Promise<void> {
+export async function refreshCount(scrapId: string, now: number): Promise<void> {
   const list = await db.aiAnswers.where('scrapId').equals(scrapId).toArray();
   const latest = list.reduce<AiAnswer | undefined>((a, b) => (!a || b.createdAt > a.createdAt ? b : a), undefined);
   await db.scraps.update(scrapId, {
@@ -55,9 +55,10 @@ export async function addAiAnswer(input: {
 }
 
 export async function deleteAiAnswer(id: string): Promise<void> {
-  await db.transaction('rw', db.aiAnswers, db.scraps, async () => {
+  await db.transaction('rw', db.aiAnswers, db.scraps, db.tombstones, async () => {
     const a = await db.aiAnswers.get(id);
     if (!a) return;
+    await bury('aiAnswers', [id]);
     await db.aiAnswers.delete(id);
     await refreshCount(a.scrapId, Date.now());
   });
@@ -91,7 +92,10 @@ export async function newTemplate(name: string, body: string): Promise<PromptTem
 }
 
 export async function deleteTemplate(id: string): Promise<void> {
-  await db.promptTemplates.delete(id);
+  await db.transaction('rw', db.promptTemplates, db.tombstones, async () => {
+    await bury('promptTemplates', [id]);
+    await db.promptTemplates.delete(id);
+  });
 }
 
 // ---- 見出し・日本語訳の反映 ----

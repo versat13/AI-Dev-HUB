@@ -11,7 +11,7 @@ import type {
   Snapshot,
 } from './types';
 
-export const SCHEMA_VERSION = 5; // 2: snapshots / 3: aiExcerpt / 4: aiHeadline / 5: 概要の選び方を直して作り直す
+export const SCHEMA_VERSION = 6; // 2: snapshots / 3: aiExcerpt / 4: aiHeadline / 5: 概要の作り直し / 6: tombstones（同期用の削除記録）
 
 class ScrapDB extends Dexie {
   scraps!: Table<Scrap, string>;
@@ -22,6 +22,7 @@ class ScrapDB extends Dexie {
   promptTemplates!: Table<PromptTemplate, string>;
   meta!: Table<{ key: string; value: unknown }, string>;
   snapshots!: Table<Snapshot, string>;
+  tombstones!: Table<Tombstone, string>;
 
   constructor(name = 'scrapai') {
     super(name);
@@ -79,6 +80,10 @@ class ScrapDB extends Dexie {
         for (const [scrapId, list] of by) await tx.table('scraps').update(scrapId, { excerpt: excerptOf(list) });
         await tx.table('meta').put({ key: 'schemaVersion', value: 5 });
       });
+    // 6: 同期のために「消したもの」の記録を残す（他のPCから消したものが戻ってこないように）
+    this.version(6)
+      .stores({ tombstones: 'id, table, deletedAt' })
+      .upgrade((tx) => tx.table('meta').put({ key: 'schemaVersion', value: 6 }));
     this.on('populate', (tx) => {
       tx.table('meta').add({ key: 'schemaVersion', value: SCHEMA_VERSION });
     });
@@ -86,6 +91,19 @@ class ScrapDB extends Dexie {
 }
 
 export const db = new ScrapDB();
+
+/** 同期の対象になる表 */
+export type SyncTable = 'scraps' | 'fragments' | 'aiAnswers' | 'categories' | 'snapshots' | 'siteProfiles' | 'promptTemplates';
+export interface Tombstone {
+  id: string; // 消した記録のID
+  table: SyncTable;
+  deletedAt: number;
+}
+
+/** 消したことを記録する（呼び出し側のトランザクションに db.tombstones を含めること） */
+export async function bury(table: SyncTable, ids: string[], now = Date.now()): Promise<void> {
+  if (ids.length) await db.tombstones.bulkPut(ids.map((id) => ({ id, table, deletedAt: now })));
+}
 
 function uuid(): string {
   return crypto.randomUUID();
@@ -134,7 +152,11 @@ export async function restoreScraps(ids: string[]): Promise<void> {
 /** Scrap と配下の Fragment / AiAnswer を1トランザクションで完全削除する */
 export async function deleteScraps(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
-  await db.transaction('rw', [db.scraps, db.fragments, db.aiAnswers, db.snapshots], async () => {
+  await db.transaction('rw', [db.scraps, db.fragments, db.aiAnswers, db.snapshots, db.tombstones], async () => {
+    await bury('fragments', await db.fragments.where('scrapId').anyOf(ids).primaryKeys());
+    await bury('aiAnswers', await db.aiAnswers.where('scrapId').anyOf(ids).primaryKeys());
+    await bury('snapshots', await db.snapshots.where('scrapId').anyOf(ids).primaryKeys());
+    await bury('scraps', ids);
     await db.fragments.where('scrapId').anyOf(ids).delete();
     await db.aiAnswers.where('scrapId').anyOf(ids).delete();
     await db.snapshots.where('scrapId').anyOf(ids).delete();
@@ -184,10 +206,13 @@ export async function renameCategory(id: string, name: string): Promise<void> {
 
 /** カテゴリを削除し、各項目の categoryIds から外す（項目自体は残る） */
 export async function deleteCategory(id: string): Promise<void> {
-  await db.transaction('rw', db.categories, db.scraps, async () => {
+  await db.transaction('rw', db.categories, db.scraps, db.tombstones, async () => {
+    const now = Date.now();
     await db.scraps.where('categoryIds').equals(id).modify((s) => {
       s.categoryIds = s.categoryIds.filter((c) => c !== id);
+      s.updatedAt = now;
     });
+    await bury('categories', [id], now);
     await db.categories.delete(id);
   });
 }
@@ -216,8 +241,9 @@ async function refreshExcerpt(scrapId: string): Promise<void> {
 /** 断片を削除する（概要も作り直す）。保存の取り消しにも使う */
 export async function deleteFragments(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
-  await db.transaction('rw', db.scraps, db.fragments, async () => {
+  await db.transaction('rw', db.scraps, db.fragments, db.tombstones, async () => {
     const targets = await db.fragments.where('id').anyOf(ids).toArray();
+    await bury('fragments', ids);
     await db.fragments.bulkDelete(ids);
     for (const scrapId of new Set(targets.map((f) => f.scrapId))) await refreshExcerpt(scrapId);
   });
@@ -259,7 +285,7 @@ export async function splitFragment(fragmentId: string): Promise<string | undefi
       updatedAt: now,
     };
     await db.scraps.add(created);
-    await db.fragments.update(fragmentId, { scrapId: created.id, order: 0 });
+    await db.fragments.update(fragmentId, { scrapId: created.id, order: 0, updatedAt: Date.now() });
     await refreshExcerpt(src.id);
     return created.id;
   });
@@ -297,5 +323,9 @@ export function newProfile(partial: Partial<SiteProfile> = {}): SiteProfile {
 /** 組み込みは削除できない（無効化する）。ユーザー作成のみ削除する */
 export async function deleteProfile(id: string): Promise<void> {
   const p = await db.siteProfiles.get(id);
-  if (p && !p.builtIn) await db.siteProfiles.delete(id);
+  if (!p || p.builtIn) return;
+  await db.transaction('rw', db.siteProfiles, db.tombstones, async () => {
+    await bury('siteProfiles', [id]);
+    await db.siteProfiles.delete(id);
+  });
 }

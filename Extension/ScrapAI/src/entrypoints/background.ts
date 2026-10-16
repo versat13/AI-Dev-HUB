@@ -9,7 +9,9 @@ import { seedSamples } from '@/lib/samples';
 import { saveFromPage } from '@/lib/save';
 import { getSettings } from '@/lib/settings';
 import { addSnapshot, cropScreenshot, type SnapRect } from '@/lib/snapshot';
-import type { SaveMode, SaveOutcome, SiteProfile } from '@/lib/types';
+import type { SectionKey } from '@/lib/ai';
+import { addAiAnswer } from '@/lib/ai-db';
+import type { AiAnswer, SaveMode, SaveOutcome, SiteProfile } from '@/lib/types';
 import { openManager, PENDING_PICK_KEY } from '@/ui/nav';
 
 interface SaveMessage {
@@ -22,6 +24,19 @@ interface SnapshotMessage {
   tabId: number;
   scrapId: string;
   remember?: boolean; // このサイトでは次から自動で撮る
+}
+interface AiOpenMessage {
+  type: 'ai-open';
+  url: string;
+  bridge: Record<string, unknown>; // aibridge.content.ts の BridgeCfg
+}
+interface AiAnswerMessage {
+  type: 'ai-answer';
+  scrapId: string;
+  raw: string;
+  service?: AiAnswer['service'];
+  templateId?: string;
+  expected?: SectionKey[];
 }
 interface PickerMessage {
   type: 'start-picker';
@@ -153,6 +168,56 @@ async function handleSnapshot(msg: SnapshotMessage): Promise<{ ok: boolean; id?:
   return { ok, id: id ?? undefined };
 }
 
+/** AIサイトを開き、読み込みが終わったら入力と取り込みボタンの仕組みを入れる */
+async function handleAiOpen(msg: AiOpenMessage): Promise<{ ok: boolean }> {
+  try {
+    const tab = await browser.tabs.create({ url: msg.url });
+    const tabId = tab.id!;
+    await new Promise<void>((resolve) => {
+      const done = (id: number, info: { status?: string }) => {
+        if (id === tabId && info.status === 'complete') {
+          browser.tabs.onUpdated.removeListener(done);
+          resolve();
+        }
+      };
+      browser.tabs.onUpdated.addListener(done);
+      setTimeout(() => {
+        browser.tabs.onUpdated.removeListener(done);
+        resolve();
+      }, 20_000);
+    });
+    await browser.scripting.executeScript({
+      target: { tabId },
+      func: (cfg: unknown) => {
+        (globalThis as unknown as { __scrapaiBridge?: unknown }).__scrapaiBridge = cfg;
+      },
+      args: [msg.bridge],
+    });
+    await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/aibridge.js'] });
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
+async function handleAiAnswer(msg: AiAnswerMessage): Promise<{ ok: boolean }> {
+  try {
+    if (!msg.raw?.trim() || !(await db.scraps.get(msg.scrapId))) return { ok: false };
+    const settings = await getSettings();
+    await addAiAnswer({
+      scrapId: msg.scrapId,
+      raw: msg.raw,
+      service: msg.service,
+      templateId: msg.templateId,
+      expected: msg.expected,
+      applyToScrap: settings.aiApplyHeadline,
+    });
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+
 async function handleStartPicker(msg: PickerMessage): Promise<{ ok: boolean; error?: string }> {
   try {
     const settings = await getSettings();
@@ -269,6 +334,14 @@ export default defineBackground(() => {
     if (type === 'save') {
       handleSave(message as SaveMessage).then(sendResponse);
       return true; // 非同期で応答する
+    }
+    if (type === 'ai-open') {
+      handleAiOpen(message as AiOpenMessage).then(sendResponse);
+      return true;
+    }
+    if (type === 'ai-answer') {
+      handleAiAnswer(message as AiAnswerMessage).then(sendResponse);
+      return true;
     }
     if (type === 'snapshot') {
       handleSnapshot(message as SnapshotMessage).then(sendResponse);

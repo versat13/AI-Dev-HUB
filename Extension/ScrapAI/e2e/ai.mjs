@@ -122,7 +122,7 @@ const dump = () =>
   );
 
 // ===== P4: AI連携 =====
-await ext.evaluate(() => chrome.storage.local.set({ settings: { locale: 'ja', articleMaxChars: 3000 } }));
+await ext.evaluate(() => chrome.storage.local.set({ settings: { locale: 'ja', articleMaxChars: 3000, aiDirect: false } })); // コピー＆貼り付けの流れを確かめる（ボタン一つは bridge.mjs）
 // ヘッドレスでは拡張機能のページにクリップボード権限を付与できないため、記録用の代役に差し替える
 const fakeClipboard = () => {
   let v = '';

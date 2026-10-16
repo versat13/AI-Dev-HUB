@@ -967,5 +967,119 @@
   },
   "themeAuto": {
     "message": "Match system"
+  },
+  "navSync": {
+    "message": "Sync"
+  },
+  "syncIntro": {
+    "message": "Use the same scraps on several computers. No server is used: each computer writes its own file into a folder that the Google Drive, Dropbox or OneDrive desktop app keeps in sync, and reads the others."
+  },
+  "syncFolder": {
+    "message": "Sync folder"
+  },
+  "syncStep1": {
+    "message": "Prepare a folder that the Google Drive, Dropbox or OneDrive desktop app syncs with this computer (for example, a “ScrapAI” folder in My Drive)."
+  },
+  "syncStep2": {
+    "message": "Choose that folder with the button below and allow editing."
+  },
+  "syncStep3": {
+    "message": "Choose the same folder on your other computers and their saves will be combined."
+  },
+  "syncChoose": {
+    "message": "Choose folder"
+  },
+  "syncFolderName": {
+    "message": "Folder"
+  },
+  "syncConnected": {
+    "message": "Connected"
+  },
+  "syncNotAllowed": {
+    "message": "Needs permission"
+  },
+  "syncReallowHelp": {
+    "message": "After Chrome restarts, you need to allow access to the folder again."
+  },
+  "syncAllow": {
+    "message": "Allow access"
+  },
+  "syncNow": {
+    "message": "Sync now"
+  },
+  "syncing": {
+    "message": "Syncing…"
+  },
+  "syncChange": {
+    "message": "Change folder"
+  },
+  "syncStop": {
+    "message": "Stop syncing"
+  },
+  "syncDone": {
+    "message": "Synced (read {0} other computers, {1} added or updated, {2} removed)."
+  },
+  "syncFailed": {
+    "message": "Could not sync. Check that the folder is available and try again."
+  },
+  "syncNeedPermission": {
+    "message": "Access to the folder is not allowed. Click “Allow access”."
+  },
+  "syncUnsupported": {
+    "message": "This browser cannot choose folders (desktop Chrome or Edge is required)."
+  },
+  "syncThisPc": {
+    "message": "This computer"
+  },
+  "syncPcName": {
+    "message": "Computer name"
+  },
+  "syncPcNamePlaceholder": {
+    "message": "e.g. Home PC"
+  },
+  "syncLast": {
+    "message": "Last synced: {0}"
+  },
+  "syncNever": {
+    "message": "Not synced yet."
+  },
+  "syncAuto": {
+    "message": "While the manager is open, it syncs every minute and when you come back to it."
+  },
+  "syncDevices": {
+    "message": "Computers in the sync folder"
+  },
+  "syncMine": {
+    "message": "This computer"
+  },
+  "aiDirectOpened": {
+    "message": "Opened {0} with the prompt filled in. When the answer appears, click “Save to ScrapAI” at the bottom right."
+  },
+  "bridgeCapture": {
+    "message": "Save to ScrapAI"
+  },
+  "bridgeSaved": {
+    "message": "Saved to ScrapAI"
+  },
+  "bridgeNotFound": {
+    "message": "No answer found yet. Click after the answer finishes (or copy it and paste it into ScrapAI)."
+  },
+  "bridgeFailed": {
+    "message": "Could not save. Copy the answer and paste it into ScrapAI."
+  },
+  "bridgeFilled": {
+    "message": "ScrapAI filled in the prompt. Check it and send."
+  },
+  "bridgeSent": {
+    "message": "ScrapAI sent the prompt."
+  },
+  "setAiDirect": {
+    "message": "One-click handoff to the AI and back"
+  },
+  "setAiDirectHelp": {
+    "message": "Fills the prompt into the AI site and shows a button to bring the answer back. The first time, it asks for access to that site (ChatGPT, Claude or Gemini). It looks for the input box and the answer automatically even if the site changes; if it fails, copy and paste still works."
+  },
+  "setAiAutoSend": {
+    "message": "Send automatically after filling in"
   }
 }

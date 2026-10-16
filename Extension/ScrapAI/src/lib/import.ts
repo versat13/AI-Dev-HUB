@@ -57,7 +57,7 @@ export async function importData(file: ExportFile, mode: DuplicateMode): Promise
   };
 
   const scrapIdMap = new Map<string, string>();
-  await db.transaction('rw', [db.scraps, db.fragments, db.aiAnswers, db.categories, db.siteProfiles, db.promptTemplates, db.snapshots], async () => {
+  await db.transaction('rw', [db.scraps, db.fragments, db.aiAnswers, db.categories, db.siteProfiles, db.promptTemplates, db.snapshots, db.tombstones], async () => {
     // カテゴリ: 同名は既存に寄せ、なければ追加（IDが衝突したら付け替え）
     const existingCats = await db.categories.toArray();
     const catMap = new Map<string, string>();

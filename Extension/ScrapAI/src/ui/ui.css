@@ -619,3 +619,11 @@ button.danger.solid { background: var(--err); border-color: var(--err); color: #
 .search-wrap .search { flex: 1; padding-right: 44px; }
 .search-count { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--ink-3); pointer-events: none; }
 .browser-bar .face-toggle { flex: none; }
+
+/* ---- 同期 ---- */
+.sync-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--ink-2); font-size: 12.5px; }
+.badge.sync-granted { color: var(--ok); border-color: currentColor; }
+.badge.sync-prompt, .badge.sync-denied { color: var(--warn); border-color: currentColor; }
+.sync-devices { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.sync-devices li { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.set-row .badge { flex: none; }

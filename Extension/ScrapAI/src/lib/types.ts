@@ -54,6 +54,7 @@ export interface Fragment {
   extras?: { label: string; role: FragmentRole; text: string }[]; // 投稿者・日時など、本文以外の項目（P3）
   imageUrls?: string[]; // URLのみ。画像自体は保存しない
   createdAt: number;
+  updatedAt?: number; // 別の項目へ移したときなど（同期でどちらが新しいかを決める）
 }
 
 export type AiParseStatus = 'ok' | 'partial' | 'failed';
@@ -161,6 +162,8 @@ export interface Settings {
   contextMenu: boolean; // 右クリックメニューに「ScrapAIに保存」を出す（既定オフ。contextMenus権限が必要）
   panelKeepOpen: boolean; // サイドパネルを自動で閉じない
   aiTemporaryChat: boolean; // AIサイトは一時チャットで開く
+  aiDirect: boolean; // AIサイトの入力欄に自動で入れ、回答を取り込むボタンを出す（初回にサイトへのアクセスを許可）
+  aiAutoSend: boolean; // 入れたあと自動で送信する
   listFace: 'ai' | 'original'; // 一覧の表示: AI要約を主役にするか、元の内容か
   cardColumns: number; // カード表示の列数（0 = 自動、1〜6）
   aiTemplateId: string; // 最後に使ったAIテンプレート（P4）
@@ -177,6 +180,8 @@ export const DEFAULT_SETTINGS: Settings = {
   cardColumns: 0,
   panelKeepOpen: false,
   aiTemporaryChat: true,
+  aiDirect: true,
+  aiAutoSend: false,
   listFace: 'ai',
   contextMenu: false,
   aiTemplateId: 'builtin-summary',
