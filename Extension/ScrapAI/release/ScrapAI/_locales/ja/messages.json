@@ -1,0 +1,740 @@
+{
+  "extName": {
+    "message": "ScrapAI"
+  },
+  "extDescription": {
+    "message": "ページ・投稿・リポジトリをワンクリックで保存し、後でAIに解説させるまでの手間を減らすスクラップブック。"
+  },
+  "actionTitle": {
+    "message": "ScrapAI"
+  },
+  "saving": {
+    "message": "保存中…"
+  },
+  "saveButton": {
+    "message": "このページをスクラップ"
+  },
+  "savedNew": {
+    "message": "保存しました"
+  },
+  "fragmentAdded": {
+    "message": "既存の項目に追加しました（{0}件目の断片）"
+  },
+  "duplicateFragment": {
+    "message": "同じ内容は保存済みです"
+  },
+  "alreadySaved": {
+    "message": "保存済みです"
+  },
+  "extractOk": {
+    "message": "本文を取得しました"
+  },
+  "extractPartial": {
+    "message": "一部のみ取得できました"
+  },
+  "extractFailed": {
+    "message": "本文は取得できませんでした（URLとタイトルは保存済み）"
+  },
+  "fragmentsCount": {
+    "message": "断片 {0}件"
+  },
+  "reextract": {
+    "message": "再抽出して追加"
+  },
+  "saveSeparate": {
+    "message": "別の項目として保存"
+  },
+  "undo": {
+    "message": "取り消し"
+  },
+  "undone": {
+    "message": "取り消しました"
+  },
+  "openDetail": {
+    "message": "詳細を開く"
+  },
+  "errorSave": {
+    "message": "保存できませんでした: {0}"
+  },
+  "errorNoTab": {
+    "message": "このタブには保存できるページがありません。"
+  },
+  "retry": {
+    "message": "再試行"
+  },
+  "localOnly": {
+    "message": "データはこのブラウザ内にのみ保存されます。"
+  },
+  "openSidePanel": {
+    "message": "サイドパネル"
+  },
+  "openManager": {
+    "message": "管理画面"
+  },
+  "searchPlaceholder": {
+    "message": "タイトル・URL・メモ・本文を検索"
+  },
+  "filters": {
+    "message": "絞り込み"
+  },
+  "filterReset": {
+    "message": "条件をリセット"
+  },
+  "labelView": {
+    "message": "表示"
+  },
+  "viewActive": {
+    "message": "通常"
+  },
+  "viewArchived": {
+    "message": "アーカイブ"
+  },
+  "viewAll": {
+    "message": "すべて"
+  },
+  "labelDomain": {
+    "message": "ドメイン"
+  },
+  "optAllDomains": {
+    "message": "すべてのドメイン"
+  },
+  "labelAi": {
+    "message": "AI要約"
+  },
+  "labelRating": {
+    "message": "評価"
+  },
+  "labelCategory": {
+    "message": "カテゴリ"
+  },
+  "labelSort": {
+    "message": "並び順"
+  },
+  "optAny": {
+    "message": "指定なし"
+  },
+  "aiNone": {
+    "message": "AI要約なし"
+  },
+  "aiYes": {
+    "message": "AI要約 {0}件"
+  },
+  "ratingUnrated": {
+    "message": "未評価"
+  },
+  "ratingMin": {
+    "message": "星{0}以上"
+  },
+  "rating": {
+    "message": "評価"
+  },
+  "starLabel": {
+    "message": "星{0}"
+  },
+  "categoryNone": {
+    "message": "未分類"
+  },
+  "pinnedOnly": {
+    "message": "ピン留めのみ"
+  },
+  "pin": {
+    "message": "ピン留め"
+  },
+  "pinned": {
+    "message": "ピン留め中"
+  },
+  "sortCreatedDesc": {
+    "message": "保存が新しい順"
+  },
+  "sortCreatedAsc": {
+    "message": "保存が古い順"
+  },
+  "sortUpdatedDesc": {
+    "message": "更新が新しい順"
+  },
+  "sortStars": {
+    "message": "評価が高い順"
+  },
+  "sortTitle": {
+    "message": "タイトル順"
+  },
+  "emptyList": {
+    "message": "まだ何も保存されていません。「このページをスクラップ」を押してください。"
+  },
+  "emptyFiltered": {
+    "message": "条件に合う項目がありません。"
+  },
+  "emptyArchived": {
+    "message": "アーカイブは空です。"
+  },
+  "itemCount": {
+    "message": "{0}件"
+  },
+  "noBody": {
+    "message": "本文なし"
+  },
+  "moreCats": {
+    "message": "他{0}"
+  },
+  "archivedBadge": {
+    "message": "アーカイブ済み"
+  },
+  "back": {
+    "message": "戻る"
+  },
+  "close": {
+    "message": "閉じる"
+  },
+  "openPage": {
+    "message": "元のページを開く"
+  },
+  "savedAt": {
+    "message": "保存: {0}"
+  },
+  "titleLabel": {
+    "message": "タイトル"
+  },
+  "memo": {
+    "message": "メモ"
+  },
+  "memoPlaceholder": {
+    "message": "保存した理由、試したいことなど"
+  },
+  "categories": {
+    "message": "カテゴリ"
+  },
+  "newCategory": {
+    "message": "新しいカテゴリ"
+  },
+  "addCategory": {
+    "message": "追加"
+  },
+  "noCategories": {
+    "message": "カテゴリはまだありません。"
+  },
+  "fragments": {
+    "message": "断片（{0}）"
+  },
+  "noFragments": {
+    "message": "この項目には本文が保存されていません。"
+  },
+  "fragTruncated": {
+    "message": "切り詰め済み"
+  },
+  "fragDelete": {
+    "message": "削除"
+  },
+  "fragSplit": {
+    "message": "別の項目に切り出す"
+  },
+  "confirmDeleteFragment": {
+    "message": "この断片を削除しますか？"
+  },
+  "fragLabel_selection": {
+    "message": "選択テキスト"
+  },
+  "fragLabel_article": {
+    "message": "本文"
+  },
+  "fragLabel_description": {
+    "message": "概要"
+  },
+  "archive": {
+    "message": "アーカイブ"
+  },
+  "restore": {
+    "message": "復元"
+  },
+  "deleteForever": {
+    "message": "完全に削除"
+  },
+  "confirmDeleteForever": {
+    "message": "この項目と断片を完全に削除します。元に戻せません。よろしいですか？"
+  },
+  "itemNotFound": {
+    "message": "この項目は既に存在しません。"
+  },
+  "navLibrary": {
+    "message": "一覧"
+  },
+  "navCategories": {
+    "message": "カテゴリ"
+  },
+  "navSettings": {
+    "message": "設定"
+  },
+  "selected": {
+    "message": "{0}件選択中"
+  },
+  "selectAll": {
+    "message": "表示中をすべて選択"
+  },
+  "clearSelection": {
+    "message": "選択解除"
+  },
+  "bulkAddCategory": {
+    "message": "カテゴリを付与…"
+  },
+  "bulkRemoveCategory": {
+    "message": "カテゴリを外す…"
+  },
+  "confirmBulkDelete": {
+    "message": "{0}件の項目と断片を完全に削除します。元に戻せません。よろしいですか？"
+  },
+  "densityCompact": {
+    "message": "コンパクト"
+  },
+  "densityCard": {
+    "message": "カード"
+  },
+  "renameCategory": {
+    "message": "名前変更"
+  },
+  "moveUp": {
+    "message": "上へ"
+  },
+  "moveDown": {
+    "message": "下へ"
+  },
+  "deleteCategory": {
+    "message": "削除"
+  },
+  "confirmDeleteCategory": {
+    "message": "カテゴリ「{0}」を削除しますか？項目は残り、このカテゴリだけが外れます。"
+  },
+  "categoryUsage": {
+    "message": "{0}件"
+  },
+  "categoryNamePlaceholder": {
+    "message": "カテゴリ名"
+  },
+  "save": {
+    "message": "保存"
+  },
+  "cancel": {
+    "message": "キャンセル"
+  },
+  "settingsLanguage": {
+    "message": "表示言語"
+  },
+  "langAuto": {
+    "message": "自動（ブラウザの言語）"
+  },
+  "settingsMaxChars": {
+    "message": "本文の保存文字数の上限"
+  },
+  "maxCharsHelp": {
+    "message": "これから保存するページに適用されます。空欄で無制限です。"
+  },
+  "settingsPinnedFirst": {
+    "message": "ピン留めを先頭に表示する"
+  },
+  "settingsData": {
+    "message": "データ"
+  },
+  "storageUsage": {
+    "message": "使用容量: {0}"
+  },
+  "localOnlyLong": {
+    "message": "データはこのPCのこのブラウザにのみ保存され、他のPCとは同期されません。データの移行用に、エクスポート／インポートを実装予定です。"
+  },
+  "navSites": {
+    "message": "サイト設定"
+  },
+  "pickElement": {
+    "message": "ページの要素を選ぶ"
+  },
+  "pickerTip": {
+    "message": "保存したい部分をクリック（↑↓で範囲を調整、Escで中止）"
+  },
+  "sitesIntro": {
+    "message": "サイトごとに、保存する場所（CSSセレクタ）と文字数の上限を決められます。何も取れなかった場合は通常の本文抽出に切り替わります。"
+  },
+  "pickResult": {
+    "message": "ページで選んだ要素"
+  },
+  "pickMatches": {
+    "message": "ページ内の一致数: {0}"
+  },
+  "pickNewProfile": {
+    "message": "新しいプロファイルにする"
+  },
+  "pickAddToProfile": {
+    "message": "編集中のプロファイルに項目として追加"
+  },
+  "profileBuiltIn": {
+    "message": "組み込み"
+  },
+  "profileCustom": {
+    "message": "自作"
+  },
+  "profileDisabled": {
+    "message": "無効"
+  },
+  "profileNew": {
+    "message": "プロファイルを追加"
+  },
+  "profileNewName": {
+    "message": "新しいプロファイル"
+  },
+  "profileSelectHint": {
+    "message": "左の一覧からプロファイルを選んでください。"
+  },
+  "profileName": {
+    "message": "名前"
+  },
+  "profileEnabled": {
+    "message": "このプロファイルを使う"
+  },
+  "profilePatterns": {
+    "message": "対象URL（1行に1つ）"
+  },
+  "profilePatternsHelp": {
+    "message": "例: x.com/** や *.2chan.net/b/res/*　（*は1階層分、**は残り全部、*. で始めるとサブドメイン。クエリは無視されます）"
+  },
+  "profilePriority": {
+    "message": "優先度（大きいほど優先）"
+  },
+  "profileFields": {
+    "message": "ページ単位の項目"
+  },
+  "profileFieldsHelp": {
+    "message": "1項目が1つの断片として保存されます。属性を指定すると、テキストの代わりにその属性値（例: href）を取得します。"
+  },
+  "profileUnit": {
+    "message": "繰り返し単位（レス・投稿）"
+  },
+  "profileUnitUse": {
+    "message": "レスや投稿のような繰り返し単位を使う"
+  },
+  "profileUnitHelp": {
+    "message": "範囲選択がなければ、このページの投稿（または最初の1つ）を保存します。複数の単位にまたがって範囲選択すると、単位ごとに別の断片として保存します。"
+  },
+  "unitSelector": {
+    "message": "単位のセレクタ"
+  },
+  "unitAnchor": {
+    "message": "番号のセレクタ（任意）"
+  },
+  "unitPermalink": {
+    "message": "リンクのセレクタ（任意）"
+  },
+  "fieldLabel": {
+    "message": "ラベル"
+  },
+  "fieldRole": {
+    "message": "役割"
+  },
+  "fieldSelector": {
+    "message": "CSSセレクタ"
+  },
+  "fieldAttr": {
+    "message": "属性"
+  },
+  "fieldMatch": {
+    "message": "取得数"
+  },
+  "matchFirst": {
+    "message": "最初の1つ"
+  },
+  "matchAll": {
+    "message": "すべて"
+  },
+  "fieldMaxChars": {
+    "message": "上限字数"
+  },
+  "fieldAdd": {
+    "message": "項目を追加"
+  },
+  "fieldRemove": {
+    "message": "項目を削除"
+  },
+  "role_body": {
+    "message": "本文"
+  },
+  "role_title": {
+    "message": "タイトル"
+  },
+  "role_author": {
+    "message": "投稿者"
+  },
+  "role_date": {
+    "message": "日時"
+  },
+  "role_custom": {
+    "message": "その他"
+  },
+  "profileReset": {
+    "message": "既定に戻す"
+  },
+  "profileDelete": {
+    "message": "削除"
+  },
+  "confirmProfileReset": {
+    "message": "このプロファイルを既定の内容に戻します。よろしいですか？"
+  },
+  "confirmProfileDelete": {
+    "message": "プロファイル「{0}」を削除しますか？保存済みの項目は残ります。"
+  },
+  "confirmDiscard": {
+    "message": "未保存の変更があります。破棄して切り替えますか？"
+  },
+  "fragLabel_post": {
+    "message": "投稿"
+  },
+  "fragLabel_res": {
+    "message": "レス"
+  },
+  "fragLabel_author": {
+    "message": "投稿者"
+  },
+  "fragLabel_date": {
+    "message": "日時"
+  },
+  "fragLabel_about": {
+    "message": "概要"
+  },
+  "fragLabel_topics": {
+    "message": "トピック"
+  },
+  "fragLabel_readme": {
+    "message": "README"
+  },
+  "fragLabel_title": {
+    "message": "タイトル"
+  },
+  "fragLabel_body": {
+    "message": "本文"
+  },
+  "aiSection": {
+    "message": "AI"
+  },
+  "aiTemplate": {
+    "message": "テンプレート"
+  },
+  "aiFragsUsed": {
+    "message": "AIに渡す断片（{0}/{1}）"
+  },
+  "aiCopyPrompt": {
+    "message": "プロンプトをコピー"
+  },
+  "aiCopyAndOpenTitle": {
+    "message": "プロンプトをコピーして {0} を開く"
+  },
+  "aiCopiedAndOpen": {
+    "message": "コピーしました。{0} の入力欄に貼り付けてください。"
+  },
+  "copied": {
+    "message": "コピーしました"
+  },
+  "copyFailed": {
+    "message": "コピーできませんでした"
+  },
+  "aiPreview": {
+    "message": "プロンプトを確認（{0}字）"
+  },
+  "aiPasteLabel": {
+    "message": "AIの回答"
+  },
+  "aiPastePlaceholder": {
+    "message": "AIの回答をここに貼り付けて「回答を保存」。見出しの形式が違っても原文はそのまま保存されます。"
+  },
+  "aiService": {
+    "message": "回答したAI"
+  },
+  "aiServiceOther": {
+    "message": "その他"
+  },
+  "aiSaveAnswer": {
+    "message": "回答を保存"
+  },
+  "aiPasteHint": {
+    "message": "回答の右下などにあるコピーボタンでコピーすると見出しが崩れません"
+  },
+  "aiAnswerSaved": {
+    "message": "回答を保存しました"
+  },
+  "aiAnswers": {
+    "message": "AIの回答（{0}）"
+  },
+  "aiParsedOk": {
+    "message": "構造化済み"
+  },
+  "aiParsedPartial": {
+    "message": "一部の見出しのみ"
+  },
+  "aiParsedFailed": {
+    "message": "原文のみ"
+  },
+  "aiShowRaw": {
+    "message": "原文を表示"
+  },
+  "aiHideRaw": {
+    "message": "見出しごとに表示"
+  },
+  "aiRawOnlyNote": {
+    "message": "見出しを読み取れなかったため、原文のまま保存しています。"
+  },
+  "aiCopyNextPrompt": {
+    "message": "次回の指示をコピー"
+  },
+  "aiCopyRaw": {
+    "message": "原文をコピー"
+  },
+  "confirmDeleteAnswer": {
+    "message": "このAIの回答を削除しますか？"
+  },
+  "navTemplates": {
+    "message": "AIテンプレート"
+  },
+  "templatesIntro": {
+    "message": "AIに渡すプロンプトのひな形です。{{source}} に資料（タイトル・URL・メモ・断片）、{{format}} に回答の見出しの指定が入ります。"
+  },
+  "templatesBuiltIn": {
+    "message": "組み込み"
+  },
+  "templatesCustom": {
+    "message": "自作"
+  },
+  "templatesNone": {
+    "message": "自作のテンプレートはまだありません。"
+  },
+  "templateView": {
+    "message": "内容を見る"
+  },
+  "templateDuplicate": {
+    "message": "複製して編集"
+  },
+  "templateEdit": {
+    "message": "編集"
+  },
+  "templateNew": {
+    "message": "新しいテンプレート"
+  },
+  "templateNewName": {
+    "message": "新しいテンプレート"
+  },
+  "templateCopyName": {
+    "message": "{0}（コピー）"
+  },
+  "templateName": {
+    "message": "名前"
+  },
+  "templateBody": {
+    "message": "本文"
+  },
+  "confirmDeleteTemplate": {
+    "message": "テンプレート「{0}」を削除しますか？"
+  },
+  "exportTitle": {
+    "message": "エクスポート"
+  },
+  "exportHelp": {
+    "message": "全データを1つのJSONファイルに書き出します。スクラップと断片は常に含まれます。"
+  },
+  "exportOrganize": {
+    "message": "星・ピン・カテゴリを含める"
+  },
+  "exportAnswers": {
+    "message": "AIの回答を含める"
+  },
+  "exportSites": {
+    "message": "サイト設定を含める"
+  },
+  "exportTemplates": {
+    "message": "自作のAIテンプレートを含める"
+  },
+  "exportSettings": {
+    "message": "表示設定を含める"
+  },
+  "exportButton": {
+    "message": "エクスポート"
+  },
+  "exportDone": {
+    "message": "{0}件を書き出しました。"
+  },
+  "importTitle": {
+    "message": "インポート"
+  },
+  "importDuplicate": {
+    "message": "同じURLのスクラップがあるとき"
+  },
+  "dupSkip": {
+    "message": "スキップ（既定）"
+  },
+  "dupOverwrite": {
+    "message": "上書き"
+  },
+  "dupAdd": {
+    "message": "別の項目として追加"
+  },
+  "importFile": {
+    "message": "JSONファイルを選ぶ（選ぶとすぐ取り込みます）"
+  },
+  "importDone": {
+    "message": "{0}件を取り込みました（スキップ{1}件、断片{2}件）。"
+  },
+  "importError_invalidJson": {
+    "message": "JSONとして読み込めませんでした。何も変更していません。"
+  },
+  "importError_invalidFormat": {
+    "message": "ScrapAIのエクスポートファイルではありません。何も変更していません。"
+  },
+  "importError_unsupportedVersion": {
+    "message": "新しい形式のファイルです。拡張機能を更新してください。何も変更していません。"
+  },
+  "importError_invalidData": {
+    "message": "ファイルの内容が不正です。何も変更していません。"
+  },
+  "translationApply": {
+    "message": "日本語訳を適用"
+  },
+  "translationApplied": {
+    "message": "タイトルを日本語にし、訳文を断片に追加しました。"
+  },
+  "translationAlready": {
+    "message": "すでに適用済みです。"
+  },
+  "translationRevert": {
+    "message": "タイトルを元に戻す"
+  },
+  "originalTitle": {
+    "message": "元のタイトル: {0}"
+  },
+  "fragLabel_translation": {
+    "message": "日本語訳"
+  },
+  "columnsLabel": {
+    "message": "列"
+  },
+  "columnsAuto": {
+    "message": "自動"
+  },
+  "columnsN": {
+    "message": "{0}列"
+  },
+  "cmdSavePage": {
+    "message": "このページをスクラップ"
+  },
+  "cmdOpenManager": {
+    "message": "ScrapAIの管理画面を開く"
+  },
+  "ctxMenuSave": {
+    "message": "ScrapAIに保存"
+  },
+  "settingsShortcuts": {
+    "message": "ショートカットと右クリック"
+  },
+  "settingsContextMenu": {
+    "message": "右クリックメニューに「ScrapAIに保存」を出す"
+  },
+  "settingsContextMenuHelp": {
+    "message": "オンにすると、ブラウザの確認が出て「右クリックメニュー」の権限を許可します。選択範囲があれば断片として追加します。既定はオフです。"
+  },
+  "settingsShortcutsHelp": {
+    "message": "キーボードショートカットは、割り当てると使えます（既定は未割り当て）。Chromeのショートカット設定で「このページをスクラップ」「管理画面を開く」にキーを割り当ててください。保存したときはアイコンに✓が出ます。"
+  },
+  "settingsShortcutsOpen": {
+    "message": "ショートカット設定を開く"
+  }
+}

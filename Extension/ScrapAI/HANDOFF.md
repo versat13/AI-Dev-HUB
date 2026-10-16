@@ -46,10 +46,11 @@
 - GitHub（リポジトリ/Issue）の既定セレクタ。
 
 ## 作品ルール
-### 配布ZIP
-- 名前：`ScrapAI-v<MAJOR>.<MINOR>.<PATCH>.zip`（リリースごとに PATCH を +1。MAJOR/MINORは指示時のみ）
-- 中身は `ScrapAI/`（ビルド済み拡張、Chromeで読み込む。フォルダ名は変えない）と `ScrapAI-source/`（ソース。node_modules等は除く）
-- ZIP作成時、`wxt.config.ts` と `package.json` の version もZIP名に合わせる。
+### 配布（GitHub）
+- ZIPは作らない。ビルド済み拡張を `Extension/ScrapAI/release/ScrapAI/` にcommitして渡す（フォルダ名は変えない。常に最新版を上書き）。
+- 手順：`npx wxt build` → `release/ScrapAI` を `dist/chrome-mv3` で置き換え → HANDOFF/log更新 → commit・push。
+- 納品の報告は1行：`https://github.com/versat13/AI-Dev-HUB/tree/main/Extension/ScrapAI/release/ScrapAI`（vX.Y.Z）。ユーザーはcloneしているので、pullしてChromeで「再読み込み」する。
+- バージョンはリリースごとに PATCH を +1（MAJOR/MINORは指示時のみ）。`wxt.config.ts` と `package.json` の version を揃え、`release/ScrapAI/manifest.json` の version と一致させる。
 ### 進め方
 - コードを書く前に方針を示し、許可を得る。完了後は指示があるまで次の作業に進まない。
 - 応答は日本語・簡潔・結論から。
