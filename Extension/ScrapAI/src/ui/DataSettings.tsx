@@ -61,6 +61,7 @@ export function DataSettings({ settings, onApplySettings }: {
       <label class="check"><input type="checkbox" checked={opts.aiAnswers} onChange={toggle('aiAnswers')} />{t('exportAnswers')}</label>
       <label class="check"><input type="checkbox" checked={opts.sites} onChange={toggle('sites')} />{t('exportSites')}</label>
       <label class="check"><input type="checkbox" checked={opts.templates} onChange={toggle('templates')} />{t('exportTemplates')}</label>
+      <label class="check"><input type="checkbox" checked={opts.snapshots} onChange={toggle('snapshots')} />{t('exportSnapshots')}</label>
       <label class="check"><input type="checkbox" checked={opts.includeSettings} onChange={toggle('includeSettings')} />{t('exportSettings')}</label>
       <p><button onClick={doExport}>{t('exportButton')}</button></p>
 

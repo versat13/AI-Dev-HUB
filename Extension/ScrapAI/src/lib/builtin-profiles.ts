@@ -6,7 +6,7 @@ import type { FieldRule, SiteProfile, UnitRule } from './types';
 // 何も取れなかった場合は汎用抽出（Readability）に自動で切り替わるため、保存は失敗しない。
 // 内容を変えたら BUILTIN_VERSION を上げる（ユーザーが編集していないものだけ更新される）。
 
-export const BUILTIN_VERSION = 1;
+export const BUILTIN_VERSION = 2; // 2: Xのスナップショット、Zenn・Qiita・note などを追加
 
 const f = (
   id: string,
@@ -68,6 +68,12 @@ export const BUILTIN_PROFILES: Omit<SiteProfile, 'createdAt' | 'updatedAt'>[] = 
     priority: 100,
     fields: [],
     unit: xUnit,
+    // 画像・動画・リンクカード・引用ポストがあるときだけ、投稿ごと撮れるようにする（引用元も写る）
+    snapshot: {
+      mode: 'ask',
+      selector: '@unit',
+      when: '[data-testid="tweetPhoto"], [data-testid="videoPlayer"], [data-testid="videoComponent"], [data-testid="card.wrapper"], div[role="link"] [data-testid="User-Name"]',
+    },
   },
   {
     id: 'builtin-github-issue',
@@ -100,7 +106,152 @@ export const BUILTIN_PROFILES: Omit<SiteProfile, 'createdAt' | 'updatedAt'>[] = 
     fields: [],
     unit: futabaUnit,
   },
+  // ---- v2 で追加（実ページでのセレクタは未確認。合わなければ汎用抽出に切り替わる） ----
+  article('builtin-zenn', 'Zenn', ['zenn.dev/*/articles/*', 'zenn.dev/*/scraps/*', 'zenn.dev/*/books/*/viewer/*'], {
+    body: '.znc',
+    author: 'a[href^="/"][class*="userName"], [class*="ArticleHeader"] a[href^="/"]',
+    tags: 'a[href^="/topics/"]',
+  }),
+  article('builtin-qiita', 'Qiita', ['qiita.com/*/items/*'], {
+    body: '#personal-public-article-body .mdContent-inner, .it-MdContent, section[class*="ArticleBody"]',
+    author: 'a[href^="/"][class*="author"], [class*="AuthorName"]',
+    tags: 'a[href^="/tags/"]',
+  }),
+  article('builtin-note', 'note', ['note.com/*/n/*'], {
+    body: '.note-common-styles__textnote-body, .p-article__content, [data-name="body"]',
+    author: '.o-noteContentHeader__name, a[class*="creator"]',
+    tags: 'a[href*="/hashtag/"]',
+  }),
+  article('builtin-hatenablog', 'はてなブログ', ['*.hatenablog.com/entry/**', '*.hatenablog.jp/entry/**', '*.hateblo.jp/entry/**', '*.hatenadiary.com/entry/**', '*.hatenadiary.jp/entry/**'], {
+    title: '.entry-title',
+    body: '.entry-content',
+    author: '.author.vcard',
+    tags: '.entry-categories a',
+  }),
+  article('builtin-devto', 'DEV', ['dev.to/*/*'], {
+    body: '#article-body',
+    author: '.crayons-article__header__meta a.crayons-link',
+    tags: '.crayons-article__header__meta .crayons-tag',
+  }),
+  article('builtin-medium', 'Medium', ['medium.com/**', '*.medium.com/**'], {
+    body: 'article section',
+    author: 'a[data-testid="authorName"]',
+  }, 60),
+  article('builtin-wikipedia', 'Wikipedia', ['*.wikipedia.org/wiki/**'], {
+    title: '#firstHeading',
+    body: '#mw-content-text .mw-parser-output > p',
+    bodyMatch: 'all',
+    bodyMax: 6000,
+  }),
+  {
+    id: 'builtin-stackoverflow',
+    name: 'Stack Overflow / Stack Exchange',
+    builtIn: true,
+    builtInVersion: BUILTIN_VERSION,
+    enabled: true,
+    urlPatterns: ['stackoverflow.com/questions/*/**', '*.stackexchange.com/questions/*/**', 'superuser.com/questions/*/**', 'serverfault.com/questions/*/**'],
+    priority: 100,
+    fields: [f('title', 'title', 'title', '#question-header h1')],
+    unit: {
+      selector: '#question, .answer',
+      permalinkSelector: 'a.js-share-link',
+      fields: [
+        f('body', 'post', 'body', '.s-prose', { maxChars: 4000 }),
+        f('author', 'author', 'author', '.post-signature:last-child .user-details a, .post-signature .user-details a'),
+        f('votes', 'votes', 'custom', '.js-vote-count'),
+      ],
+    },
+  },
+  {
+    id: 'builtin-reddit',
+    name: 'Reddit',
+    builtIn: true,
+    builtInVersion: BUILTIN_VERSION,
+    enabled: true,
+    urlPatterns: ['reddit.com/r/*/comments/**', 'old.reddit.com/r/*/comments/**'],
+    priority: 100,
+    fields: [f('title', 'title', 'title', 'h1, a.title')],
+    unit: {
+      selector: 'shreddit-post, shreddit-comment, .thing.link, .thing.comment',
+      fields: [
+        f('body', 'post', 'body', '[slot="text-body"], [slot="comment"], .usertext-body', { maxChars: 3000 }),
+        f('author', 'author', 'author', 'a[href^="/user/"], .author'),
+      ],
+    },
+    snapshot: { mode: 'ask', selector: 'shreddit-post, .thing.link', when: 'img, video, shreddit-player, gallery-carousel' },
+  },
+  {
+    id: 'builtin-hackernews',
+    name: 'Hacker News',
+    builtIn: true,
+    builtInVersion: BUILTIN_VERSION,
+    enabled: true,
+    urlPatterns: ['news.ycombinator.com/item'],
+    priority: 100,
+    fields: [f('title', 'title', 'title', '.titleline > a')],
+    unit: {
+      selector: '.fatitem, tr.comtr',
+      permalinkSelector: '.age a',
+      fields: [
+        f('body', 'post', 'body', '.toptext, .commtext', { maxChars: 3000 }),
+        f('author', 'author', 'author', '.hnuser'),
+      ],
+    },
+  },
+  {
+    id: 'builtin-bluesky',
+    name: 'Bluesky',
+    builtIn: true,
+    builtInVersion: BUILTIN_VERSION,
+    enabled: true,
+    urlPatterns: ['bsky.app/profile/*/post/*'],
+    priority: 100,
+    fields: [],
+    unit: {
+      selector: '[data-testid^="postThreadItem-by-"]',
+      fields: [
+        f('body', 'post', 'body', '[data-testid="postText"]', { maxChars: 3000 }),
+        f('author', 'author', 'author', 'a[href^="/profile/"][aria-label]'),
+      ],
+    },
+    snapshot: { mode: 'ask', selector: '@unit', when: 'img[src*="cdn.bsky.app/img/feed"], video, [data-testid="contentHider-embed"], [role="link"] [data-testid="postText"]' },
+  },
+  {
+    id: 'builtin-youtube',
+    name: 'YouTube',
+    builtIn: true,
+    builtInVersion: BUILTIN_VERSION,
+    enabled: true,
+    urlPatterns: ['youtube.com/watch', 'youtube.com/shorts/*', 'm.youtube.com/watch'],
+    priority: 100,
+    fields: [
+      f('title', 'title', 'title', 'h1.ytd-watch-metadata yt-formatted-string, #title h1'),
+      f('author', 'author', 'author', '#owner #channel-name a, ytd-channel-name a'),
+      f('description', 'description', 'body', '#description-inline-expander, ytd-text-inline-expander, #description', { maxChars: 4000 }),
+    ],
+  },
 ];
+
+/**
+ * 記事型サイト（ブログ・技術記事）用のプロファイルを作る。
+ * 本文は1つの断片、著者・タグは添え書き。日付は <time datetime> から取る。
+ */
+function article(
+  id: string,
+  name: string,
+  urlPatterns: string[],
+  sel: { title?: string; body: string; author?: string; tags?: string; bodyMatch?: 'first' | 'all'; bodyMax?: number },
+  priority = 100,
+): Omit<SiteProfile, 'createdAt' | 'updatedAt'> {
+  const fields: FieldRule[] = [
+    f('title', 'title', 'title', sel.title ?? 'h1'),
+    f('body', 'body', 'body', sel.body, { match: sel.bodyMatch ?? 'first', joinWith: '\n\n', maxChars: sel.bodyMax ?? 8000 }),
+    f('date', 'date', 'date', 'time[datetime]', { attr: 'datetime' }),
+  ];
+  if (sel.author) fields.push(f('author', 'author', 'author', sel.author));
+  if (sel.tags) fields.push(f('tags', 'tags', 'custom', sel.tags, { match: 'all', joinWith: ', ' }));
+  return { id, name, builtIn: true, builtInVersion: BUILTIN_VERSION, enabled: true, urlPatterns, priority, fields };
+}
 
 function stamp(p: Omit<SiteProfile, 'createdAt' | 'updatedAt'>, now: number): SiteProfile {
   return { ...structuredClone(p), createdAt: now, updatedAt: now };

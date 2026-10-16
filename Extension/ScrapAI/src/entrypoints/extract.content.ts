@@ -1,5 +1,5 @@
 import { extractFromDocument } from '@/lib/extract-page';
-import { runProfile } from '@/lib/profile-extract';
+import { markSnapshotTarget, runProfile } from '@/lib/profile-extract';
 import type { SiteProfile } from '@/lib/types';
 
 // 常駐させず、保存のたびに background から scripting.executeScript で注入する。
@@ -15,11 +15,13 @@ export default defineContentScript({
 
     const result = extractFromDocument(document, window);
     if (profile) {
+      const out = { units: [] as Element[] };
       try {
-        result.profile = runProfile(profile, document, window);
+        result.profile = runProfile(profile, document, window, out);
       } catch {
         // プロファイルの失敗は汎用抽出だけで続行する
       }
+      result.snapshot = markSnapshotTarget(profile.snapshot, document, out.units) ?? undefined;
     }
     return result;
   },

@@ -7,9 +7,10 @@ import type {
   PromptTemplate,
   Scrap,
   SiteProfile,
+  Snapshot,
 } from './types';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2; // 2: snapshots を追加
 
 class ScrapDB extends Dexie {
   scraps!: Table<Scrap, string>;
@@ -19,12 +20,13 @@ class ScrapDB extends Dexie {
   siteProfiles!: Table<SiteProfile, string>;
   promptTemplates!: Table<PromptTemplate, string>;
   meta!: Table<{ key: string; value: unknown }, string>;
+  snapshots!: Table<Snapshot, string>;
 
   constructor(name = 'scrapai') {
     super(name);
     // 注意: boolean と null は IndexedDB のキーにできないため pinned はインデックスしない
     // （一覧は件数が数千件までの想定なのでメモリ内フィルタで足りる）。
-    this.version(SCHEMA_VERSION).stores({
+    this.version(1).stores({
       scraps: 'id, normalizedUrl, createdAt, updatedAt, domain, stars, archivedAt, *categoryIds',
       fragments: 'id, scrapId, [scrapId+order]',
       aiAnswers: 'id, scrapId',
@@ -33,6 +35,9 @@ class ScrapDB extends Dexie {
       promptTemplates: 'id, order',
       meta: 'key',
     });
+    this.version(2)
+      .stores({ snapshots: 'id, scrapId' })
+      .upgrade((tx) => tx.table('meta').put({ key: 'schemaVersion', value: 2 }));
     this.on('populate', (tx) => {
       tx.table('meta').add({ key: 'schemaVersion', value: SCHEMA_VERSION });
     });
@@ -88,9 +93,10 @@ export async function restoreScraps(ids: string[]): Promise<void> {
 /** Scrap と配下の Fragment / AiAnswer を1トランザクションで完全削除する */
 export async function deleteScraps(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
-  await db.transaction('rw', db.scraps, db.fragments, db.aiAnswers, async () => {
+  await db.transaction('rw', [db.scraps, db.fragments, db.aiAnswers, db.snapshots], async () => {
     await db.fragments.where('scrapId').anyOf(ids).delete();
     await db.aiAnswers.where('scrapId').anyOf(ids).delete();
+    await db.snapshots.where('scrapId').anyOf(ids).delete();
     await db.scraps.bulkDelete(ids);
   });
 }

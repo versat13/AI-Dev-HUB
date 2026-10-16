@@ -51,3 +51,27 @@ describe('pickProfile', () => {
     expect(pickProfile([base, { ...mine, enabled: false }], 'https://x.com/u/status/1')?.id).toBe('builtin-x');
   });
 });
+
+describe('組み込みプロファイル（v2で追加したサイト）', () => {
+  const all = BUILTIN_PROFILES.map((p) => ({ ...p, createdAt: 1, updatedAt: 1 }));
+  it.each([
+    ['https://zenn.dev/someone/articles/abc123', 'builtin-zenn'],
+    ['https://qiita.com/someone/items/0123abcd', 'builtin-qiita'],
+    ['https://note.com/someone/n/n0123abcd', 'builtin-note'],
+    ['https://foo.hatenablog.com/entry/2026/10/16/120000', 'builtin-hatenablog'],
+    ['https://stackoverflow.com/questions/123/how-to-x', 'builtin-stackoverflow'],
+    ['https://www.reddit.com/r/LocalLLaMA/comments/abc/title/', 'builtin-reddit'],
+    ['https://news.ycombinator.com/item?id=1', 'builtin-hackernews'],
+    ['https://bsky.app/profile/a.bsky.social/post/3k', 'builtin-bluesky'],
+    ['https://www.youtube.com/watch?v=abc', 'builtin-youtube'],
+    ['https://ja.wikipedia.org/wiki/拡張機能', 'builtin-wikipedia'],
+    ['https://dev.to/someone/my-post-1abc', 'builtin-devto'],
+    ['https://x.com/u/status/1', 'builtin-x'],
+  ])('%s → %s', (url, id) => {
+    expect(pickProfile(all, url)?.id).toBe(id);
+  });
+  it('一覧ページなどには当てない', () => {
+    expect(pickProfile(all, 'https://zenn.dev/')).toBeUndefined();
+    expect(pickProfile(all, 'https://qiita.com/someone')).toBeUndefined();
+  });
+});

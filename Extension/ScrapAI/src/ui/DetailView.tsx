@@ -13,6 +13,8 @@ import {
 } from '@/lib/db';
 import { t } from '@/lib/i18n';
 import { AiPanel } from './AiPanel';
+import { ConfirmDelete } from './ConfirmDelete';
+import { Snapshots } from './Snapshots';
 import { revertTitle } from '@/lib/ai-db';
 import { fragLabel, formatDateTime } from './format';
 import { Icon, SourceMark } from './icons';
@@ -36,6 +38,7 @@ export function DetailView(props: {
   const [title, setTitle] = useState('');
   const [memo, setMemo] = useState('');
   const [newCat, setNewCat] = useState('');
+  const [addingCat, setAddingCat] = useState(false);
   const [tab, setTab] = useState<'body' | 'ai'>(lastTab);
   const chooseTab = (v: 'body' | 'ai') => {
     lastTab = v;
@@ -112,7 +115,6 @@ export function DetailView(props: {
   }
 
   async function removeForever() {
-    if (!window.confirm(t('confirmDeleteForever'))) return;
     await deleteScraps([scrapId]);
     props.onClose?.();
   }
@@ -122,7 +124,6 @@ export function DetailView(props: {
     if (newId) props.onOpenOther?.(newId);
   }
 
-  const assigned = categories.filter((c) => scrap.categoryIds.includes(c.id));
 
   return (
     <article class="detail">
@@ -151,17 +152,16 @@ export function DetailView(props: {
             onClick={(e) => {
               // 操作したらメニューを閉じる
               const d = (e.currentTarget as HTMLElement).closest('details');
-              if (d && (e.target as HTMLElement).closest('button')) d.open = false;
+              if (d && (e.target as HTMLElement).closest('button') && !(e.target as HTMLElement).closest('.danger:not(.solid)')) d.open = false;
             }}
           >
             {!archived ? (
               <button onClick={() => archiveScraps([scrapId])}>{t('archive')}</button>
             ) : (
-              <>
-                <button onClick={() => restoreScraps([scrapId])}>{t('restore')}</button>
-                <button class="danger" onClick={removeForever}>{t('deleteForever')}</button>
-              </>
+              <button onClick={() => restoreScraps([scrapId])}>{t('restore')}</button>
             )}
+            <hr />
+            <ConfirmDelete label={t('deleteForever')} question={t('confirmDeleteForever')} onConfirm={removeForever} />
           </div>
         </details>
       </div>
@@ -210,43 +210,41 @@ export function DetailView(props: {
               </button>
             ))}
           </div>
-          {assigned.map((c) => <span key={c.id} class="tag">{c.name}</span>)}
-          <details class="cat-picker">
-            <summary class="link">{assigned.length ? t('editCategories') : t('addCategoryShort')}</summary>
-            <div class="cat-pop" aria-label={t('categories')}>
-              <div class="chips">
-                {categories.length === 0 && <span class="muted">{t('noCategories')}</span>}
-                {categories.map((c) => {
-                  const on = scrap.categoryIds.includes(c.id);
-                  return (
-                    <button
-                      key={c.id}
-                      class="chip toggle-chip"
-                      aria-pressed={on}
-                      onClick={() => setCategoryOn([scrapId], c.id, !on)}
-                    >
-                      {on ? '✓ ' : ''}{c.name}
-                    </button>
-                  );
-                })}
-              </div>
-              <form
-                class="inline-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void addCategory();
-                }}
+          {/* カテゴリは押すだけで付け外しできる */}
+          {categories.map((c) => {
+            const on = scrap.categoryIds.includes(c.id);
+            return (
+              <button
+                key={c.id}
+                class="chip toggle-chip"
+                aria-pressed={on}
+                onClick={() => setCategoryOn([scrapId], c.id, !on)}
               >
-                <input
-                  value={newCat}
-                  placeholder={t('newCategory')}
-                  aria-label={t('newCategory')}
-                  onInput={(e) => setNewCat((e.target as HTMLInputElement).value)}
-                />
-                <button type="submit" disabled={!newCat.trim()}>{t('addCategory')}</button>
-              </form>
-            </div>
-          </details>
+                {on ? '✓ ' : ''}{c.name}
+              </button>
+            );
+          })}
+          {addingCat ? (
+            <form
+              class="inline-form cat-add"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void addCategory().then(() => setAddingCat(false));
+              }}
+            >
+              <input
+                value={newCat}
+                placeholder={t('newCategory')}
+                aria-label={t('newCategory')}
+                autoFocus
+                onInput={(e) => setNewCat((e.target as HTMLInputElement).value)}
+                onKeyDown={(e) => e.key === 'Escape' && setAddingCat(false)}
+              />
+              <button type="submit" disabled={!newCat.trim()}>{t('addCategory')}</button>
+            </form>
+          ) : (
+            <button class="link" onClick={() => setAddingCat(true)}>{t('addCategoryShort')}</button>
+          )}
         </div>
 
         <textarea
@@ -271,6 +269,7 @@ export function DetailView(props: {
 
       {tab === 'body' && (
         <div role="tabpanel">
+          <Snapshots scrapId={scrapId} />
           {frags.length === 0 && <p class="empty">{t('noFragments')}</p>}
           <ul class="frags">
             {frags.map((f) => (

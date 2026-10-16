@@ -246,10 +246,10 @@
     "message": "Restore"
   },
   "deleteForever": {
-    "message": "Delete permanently"
+    "message": "Delete"
   },
   "confirmDeleteForever": {
-    "message": "Delete this item and all its snippets permanently? This cannot be undone."
+    "message": "This deletes the item with its fragments and AI answers. This cannot be undone."
   },
   "itemNotFound": {
     "message": "This item no longer exists."
@@ -279,7 +279,7 @@
     "message": "Remove category…"
   },
   "confirmBulkDelete": {
-    "message": "Delete {0} items and all their snippets permanently? This cannot be undone."
+    "message": "This deletes {0} items with their fragments and AI answers. This cannot be undone."
   },
   "densityCompact": {
     "message": "Compact"
@@ -775,5 +775,86 @@
   },
   "filterRemove": {
     "message": "Remove {0}"
+  },
+  "confirmDeleteYes": {
+    "message": "Delete"
+  },
+  "sortDomain": {
+    "message": "By domain"
+  },
+  "bulkMore": {
+    "message": "More"
+  },
+  "bulkDelete": {
+    "message": "Delete {0} selected"
+  },
+  "aiPromptLang": {
+    "message": "Prompt language"
+  },
+  "aiPromptNative": {
+    "message": "Native"
+  },
+  "aiPromptLangHelp": {
+    "message": "EN: instructions in English, answer in your language. Native: instructions in your language."
+  },
+  "snapshotTake": {
+    "message": "Take a snapshot"
+  },
+  "snapshotRemember": {
+    "message": "Always take one on this site"
+  },
+  "snapshotSaved": {
+    "message": "Snapshot saved"
+  },
+  "snapshotFailed": {
+    "message": "Could not take a snapshot (reload the page and save again)"
+  },
+  "snapshots": {
+    "message": "Snapshots"
+  },
+  "snapshotOpen": {
+    "message": "Open full size"
+  },
+  "snapshotAlt": {
+    "message": "Cut-out of the page when saved"
+  },
+  "confirmDeleteSnapshot": {
+    "message": "Delete this snapshot?"
+  },
+  "profileSnapshot": {
+    "message": "Snapshot"
+  },
+  "profileSnapshotHelp": {
+    "message": "Keep part of the page as an image when saving. Only the visible part of the screen is captured. Use “@unit” to capture the saved unit (such as a post) itself."
+  },
+  "snapMode": {
+    "message": "Mode"
+  },
+  "snapOff": {
+    "message": "Off"
+  },
+  "snapAsk": {
+    "message": "Ask each time"
+  },
+  "snapAuto": {
+    "message": "Automatic"
+  },
+  "snapSelector": {
+    "message": "Area (CSS selector or @unit)"
+  },
+  "snapWhen": {
+    "message": "Only when this element is inside (empty = always)"
+  },
+  "pickAsSnapshot": {
+    "message": "Use as snapshot area"
+  },
+  "exportSnapshots": {
+    "message": "Include snapshots (images)"
+  },
+  "fragLabel_tags": {
+    "message": "Tags"
+  },
+  "fragLabel_votes": {
+    "message": "Votes"
   }
 }

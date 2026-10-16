@@ -3,9 +3,11 @@ import { ensureBuiltInProfiles } from '@/lib/builtin-profiles';
 import { db } from '@/lib/db';
 import type { ExtractResult } from '@/lib/extract-page';
 import { resolveLocale, setLocale, t } from '@/lib/i18n';
+import { SNAP_ATTR } from '@/lib/profile-extract';
 import { pickProfile } from '@/lib/profile-match';
 import { saveFromPage } from '@/lib/save';
 import { getSettings } from '@/lib/settings';
+import { addSnapshot, cropScreenshot, type SnapRect } from '@/lib/snapshot';
 import type { SaveMode, SaveOutcome, SiteProfile } from '@/lib/types';
 import { openManager, PENDING_PICK_KEY } from '@/ui/nav';
 
@@ -13,6 +15,12 @@ interface SaveMessage {
   type: 'save';
   tabId: number;
   mode?: SaveMode;
+}
+interface SnapshotMessage {
+  type: 'snapshot';
+  tabId: number;
+  scrapId: string;
+  remember?: boolean; // このサイトでは次から自動で撮る
 }
 interface PickerMessage {
   type: 'start-picker';
@@ -51,15 +59,97 @@ async function handleSave(msg: SaveMessage): Promise<SaveOutcome> {
     const tab = await browser.tabs.get(msg.tabId);
     const settings = await getSettings();
     const profile = tab.url ? await findProfile(tab.url).catch(() => undefined) : undefined;
-    return await saveFromPage(
+    let snap: ExtractResult['snapshot'];
+    const outcome = await saveFromPage(
       { url: tab.url ?? '', title: tab.title ?? '' },
-      () => runExtraction(msg.tabId, profile),
+      async () => {
+        const ex = await runExtraction(msg.tabId, profile);
+        snap = ex?.snapshot;
+        return ex;
+      },
       settings,
       msg.mode ?? 'auto',
     );
+    // 新しく保存したもの（項目・断片）があるときだけ撮る。同じ内容の再保存で画像を増やさない
+    if (snap && outcome.scrapId && (outcome.kind === 'created' || outcome.kind === 'fragment-added')) {
+      if (snap === 'auto') {
+        const id = await captureSnapshot(msg.tabId, outcome.scrapId);
+        outcome.snapshot = id ? 'taken' : 'failed';
+        if (id) outcome.addedSnapshotId = id;
+      } else outcome.snapshot = 'available';
+    }
+    return outcome;
   } catch (e) {
     return { kind: 'failed', error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+/**
+ * 印を付けた範囲を画面内に入れて撮影し、切り抜いて保存する。
+ * captureVisibleTab は activeTab（ユーザーが保存を押したタブ）で使える。画面に見えている部分だけが写る。
+ */
+async function captureSnapshot(tabId: number, scrapId: string): Promise<string | null> {
+  try {
+    const tab = await browser.tabs.get(tabId);
+    const [res] = await browser.scripting.executeScript({
+      target: { tabId },
+      func: (attr: string) =>
+        new Promise<(SnapRect & { prevX: number; prevY: number }) | null>((resolve) => {
+          const el = document.querySelector(`[${attr}]`);
+          if (!el) return resolve(null);
+          const prevX = scrollX;
+          const prevY = scrollY;
+          const fits = el.getBoundingClientRect().height < innerHeight * 0.9;
+          el.scrollIntoView({ block: fits ? 'center' : 'start', inline: 'nearest' });
+          // 再描画と遅延読み込みの画像を少し待つ
+          setTimeout(() => {
+            const b = el.getBoundingClientRect();
+            const x = Math.max(0, b.left);
+            const y = Math.max(0, b.top);
+            resolve({
+              x,
+              y,
+              w: Math.min(b.right, innerWidth) - x,
+              h: Math.min(b.bottom, innerHeight) - y,
+              viewportW: innerWidth,
+              prevX,
+              prevY,
+            });
+          }, 350);
+        }),
+      args: [SNAP_ATTR],
+    });
+    const rect = res?.result as (SnapRect & { prevX: number; prevY: number }) | null | undefined;
+    if (!rect || rect.w < 4 || rect.h < 4) return null;
+    const dataUrl = await browser.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+    await browser.scripting
+      .executeScript({
+        target: { tabId },
+        func: (x: number, y: number) => scrollTo(x, y),
+        args: [rect.prevX, rect.prevY],
+      })
+      .catch(() => undefined);
+    return (await addSnapshot(scrapId, await cropScreenshot(dataUrl, rect))).id;
+  } catch {
+    return null;
+  }
+}
+
+async function handleSnapshot(msg: SnapshotMessage): Promise<{ ok: boolean; id?: string }> {
+  const id = await captureSnapshot(msg.tabId, msg.scrapId);
+  const ok = !!id;
+  if (ok && msg.remember) {
+    const tab = await browser.tabs.get(msg.tabId);
+    const p = tab.url ? await findProfile(tab.url).catch(() => undefined) : undefined;
+    if (p?.snapshot) {
+      await db.siteProfiles.update(p.id, {
+        snapshot: { ...p.snapshot, mode: 'auto' },
+        modified: p.builtIn ? true : p.modified,
+        updatedAt: Date.now(),
+      });
+    }
+  }
+  return { ok, id: id ?? undefined };
 }
 
 async function handleStartPicker(msg: PickerMessage): Promise<{ ok: boolean; error?: string }> {
@@ -160,6 +250,10 @@ export default defineBackground(() => {
     if (type === 'save') {
       handleSave(message as SaveMessage).then(sendResponse);
       return true; // 非同期で応答する
+    }
+    if (type === 'snapshot') {
+      handleSnapshot(message as SnapshotMessage).then(sendResponse);
+      return true;
     }
     if (type === 'start-picker') {
       handleStartPicker(message as PickerMessage).then(sendResponse);

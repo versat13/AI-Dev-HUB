@@ -1,6 +1,7 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { browser } from 'wxt/browser';
 import { deleteFragments, deleteScraps } from '@/lib/db';
+import { deleteSnapshot } from '@/lib/snapshot';
 import { t } from '@/lib/i18n';
 import type { SaveMode, SaveOutcome, Settings } from '@/lib/types';
 import { ListBrowser } from '@/ui/ListBrowser';
@@ -52,7 +53,10 @@ export function App({ settings }: { settings: Settings }) {
   // 取り消しは「今回の保存で増えたもの」だけを元に戻す
   async function undo(o: SaveOutcome) {
     if (o.kind === 'created' && o.scrapId) await deleteScraps([o.scrapId]);
-    else if (o.kind === 'fragment-added' && o.addedFragmentIds) await deleteFragments(o.addedFragmentIds);
+    else if (o.kind === 'fragment-added' && o.addedFragmentIds) {
+      await deleteFragments(o.addedFragmentIds);
+      if (o.addedSnapshotId) await deleteSnapshot(o.addedSnapshotId);
+    }
     setBanner({ kind: 'undone' });
   }
 
@@ -148,6 +152,7 @@ function ResultBanner(props: {
         <span class="icon" aria-hidden="true">{ex.icon}</span> {ex.text}
         {o.fragmentCount ? ` · ${t('fragmentsCount', o.fragmentCount)}` : ''}
       </p>
+      {o.snapshot && o.scrapId && <SnapshotOffer outcome={o} onTaken={(id) => (o.addedSnapshotId = id)} />}
       <div class="actions">
         {o.kind === 'already-saved' && (
           <>
@@ -156,8 +161,42 @@ function ResultBanner(props: {
           </>
         )}
         {o.scrapId && <button onClick={() => props.onOpen(o.scrapId!)}>{t('openDetail')}</button>}
-        {canUndo && <button class="link" onClick={() => props.onUndo(o)}>{t('undo')}</button>}
+        {canUndo && <button onClick={() => props.onUndo(o)}>{t('undo')}</button>}
       </div>
+    </div>
+  );
+}
+
+/** 保存結果のスナップショット欄: 撮れるときはボタン、自動で撮ったときは結果を出す */
+function SnapshotOffer({ outcome, onTaken }: { outcome: SaveOutcome; onTaken: (id: string) => void }) {
+  const [state, setState] = useState<'idle' | 'taking' | 'taken' | 'failed'>(
+    outcome.snapshot === 'taken' ? 'taken' : outcome.snapshot === 'failed' ? 'failed' : 'idle',
+  );
+  const [remember, setRemember] = useState(false);
+  useEffect(() => setRemember(false), [outcome.scrapId]);
+
+  async function take() {
+    setState('taking');
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    const res = (await browser.runtime.sendMessage({
+      type: 'snapshot',
+      tabId: tab?.id,
+      scrapId: outcome.scrapId,
+      remember,
+    })) as { ok: boolean; id?: string } | undefined;
+    if (res?.id) onTaken(res.id);
+    setState(res?.ok ? 'taken' : 'failed');
+  }
+
+  if (state === 'taken') return <p class="sub snap-line">📷 {t('snapshotSaved')}</p>;
+  if (state === 'failed') return <p class="sub warn snap-line">{t('snapshotFailed')}</p>;
+  return (
+    <div class="snap-offer">
+      <button disabled={state === 'taking'} onClick={take}>📷 {t('snapshotTake')}</button>
+      <label class="check small">
+        <input type="checkbox" checked={remember} onChange={(e) => setRemember((e.target as HTMLInputElement).checked)} />
+        {t('snapshotRemember')}
+      </label>
     </div>
   );
 }

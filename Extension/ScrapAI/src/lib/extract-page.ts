@@ -21,6 +21,7 @@ export interface ExtractResult {
   articleText: string;
   lang: string;
   profile?: ProfileExtraction; // サイトプロファイルが適用されたときのみ（content script が付与）
+  snapshot?: 'ask' | 'auto'; // スナップショットを撮れるとき（範囲には印が付いている）
 }
 
 function meta(doc: Document, selector: string): string {

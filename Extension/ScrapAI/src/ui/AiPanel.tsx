@@ -3,6 +3,7 @@ import { browser } from 'wxt/browser';
 import {
   AI_SERVICES,
   buildPrompt,
+  promptLangs,
   resolveTemplates,
   sectionTitle,
   type AiServiceId,
@@ -113,7 +114,10 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
   const custom = useLive(listCustomTemplates, []) ?? [];
   const answers = useLive(() => listAiAnswers(scrap.id), [scrap.id]) ?? [];
   const lang = getLocale();
-  const templates = useMemo(() => resolveTemplates(custom, lang), [custom, lang]);
+  const [promptMode, setPromptMode] = useState<'en' | 'native'>('en');
+  const [uiCode, setUiCode] = useState<string>(lang);
+  const langs = promptLangs(lang, promptMode, uiCode);
+  const templates = useMemo(() => resolveTemplates(custom, lang, langs.bodyLang), [custom, lang, langs.bodyLang]);
 
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
@@ -127,13 +131,16 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
     void getSettings().then((s) => {
       setTemplateId(s.aiTemplateId);
       setApplyHeadline(s.aiApplyHeadline);
+      setPromptMode(s.aiPromptLang);
+      // 回答の言語: 表示言語を固定していればそれ、自動ならブラウザの言語（日英以外も可）
+      setUiCode(s.locale === 'auto' ? browser.i18n.getUILanguage() : lang);
     });
   }, []);
   useEffect(() => setExcluded(new Set()), [scrap.id]);
 
   const tpl = templates.find((x) => x.id === templateId) ?? templates[0]!;
   const used = frags.filter((f) => !excluded.has(f.id));
-  const prompt = buildPrompt(tpl, scrap, used, lang, fragLabel);
+  const prompt = buildPrompt(tpl, scrap, used, langs, fragLabel);
 
   async function chooseTemplate(id: string) {
     setTemplateId(id);
@@ -170,6 +177,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
       <div class="ai-step">
         <h4><span class="step-no">1</span>{t('aiStepAsk')}</h4>
         <div class="ai-ask">
+          <div class="tpl-row">
           <label class="field">
             <span>{t('aiTemplate')}</span>
             <select value={tpl.id} onChange={(e) => chooseTemplate((e.target as HTMLSelectElement).value)}>
@@ -178,6 +186,23 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
               ))}
             </select>
           </label>
+          {lang !== 'en' && (
+            <div class="seg" role="group" aria-label={t('aiPromptLang')} title={t('aiPromptLangHelp')}>
+              {(['en', 'native'] as const).map((m) => (
+                <button
+                  key={m}
+                  aria-pressed={promptMode === m}
+                  onClick={async () => {
+                    setPromptMode(m);
+                    await setSettings({ aiPromptLang: m });
+                  }}
+                >
+                  {m === 'en' ? 'EN' : t('aiPromptNative')}
+                </button>
+              ))}
+            </div>
+          )}
+          </div>
 
           {frags.length > 1 && (
             <details class="ai-frags">

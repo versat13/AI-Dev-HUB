@@ -19,6 +19,7 @@ import { applyLocale } from '@/ui/boot';
 import { DataSettings } from '@/ui/DataSettings';
 import { DetailView } from '@/ui/DetailView';
 import { ActiveFilters, FilterPanel, SearchBox, SortSelect } from '@/ui/Filters';
+import { ConfirmDelete } from '@/ui/ConfirmDelete';
 import { Icon } from '@/ui/icons';
 import { formatBytes } from '@/ui/format';
 import { useCategories, useListData, useLive } from '@/ui/hooks';
@@ -217,7 +218,6 @@ function Library(props: {
 }) {
   const { selection, params } = props;
   const ids = [...selection];
-  const archivedView = params.view === 'archived';
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   async function bulk(fn: (ids: string[]) => Promise<void>) {
@@ -281,7 +281,7 @@ function Library(props: {
       )}
       <div class="list-head">
         <span class="count" aria-live="polite">{props.data ? t('itemCount', props.data.items.length) : ''}</span>
-        <ActiveFilters params={params} onChange={props.setParams} categories={props.categories} />
+        <ActiveFilters params={params} onChange={props.setParams} categories={props.categories} hide={['view', 'category']} />
         <span class="spacer" />
         <button class="link" onClick={props.selectAll}>{t('selectAll')}</button>
       </div>
@@ -321,18 +321,20 @@ function Library(props: {
           )}
           {params.view !== 'archived' && <button onClick={() => bulk(archiveScraps)}>{t('archive')}</button>}
           {params.view !== 'active' && <button onClick={() => bulk(restoreScraps)}>{t('restore')}</button>}
-          {archivedView && (
-            <button
-              class="danger"
-              onClick={async () => {
-                if (!window.confirm(t('confirmBulkDelete', selection.size))) return;
-                await bulk(deleteScraps);
-                if (props.activeId && selection.has(props.activeId)) props.setActiveId(null);
-              }}
-            >
-              {t('deleteForever')}
-            </button>
-          )}
+          <details class="menu bulk-more">
+            <summary>{t('bulkMore')}</summary>
+            <div class="menu-list">
+              <ConfirmDelete
+                label={t('bulkDelete', selection.size)}
+                question={t('confirmBulkDelete', selection.size)}
+                onConfirm={async () => {
+                  const hadActive = props.activeId && selection.has(props.activeId);
+                  await bulk(deleteScraps);
+                  if (hadActive) props.setActiveId(null);
+                }}
+              />
+            </div>
+          </details>
         </div>
       )}
 

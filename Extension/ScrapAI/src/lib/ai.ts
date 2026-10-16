@@ -29,7 +29,7 @@ export const SECTIONS: SectionDef[] = [
   {
     key: 'headline',
     title: { ja: '見出し', en: 'Headline' },
-    hint: { ja: '内容が一目で分かる1行の日本語タイトル（40字以内）', en: 'a one-line title that conveys the content at a glance (under 80 characters)' },
+    hint: { ja: '内容が一目で分かる1行のタイトル（40字以内）', en: 'a one-line title that conveys the content at a glance (under 40 characters if Japanese, 80 otherwise)' },
     // 旧「日本語タイトル」もここに寄せる
     aliases: ['日本語タイトル', '日本語の見出し', '日本語見出し', '邦題', 'japanese title', 'headline'],
   },
@@ -83,9 +83,9 @@ export const SECTIONS: SectionDef[] = [
   },
   {
     key: 'translation',
-    title: { ja: '日本語訳', en: 'Japanese translation' },
-    hint: { ja: '本文全体の日本語訳（意訳でよい。要約しない）', en: 'Japanese translation of the whole body (free translation is fine; do not summarize)' },
-    aliases: ['本文の日本語訳', '翻訳', '和訳', '日本語訳本文', 'japanese translation', 'translation'],
+    title: { ja: '日本語訳', en: 'Translation' },
+    hint: { ja: '本文全体の訳（意訳でよい。要約しない）', en: 'translation of the whole body (free translation is fine; do not summarize)' },
+    aliases: ['本文の日本語訳', '翻訳', '和訳', '日本語訳本文', '訳文', 'japanese translation', 'translation'],
   },
 ];
 
@@ -117,7 +117,6 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
 
 - 資料に書かれていることと、あなたの知識・推測をはっきり区別してください。
 - 確かめられないことは「未確認事項」に入れ、そう判断した根拠を書いてください。
-- 回答は日本語で、下の見出しを変えずに、この順番で書いてください。
 
 {{format}}
 
@@ -126,7 +125,6 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
 
 - Clearly separate what the material says from your own knowledge or guesses.
 - Put anything you cannot confirm under the unverified section, with your reasoning.
-- Answer in English, using the headings below unchanged and in this order.
 
 {{format}}
 
@@ -143,7 +141,6 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
 - 必要な環境・費用・アカウントなどの前提をすべて挙げてください。
 - 最初の一歩は、30分以内に終わる具体的な操作にしてください。
 - 資料から読み取れないことは推測で補わず、「未確認事項」に書いてください。
-- 回答は日本語で、下の見出しを変えずに、この順番で書いてください。
 
 {{format}}
 
@@ -153,7 +150,6 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
 - List every prerequisite (environment, cost, accounts, etc.).
 - Make the first step a concrete action that takes 30 minutes or less.
 - Do not fill gaps with guesses; put them under the unverified section.
-- Answer in English, using the headings below unchanged and in this order.
 
 {{format}}
 
@@ -165,21 +161,18 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     name: { ja: '日本語に訳す', en: 'Translate to Japanese' },
     sections: TRANSLATION_KEYS,
     body: {
-      ja: `次の資料の本文を日本語に訳してください。
+      ja: `次の資料の本文を{{lang}}に訳してください。
 
 - 意訳でかまいませんが、要約や省略はせず、本文全体を訳してください。
 - 固有名詞・コード・URLは原文のままにしてください。
-- 回答は、下の見出しを変えずに、この順番で書いてください。
 
 {{format}}
 
 {{source}}`,
-      en: `Translate the body of the following material into Japanese.
+      en: `Translate the body of the following material into {{lang}}.
 
 - A free translation is fine, but translate the whole body without summarizing or omitting.
 - Keep proper nouns, code and URLs as in the original.
-- Write the headline in Japanese.
-- Use the headings below unchanged and in this order.
 
 {{format}}
 
@@ -191,12 +184,12 @@ export const BUILTIN_TEMPLATES: BuiltinTemplate[] = [
     name: { ja: '短く要点だけ', en: 'Just the key points' },
     sections: ['headline', 'summary', 'usefulness'],
     body: {
-      ja: `次の資料の要点を短くまとめてください。回答は日本語で、下の見出しを変えずに書いてください。
+      ja: `次の資料の要点を短くまとめてください。
 
 {{format}}
 
 {{source}}`,
-      en: `Briefly summarize the key points of the following material. Answer in English, using the headings below unchanged.
+      en: `Briefly summarize the key points of the following material.
 
 {{format}}
 
@@ -216,9 +209,10 @@ export interface ResolvedTemplate {
   sections: SectionKey[];
 }
 
-export function resolveTemplates(custom: PromptTemplate[], lang: Lang): ResolvedTemplate[] {
+/** nameLang: 一覧に出す名前の言語（表示言語）、bodyLang: プロンプト本文の言語 */
+export function resolveTemplates(custom: PromptTemplate[], nameLang: Lang, bodyLang: Lang = nameLang): ResolvedTemplate[] {
   return [
-    ...BUILTIN_TEMPLATES.map((b) => ({ id: b.id, name: b.name[lang], body: b.body[lang], builtIn: true, sections: b.sections })),
+    ...BUILTIN_TEMPLATES.map((b) => ({ id: b.id, name: b.name[nameLang], body: b.body[bodyLang], builtIn: true, sections: b.sections })),
     ...[...custom]
       .sort((a, b) => a.order - b.order || a.createdAt - b.createdAt)
       .map((c) => ({ id: c.id, name: c.name, body: c.body, builtIn: false, sections: ALL_SECTION_KEYS })),
@@ -234,13 +228,62 @@ const L = {
   en: { material: '# Material', title: 'Title', url: 'URL', site: 'Site', saved: 'Saved', memo: 'My note', frag: 'Fragment', omitted: '(The rest was omitted because it is too long.)' },
 };
 
-export function formatBlock(keys: SectionKey[], lang: Lang): string {
-  return keys
+/**
+ * プロンプトの言語の組み合わせ。
+ * - bodyLang: 指示文の言語（既定は英語。英語の指示のほうが守られやすい）
+ * - headLang: 見出しの言語（表示言語。回答をそのまま読めるように）
+ * - answerLang: 回答させる言語の名前（bodyLang の言葉で書く。例: 'Japanese' / '日本語'）
+ */
+export interface PromptLangs {
+  bodyLang: Lang;
+  headLang: Lang;
+  answerLang: string;
+}
+
+export function languageName(code: string, inLang: Lang): string {
+  try {
+    return new Intl.DisplayNames([inLang], { type: 'language' }).of(code.split('-')[0]!) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+/** 表示言語の設定から、プロンプトの言語の組み合わせを決める */
+export function promptLangs(uiLang: Lang, mode: 'en' | 'native', uiLanguageCode: string = uiLang): PromptLangs {
+  const bodyLang: Lang = mode === 'en' ? 'en' : uiLang;
+  return { bodyLang, headLang: uiLang, answerLang: languageName(uiLanguageCode, bodyLang) };
+}
+
+const asLangs = (l: Lang | PromptLangs): PromptLangs =>
+  typeof l === 'string' ? { bodyLang: l, headLang: l, answerLang: languageName(l, l) } : l;
+
+const RULES = {
+  ja: (lang: string) => `## 回答の形式（厳守）
+- 回答全体を、1つのコードブロック（\`\`\`markdown で始め \`\`\` で終える）の中に書いてください。コピーしたときに「##」が消えないようにするためです。
+- 下の見出しを、名前を変えず・訳さず・番号を付けず、この順番で使ってください。各見出しは「## 」で始まる1行にしてください。
+- 見出しを増やさないでください。書くことがない見出しは「なし」と書いてください。
+- 回答の中でコードを示すときは、\`\`\` ではなく ~~~ で囲んでください。
+- コードブロックの外には何も書かないでください。
+- 回答は${lang}で書いてください。`,
+  en: (lang: string) => `## Answer format (follow strictly)
+- Put the entire answer inside ONE fenced code block (start with \`\`\`markdown and end with \`\`\`), so the "##" marks survive copying.
+- Use the headings below exactly as written — do not rename, translate or number them — in this order, each on its own line starting with "## ".
+- Do not add headings. If a heading has nothing to say, write "None".
+- If you show code inside the answer, fence it with ~~~ instead of \`\`\`.
+- Write nothing outside the code block.
+- Write the answer in ${lang}.`,
+};
+
+export function formatBlock(keys: SectionKey[], langs: Lang | PromptLangs): string {
+  const { bodyLang, headLang, answerLang } = asLangs(langs);
+  const heads = keys
     .map((k) => {
       const s = SECTIONS.find((x) => x.key === k)!;
-      return lang === 'ja' ? `## ${s.title.ja}\n（${s.hint.ja}）` : `## ${s.title.en}\n(${s.hint.en})`;
+      const hint = bodyLang === 'ja' ? `（${s.hint.ja}）` : `(${s.hint.en})`;
+      return `## ${s.title[headLang]}\n${hint}`;
     })
     .join('\n\n');
+  return `${RULES[bodyLang](answerLang)}\n\n\`\`\`markdown\n${heads}\n\`\`\``;
 }
 
 export function sourceBlock(
@@ -286,12 +329,14 @@ export function buildPrompt(
   tpl: Pick<ResolvedTemplate, 'body' | 'sections'>,
   scrap: Pick<Scrap, 'title' | 'url' | 'siteName' | 'memo' | 'createdAt'>,
   frags: Pick<Fragment, 'fieldLabel' | 'text' | 'anchor' | 'permalink' | 'extras'>[],
-  lang: Lang,
+  langs: Lang | PromptLangs,
   labelOf?: (label: string) => string,
 ): string {
-  const source = sourceBlock(scrap, frags, lang, labelOf);
+  const l = asLangs(langs);
+  const source = sourceBlock(scrap, frags, l.bodyLang, labelOf);
   const vars: Record<string, string> = {
-    format: formatBlock(tpl.sections, lang),
+    format: formatBlock(tpl.sections, l),
+    lang: l.answerLang,
     source,
     title: scrap.title,
     url: scrap.url,
@@ -314,8 +359,11 @@ function norm(s: string): string {
 }
 
 const NAME_TO_KEY = new Map<string, SectionKey>();
+// 記号のない行は、正式な見出し名と完全に一致するときだけ見出しとみなす（別名は本文中に出やすいため使わない）
+const PLAIN_TITLE_TO_KEY = new Map<string, SectionKey>();
 for (const s of SECTIONS) {
   for (const n of [s.title.ja, s.title.en, ...s.aliases]) NAME_TO_KEY.set(norm(n), s.key);
+  for (const n of [s.title.ja, s.title.en]) PLAIN_TITLE_TO_KEY.set(norm(n), s.key);
 }
 
 /** 見出し行なら、その節のキーを返す（#見出し、**太字だけの行**、「見出し：」だけの行） */
@@ -328,7 +376,7 @@ export function headingKey(line: string): SectionKey | null {
     m = t.match(/^\*\*(.+?)\*\*\s*[:：]?$/) ?? t.match(/^(.{1,30}?)\s*[:：]$/);
     name = m?.[1];
   }
-  if (!name) return null;
+  if (!name) return PLAIN_TITLE_TO_KEY.get(norm(t)) ?? null;
   name = name.replace(/^\*\*(.+)\*\*$/, '$1').replace(/^(\d+[.)．、]|[①-⑳]|[-・])\s*/, '');
   return NAME_TO_KEY.get(norm(name)) ?? null;
 }
@@ -343,7 +391,11 @@ export interface ParsedAnswer {
  * ok: 期待した見出しが全てある / partial: 一部だけ / failed: 1つも見つからない
  */
 export function parseAnswer(raw: string, expected: SectionKey[] = ALL_SECTION_KEYS): ParsedAnswer {
-  const lines = raw.replace(/\r\n?/g, '\n').split('\n');
+  // コードブロックの囲み（```markdown など）だけの行は捨てる
+  const lines = raw
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .filter((line) => !/^\s*(```|~~~)[\w-]*\s*$/.test(line));
   const found = new Map<string, string[]>();
   const order: string[] = [];
   let cur = 'intro';

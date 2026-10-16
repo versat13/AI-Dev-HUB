@@ -122,22 +122,26 @@ export function SortSelect({ value, onChange, labelled }: { value: SortKey; onCh
       <option value="updated-desc">{t('sortUpdatedDesc')}</option>
       <option value="stars-desc">{t('sortStars')}</option>
       <option value="title-asc">{t('sortTitle')}</option>
+      <option value="domain-asc">{t('sortDomain')}</option>
     </select>
   );
   return labelled ? <Field label={t('labelSort')}>{sel}</Field> : sel;
 }
 
 /** 有効な絞り込み条件だけをチップで並べる。× で個別に解除できる */
-export function ActiveFilters({ params, onChange, categories }: {
+export function ActiveFilters({ params, onChange, categories, hide = [] }: {
   params: ListParams;
   onChange: (next: ListParams) => void;
   categories: Category[];
+  hide?: ('view' | 'category')[]; // 管理タブではサイドバーで分かるので出さない
 }) {
   if (!isFiltered(params)) return null;
   const chips: { key: string; label: string; clear: Partial<ListParams> }[] = [];
-  if (params.view === 'archived') chips.push({ key: 'view', label: t('viewArchived'), clear: { view: 'active' } });
-  if (params.view === 'all') chips.push({ key: 'view', label: t('viewAll'), clear: { view: 'active' } });
-  if (params.category !== 'any') {
+  if (!hide.includes('view')) {
+    if (params.view === 'archived') chips.push({ key: 'view', label: t('viewArchived'), clear: { view: 'active' } });
+    if (params.view === 'all') chips.push({ key: 'view', label: t('viewAll'), clear: { view: 'active' } });
+  }
+  if (params.category !== 'any' && !hide.includes('category')) {
     const name = params.category === 'none' ? t('categoryNone') : categories.find((c) => c.id === params.category)?.name ?? '?';
     chips.push({ key: 'cat', label: name, clear: { category: 'any' } });
   }

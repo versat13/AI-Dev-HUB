@@ -1,7 +1,8 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { addAiAnswer } from './ai-db';
-import { createCategory, db, listFragments, setCategoryOn } from './db';
+import { createCategory, db, deleteScraps, listFragments, setCategoryOn } from './db';
+import { addSnapshot, listSnapshots } from './snapshot';
 import { buildExport, DEFAULT_EXPORT_OPTIONS } from './export';
 import { importData, parseExport } from './import';
 import type { ExtractResult } from './extract-page';
@@ -93,5 +94,31 @@ describe('export / import', () => {
     for (const s of await db.scraps.toArray()) expect(await listFragments(s.id)).toHaveLength(1);
     for (const a of await db.aiAnswers.toArray()) expect(await db.scraps.get(a.scrapId)).toBeTruthy();
     expect((await db.categories.toArray())).toHaveLength(1); // 同名カテゴリは寄せる
+  });
+});
+
+describe('スナップショット', () => {
+  beforeEach(clearAll);
+
+  it('エクスポート/インポートで画像が往復し、項目の削除で消える', async () => {
+    const id = await seed();
+    const bytes = new Uint8Array([1, 2, 3, 250, 0, 7]);
+    await addSnapshot(id, { blob: new Blob([bytes], { type: 'image/webp' }), width: 10, height: 6 });
+    const file = JSON.parse(JSON.stringify(await buildExport(OPTS)));
+    expect(file.snapshots).toHaveLength(1);
+    expect((await buildExport({ ...OPTS, snapshots: false })).snapshots).toBeUndefined();
+
+    await clearAll();
+    const r = await importData(parseExport(JSON.stringify(file)), 'skip');
+    expect(r.snapshots).toBe(1);
+    const [snap] = await listSnapshots(id);
+    expect(snap!.width).toBe(10);
+    expect(new Uint8Array(await snap!.blob.arrayBuffer())).toEqual(bytes);
+
+    // スキップした項目のスナップショットは重ねて取り込まない
+    expect((await importData(parseExport(JSON.stringify(file)), 'skip')).snapshots).toBe(0);
+
+    await deleteScraps([id]);
+    expect(await db.snapshots.count()).toBe(0);
   });
 });

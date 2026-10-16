@@ -1,5 +1,5 @@
 import { db, deleteScraps } from './db';
-import { EXPORT_FORMAT, EXPORT_VERSION, type ExportFile } from './export';
+import { EXPORT_FORMAT, EXPORT_VERSION, fromBase64, type ExportFile } from './export';
 import type { AiAnswer, Category, Fragment, Scrap, Settings } from './types';
 
 export type DuplicateMode = 'skip' | 'overwrite' | 'add';
@@ -12,6 +12,7 @@ export interface ImportResult {
   categories: number;
   siteProfiles: number;
   promptTemplates: number;
+  snapshots: number;
   settings: Partial<Settings> | null; // 呼び出し側が storage に反映する
 }
 
@@ -38,6 +39,8 @@ export function parseExport(text: string): ExportFile {
   const okCats = categories.every((c) => isObj(c) && isStr(c.id) && isStr(c.name));
   const answers = arr(data.aiAnswers);
   const okAns = !!answers && answers.every((a) => isObj(a) && isStr(a.id) && isStr(a.scrapId) && isStr(a.raw));
+  const snaps = arr(data.snapshots);
+  if (!snaps || !snaps.every((x) => isObj(x) && isStr(x.id) && isStr(x.scrapId) && isStr(x.data))) throw new Error('invalid-data');
   for (const k of ['siteProfiles', 'promptTemplates'] as const) {
     const v = arr(data[k]);
     if (!v || !v.every((x) => isObj(x) && isStr(x.id))) throw new Error('invalid-data');
@@ -50,10 +53,11 @@ export async function importData(file: ExportFile, mode: DuplicateMode): Promise
   const now = Date.now();
   const res: ImportResult = {
     scraps: 0, skipped: 0, fragments: 0, aiAnswers: 0, categories: 0,
-    siteProfiles: 0, promptTemplates: 0, settings: null,
+    siteProfiles: 0, promptTemplates: 0, snapshots: 0, settings: null,
   };
 
-  await db.transaction('rw', [db.scraps, db.fragments, db.aiAnswers, db.categories, db.siteProfiles, db.promptTemplates], async () => {
+  const scrapIdMap = new Map<string, string>();
+  await db.transaction('rw', [db.scraps, db.fragments, db.aiAnswers, db.categories, db.siteProfiles, db.promptTemplates, db.snapshots], async () => {
     // カテゴリ: 同名は既存に寄せ、なければ追加（IDが衝突したら付け替え）
     const existingCats = await db.categories.toArray();
     const catMap = new Map<string, string>();
@@ -102,6 +106,7 @@ export async function importData(file: ExportFile, mode: DuplicateMode): Promise
         categoryIds: (s.categoryIds ?? []).map((c) => catMap.get(c)).filter((c): c is string => !!c),
         aiAnswerCount: answers.length,
       };
+      scrapIdMap.set(s.id, newId);
       await db.scraps.add(scrap);
       await db.fragments.bulkAdd(frags);
       await db.aiAnswers.bulkAdd(answers);
@@ -110,6 +115,13 @@ export async function importData(file: ExportFile, mode: DuplicateMode): Promise
       res.aiAnswers += answers.length;
     }
 
+    for (const x of file.snapshots ?? []) {
+      const scrapId = scrapIdMap.get(x.scrapId);
+      if (!scrapId) continue; // スキップした項目のスナップショットは取り込まない
+      const blob = new Blob([fromBase64(x.data)], { type: x.type || 'image/webp' });
+      await db.snapshots.add({ id: crypto.randomUUID(), scrapId, blob, width: x.width, height: x.height, createdAt: x.createdAt });
+      res.snapshots++;
+    }
     for (const p of file.siteProfiles ?? []) {
       await db.siteProfiles.put(p);
       res.siteProfiles++;

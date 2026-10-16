@@ -46,7 +46,7 @@ export function App({ settings }: { settings: Settings }) {
           onOpenOther={(id) => setSelectedId(id)}
         />
       ) : (
-        <>
+        <div class="panel-list" key="list">
           <header class="popup-head">
             <span class="brand"><img src="/icon/32.png" width="18" height="18" alt="" />ScrapAI</span>
             <span class="spacer" />
@@ -55,7 +55,7 @@ export function App({ settings }: { settings: Settings }) {
             </button>
           </header>
           <ListBrowser settings={settings} onOpen={setSelectedId} />
-        </>
+        </div>
       )}
     </main>
   );

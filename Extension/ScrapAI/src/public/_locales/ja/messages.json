@@ -246,10 +246,10 @@
     "message": "復元"
   },
   "deleteForever": {
-    "message": "完全に削除"
+    "message": "削除"
   },
   "confirmDeleteForever": {
-    "message": "この項目と断片を完全に削除します。元に戻せません。よろしいですか？"
+    "message": "この項目を断片・AIの回答ごと削除します。元に戻せません。"
   },
   "itemNotFound": {
     "message": "この項目は既に存在しません。"
@@ -279,7 +279,7 @@
     "message": "カテゴリを外す…"
   },
   "confirmBulkDelete": {
-    "message": "{0}件の項目と断片を完全に削除します。元に戻せません。よろしいですか？"
+    "message": "{0}件を断片・AIの回答ごと削除します。元に戻せません。"
   },
   "densityCompact": {
     "message": "コンパクト"
@@ -775,5 +775,86 @@
   },
   "filterRemove": {
     "message": "{0} を解除"
+  },
+  "confirmDeleteYes": {
+    "message": "削除する"
+  },
+  "sortDomain": {
+    "message": "ドメイン順"
+  },
+  "bulkMore": {
+    "message": "その他"
+  },
+  "bulkDelete": {
+    "message": "選択した{0}件を削除"
+  },
+  "aiPromptLang": {
+    "message": "プロンプトの言語"
+  },
+  "aiPromptNative": {
+    "message": "日本語"
+  },
+  "aiPromptLangHelp": {
+    "message": "EN: 指示を英語で書き、回答は日本語で返させます（指示が守られやすい）。日本語: 指示も日本語で、目で確認しやすい。"
+  },
+  "snapshotTake": {
+    "message": "スナップショットを撮る"
+  },
+  "snapshotRemember": {
+    "message": "このサイトでは次から自動で撮る"
+  },
+  "snapshotSaved": {
+    "message": "スナップショットを保存しました"
+  },
+  "snapshotFailed": {
+    "message": "スナップショットを撮れませんでした（ページを再読み込みしてからもう一度保存してください）"
+  },
+  "snapshots": {
+    "message": "スナップショット"
+  },
+  "snapshotOpen": {
+    "message": "原寸で開く"
+  },
+  "snapshotAlt": {
+    "message": "保存時の画面の切り抜き"
+  },
+  "confirmDeleteSnapshot": {
+    "message": "このスナップショットを削除しますか？"
+  },
+  "profileSnapshot": {
+    "message": "スナップショット"
+  },
+  "profileSnapshotHelp": {
+    "message": "保存したときに、ページの一部を画像で残せます。画面に見えている範囲だけが写ります。範囲に「@unit」と書くと、保存した単位（投稿など）そのものを撮ります。"
+  },
+  "snapMode": {
+    "message": "撮り方"
+  },
+  "snapOff": {
+    "message": "撮らない"
+  },
+  "snapAsk": {
+    "message": "毎回たずねる"
+  },
+  "snapAuto": {
+    "message": "自動で撮る"
+  },
+  "snapSelector": {
+    "message": "撮る範囲（CSSセレクタ、または @unit）"
+  },
+  "snapWhen": {
+    "message": "この要素が範囲内にあるときだけ（空欄なら常に）"
+  },
+  "pickAsSnapshot": {
+    "message": "スナップショットの範囲にする"
+  },
+  "exportSnapshots": {
+    "message": "スナップショット（画像）を含める"
+  },
+  "fragLabel_tags": {
+    "message": "タグ"
+  },
+  "fragLabel_votes": {
+    "message": "票"
   }
 }

@@ -157,7 +157,8 @@ function pathOf(url: string): string {
   }
 }
 
-export function runProfile(profile: SiteProfile, doc: Document, win: Window): ProfileExtraction {
+/** out.units には、保存に使った単位の要素が入る（スナップショットの範囲に使う） */
+export function runProfile(profile: SiteProfile, doc: Document, win: Window, out?: { units: Element[] }): ProfileExtraction {
   const result: ProfileExtraction = {
     profileId: profile.id,
     fieldDrafts: [],
@@ -184,7 +185,10 @@ export function runProfile(profile: SiteProfile, doc: Document, win: Window): Pr
     if (hit.length > 0 && !insideOne) {
       for (const el of hit.slice(0, MAX_SELECTED_UNITS)) {
         const d = buildUnit(el, rule);
-        if (d) result.unitDrafts.push(d);
+        if (d) {
+          result.unitDrafts.push(d);
+          out?.units.push(el);
+        }
       }
       if (result.unitDrafts.length > 0) {
         result.unitsFromSelection = true;
@@ -201,15 +205,42 @@ export function runProfile(profile: SiteProfile, doc: Document, win: Window): Pr
   // 既定: URLと同じ permalink を持つ単位（X の投稿詳細など）。なければ最初の単位
   const here = pathOf(doc.location?.href ?? '');
   let fallback: ProfileDraft | null = null;
+  let fallbackEl: Element | null = null;
   for (const el of unitEls) {
     const d = buildUnit(el, rule);
     if (!d) continue;
-    if (!fallback) fallback = d;
+    if (!fallback) [fallback, fallbackEl] = [d, el];
     if (d.permalink && pathOf(d.permalink) === here) {
-      fallback = d;
+      [fallback, fallbackEl] = [d, el];
       break;
     }
   }
   if (fallback) result.unitDrafts.push(fallback);
+  if (fallbackEl) out?.units.push(fallbackEl);
   return result;
+}
+
+export const SNAP_ATTR = 'data-scrapai-snap';
+
+/**
+ * スナップショットの範囲を決めて印を付ける（撮影は background が後で行う）。
+ * 撮れないとき（設定がオフ・範囲がない・when の要素がない）は null。
+ */
+export function markSnapshotTarget(
+  rule: SiteProfile['snapshot'],
+  doc: Document,
+  units: Element[],
+): 'ask' | 'auto' | null {
+  doc.querySelectorAll(`[${SNAP_ATTR}]`).forEach((el) => el.removeAttribute(SNAP_ATTR));
+  if (!rule || rule.mode === 'off' || !rule.selector.trim()) return null;
+  let el: Element | null = null;
+  try {
+    el = rule.selector.trim() === '@unit' ? (units[0] ?? null) : doc.querySelector(rule.selector);
+    if (el && rule.when?.trim() && !el.querySelector(rule.when)) el = null;
+  } catch {
+    return null; // セレクタの書き間違い
+  }
+  if (!el) return null;
+  el.setAttribute(SNAP_ATTR, '');
+  return rule.mode;
 }

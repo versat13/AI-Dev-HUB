@@ -3,7 +3,7 @@ import type { Scrap } from './types';
 // 一覧の検索・絞り込み・並び替え（仕様書5章）。DBに依存しない純粋関数にしてテストしやすくする。
 
 export type ViewMode = 'active' | 'archived' | 'all';
-export type SortKey = 'created-desc' | 'created-asc' | 'updated-desc' | 'stars-desc' | 'title-asc';
+export type SortKey = 'created-desc' | 'created-asc' | 'updated-desc' | 'stars-desc' | 'title-asc' | 'domain-asc';
 
 export interface ListParams {
   q: string;
@@ -63,6 +63,8 @@ function compare(a: Scrap, b: Scrap, sort: SortKey): number {
       return b.updatedAt - a.updatedAt;
     case 'stars-desc':
       return (b.stars ?? 0) - (a.stars ?? 0) || b.createdAt - a.createdAt;
+    case 'domain-asc':
+      return a.domain.localeCompare(b.domain) || b.createdAt - a.createdAt;
     case 'title-asc':
       return a.title.localeCompare(b.title) || b.createdAt - a.createdAt;
     default:

@@ -7,6 +7,7 @@ import {
   formatBlock,
   headingKey,
   parseAnswer,
+  promptLangs,
   resolveTemplates,
   sourceBlock,
 } from './ai';
@@ -32,7 +33,9 @@ const label = (l: string) => ({ post: '投稿', res: 'レス', author: '投稿�
 describe('プロンプト生成', () => {
   it('形式の見出しはテンプレートの節だけ、この順で並ぶ', () => {
     const f = formatBlock(['summary', 'firstStep'], 'ja');
-    expect(f).toBe('## 要点\n（3〜5行の箇条書き）\n\n## 最初の一歩\n（今日できる具体的な最初の操作）');
+    expect(f).toContain('```markdown\n## 要点\n（3〜5行の箇条書き）\n\n## 最初の一歩\n（今日できる具体的な最初の操作）\n```');
+    expect(f).toContain('コードブロック');
+    expect(f).toContain('回答は日本語で書いてください');
   });
 
   it('資料ブロックにタイトル・URL・メモ・断片（番号・投稿者）が入る', () => {
@@ -69,7 +72,51 @@ describe('プロンプト生成', () => {
   });
 });
 
+describe('プロンプトの言語', () => {
+  it('EN方式: 指示は英語、見出しは表示言語、回答言語を指定する', () => {
+    const langs = promptLangs('ja', 'en', 'ja');
+    expect(langs).toEqual({ bodyLang: 'en', headLang: 'ja', answerLang: 'Japanese' });
+    const tpl = resolveTemplates([], 'ja', langs.bodyLang).find((t) => t.id === 'builtin-verify')!;
+    expect(tpl.name).toBe('要約と検証'); // 一覧の名前は表示言語
+    const p = buildPrompt(tpl, scrap, frags, langs, label);
+    expect(p).toContain('Please organize the following material');
+    expect(p).toContain('Write the answer in Japanese.');
+    expect(p).toContain('## 要点\n(3–5 bullet points)');
+    expect(p).toContain('# Material');
+  });
+
+  it('日本語方式: 指示も見出しも日本語', () => {
+    const langs = promptLangs('ja', 'native', 'ja');
+    const tpl = resolveTemplates([], 'ja', langs.bodyLang).find((t) => t.id === 'builtin-translate')!;
+    const p = buildPrompt(tpl, scrap, frags, langs, label);
+    expect(p).toContain('次の資料の本文を日本語に訳してください');
+    expect(p).toContain('回答は日本語で書いてください');
+  });
+
+  it('日英以外の言語でも回答言語を指定できる（見出しは英語）', () => {
+    const langs = promptLangs('en', 'en', 'fr-FR');
+    expect(langs.answerLang).toBe('French');
+    expect(formatBlock(['summary'], langs)).toContain('## Key points');
+  });
+});
+
 describe('回答の読み取り', () => {
+  it('コードブロックで囲まれた回答、コピーで「##」が消えた回答も読める', () => {
+    const fenced = '```markdown\n## 見出し\nT\n\n## 要点\n- a\n```';
+    expect(parseAnswer(fenced, ['headline', 'summary']).parseStatus).toBe('ok');
+    // AIの画面から表示どおりにコピーすると記号が消え、見出しは単独の行になる
+    const rendered = 'はい。\n見出し\nT\n要点\n・a\n有用性\n便利\n最初の一歩\n試す';
+    const r = parseAnswer(rendered, ['headline', 'summary', 'usefulness', 'firstStep']);
+    expect(r.parseStatus).toBe('ok');
+    expect(r.sections.find((x) => x.key === 'summary')?.body).toBe('・a');
+  });
+
+  it('記号のない行は別名では見出しにしない（本文の「事実」「参考」などを誤認しない）', () => {
+    expect(headingKey('事実')).toBeNull();
+    expect(headingKey('参考')).toBeNull();
+    expect(headingKey('要点')).toBe('summary');
+  });
+
   it('見出しのゆれ（番号・太字・括弧・英語・コロン）を読み取る', () => {
     expect(headingKey('## 要点')).toBe('summary');
     expect(headingKey('### 1. 要点（3行）')).toBe('summary');

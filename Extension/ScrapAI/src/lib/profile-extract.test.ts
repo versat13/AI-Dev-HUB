@@ -3,7 +3,7 @@ import futaba from './__fixtures__/futaba-thread.html?raw';
 import xStatus from './__fixtures__/x-status.html?raw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BUILTIN_PROFILES } from './builtin-profiles';
-import { evalField, runProfile, textOf } from './profile-extract';
+import { evalField, markSnapshotTarget, runProfile, SNAP_ATTR, textOf } from './profile-extract';
 import { generateSelector } from './selector-gen';
 import type { FieldRule, SiteProfile } from './types';
 
@@ -121,5 +121,31 @@ describe('selector-gen', () => {
     expect(g.selector).not.toMatch(/css-|r-9z|98765/);
     expect(g.matchCount).toBe(1);
     expect(document.querySelector(g.selector)).toBe(el);
+  });
+});
+
+const XPATH = '/thedelost/status/2110472847084650726';
+describe('スナップショットの範囲（X）', () => {
+  it('動画のある投稿では、保存した投稿に印を付けて「たずねる」を返す', () => {
+    load('x-status.html', XPATH);
+    const out = { units: [] as Element[] };
+    const p = profile('builtin-x');
+    runProfile(p, document, window, out);
+    expect(markSnapshotTarget(p.snapshot, document, out.units)).toBe('ask');
+    const marked = document.querySelectorAll(`[${SNAP_ATTR}]`);
+    expect(marked.length).toBe(1);
+    expect(marked[0]).toBe(out.units[0]);
+  });
+
+  it('画像・動画・引用がなければ撮らない。オフ・不正なセレクタでも落ちない', () => {
+    load('x-status.html', XPATH);
+    const unit = document.querySelector('article[data-testid="tweet"]')!;
+    unit.querySelectorAll('[data-testid="tweetPhoto"], [data-testid="videoPlayer"], [data-testid="videoComponent"], [data-testid="card.wrapper"], div[role="link"]').forEach((e) => e.remove());
+    const p = profile('builtin-x');
+    expect(markSnapshotTarget(p.snapshot, document, [unit])).toBeNull();
+    expect(document.querySelector(`[${SNAP_ATTR}]`)).toBeNull();
+    expect(markSnapshotTarget({ mode: 'off', selector: '@unit' }, document, [unit])).toBeNull();
+    expect(markSnapshotTarget({ mode: 'auto', selector: '[[bad' }, document, [unit])).toBeNull();
+    expect(markSnapshotTarget({ mode: 'auto', selector: 'article' }, document, [])).toBe('auto');
   });
 });

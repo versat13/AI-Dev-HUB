@@ -185,6 +185,45 @@ function ProfileEditor(props: {
         </div>
       )}
 
+      <h3>{t('profileSnapshot')}</h3>
+      <p class="help">{t('profileSnapshotHelp')}</p>
+      <div class="unit-editor">
+        <label class="block narrow-block">
+          <span>{t('snapMode')}</span>
+          <select
+            value={p.snapshot?.mode ?? 'off'}
+            onChange={(e) => {
+              const mode = (e.target as HTMLSelectElement).value as NonNullable<SiteProfile['snapshot']>['mode'];
+              patch({ snapshot: { selector: p.unit ? '@unit' : '', ...p.snapshot, mode } });
+            }}
+          >
+            <option value="off">{t('snapOff')}</option>
+            <option value="ask">{t('snapAsk')}</option>
+            <option value="auto">{t('snapAuto')}</option>
+          </select>
+        </label>
+        {p.snapshot && p.snapshot.mode !== 'off' && (
+          <>
+            <label class="block">
+              <span>{t('snapSelector')}</span>
+              <input
+                class="mono"
+                value={p.snapshot.selector}
+                onInput={(e) => patch({ snapshot: { ...p.snapshot!, selector: (e.target as HTMLInputElement).value } })}
+              />
+            </label>
+            <label class="block">
+              <span>{t('snapWhen')}</span>
+              <input
+                class="mono"
+                value={p.snapshot.when ?? ''}
+                onInput={(e) => patch({ snapshot: { ...p.snapshot!, when: (e.target as HTMLInputElement).value.trim() || undefined } })}
+              />
+            </label>
+          </>
+        )}
+      </div>
+
       <div class="editor-actions">
         <button class="primary" disabled={!props.dirty || !p.name.trim()} onClick={props.onSave}>
           {t('save')}
@@ -264,6 +303,12 @@ export function SiteSettings() {
     await clearPick();
   }
 
+  async function pickAsSnapshot() {
+    if (!pick || !draft) return;
+    edit({ ...draft, snapshot: { mode: draft.snapshot?.mode && draft.snapshot.mode !== 'off' ? draft.snapshot.mode : 'ask', selector: pick.selector } });
+    await clearPick();
+  }
+
   async function pickIntoDraft() {
     if (!pick || !draft) return;
     edit({ ...draft, fields: [...draft.fields, newField({ selector: pick.selector, maxChars: 3000 })] });
@@ -306,6 +351,7 @@ export function SiteSettings() {
           <div class="actions">
             <button onClick={pickAsNewProfile}>{t('pickNewProfile')}</button>
             <button disabled={!draft} onClick={pickIntoDraft}>{t('pickAddToProfile')}</button>
+            <button disabled={!draft} onClick={pickAsSnapshot}>{t('pickAsSnapshot')}</button>
             <button class="link" onClick={clearPick}>{t('cancel')}</button>
           </div>
         </div>

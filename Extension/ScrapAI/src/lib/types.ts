@@ -92,6 +92,26 @@ export interface UnitRule {
   fields: FieldRule[];
 }
 
+/**
+ * スナップショット（ページの一部の画像）の撮り方。サイトごとに持つ。
+ * selector が '@unit' のときは、保存した単位（Xの投稿など）そのものを撮る。
+ * when を指定すると、その要素が範囲内にあるときだけ撮れる（画像・動画・引用があるときなど）。
+ */
+export interface SnapshotRule {
+  mode: 'off' | 'ask' | 'auto';
+  selector: string;
+  when?: string;
+}
+
+export interface Snapshot {
+  id: string;
+  scrapId: string;
+  blob: Blob; // WebP。画面に見えていた範囲だけ
+  width: number;
+  height: number;
+  createdAt: number;
+}
+
 export interface SiteProfile {
   id: string;
   name: string;
@@ -103,6 +123,7 @@ export interface SiteProfile {
   priority: number;
   fields: FieldRule[];
   unit?: UnitRule;
+  snapshot?: SnapshotRule;
   createdAt: number;
   updatedAt: number;
 }
@@ -125,6 +146,7 @@ export interface Settings {
   contextMenu: boolean; // 右クリックメニューに「ScrapAIに保存」を出す（既定オフ。contextMenus権限が必要）
   cardColumns: number; // カード表示の列数（0 = 自動、1〜6）
   aiTemplateId: string; // 最後に使ったAIテンプレート（P4）
+  aiPromptLang: 'en' | 'native'; // プロンプトの指示文: 英語（回答は表示言語）か、表示言語そのまま
   aiApplyHeadline: boolean; // 回答を保存したとき、見出しでタイトルを置き換える（既定オン）
 }
 
@@ -137,6 +159,7 @@ export const DEFAULT_SETTINGS: Settings = {
   contextMenu: false,
   aiTemplateId: 'builtin-verify',
   aiApplyHeadline: true,
+  aiPromptLang: 'en',
 };
 
 // 保存処理の結果（背景ページ → ポップアップ）
@@ -149,5 +172,7 @@ export interface SaveOutcome {
   extractStatus?: ExtractStatus;
   fragmentCount?: number; // 保存後の断片の総数
   addedFragmentIds?: string[]; // 今回追加した断片（取り消し用）
+  snapshot?: 'available' | 'taken' | 'failed';
+  addedSnapshotId?: string; // 今回撮ったスナップショット（取り消し用） // スナップショット: 撮れる / 自動で撮った / 失敗
   error?: string;
 }

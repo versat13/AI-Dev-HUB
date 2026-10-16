@@ -124,8 +124,17 @@ check('詳細にAI欄がある', await det.locator('.ai-panel').isVisible());
 await det.getByRole('button', { name: 'プロンプトをコピー' }).click();
 await mg.waitForTimeout(300);
 let clip = await mg.evaluate(() => navigator.clipboard.readText());
-check('プロンプト: 形式と資料が入る', clip.includes('## 要点') && clip.includes('## 次回AIに渡す指示') && clip.includes('タイトル: テスト記事') && clip.includes('これは本文の段落です'), clip.slice(0, 80));
+check('プロンプト: 形式と資料が入る', clip.includes('## 要点') && clip.includes('## 次回AIに渡す指示') && clip.includes('Title: テスト記事') && clip.includes('Write the answer in Japanese.') && clip.includes('```markdown') && clip.includes('これは本文の段落です'), clip.slice(0, 80));
 check('プロンプト: コピーしました表示', /コピーしました/.test(await det.locator('.ai-ask').innerText()));
+
+// プロンプトの言語: EN（既定）⇔ 日本語
+await det.locator('.seg').getByRole('button', { name: '日本語' }).click();
+await det.getByRole('button', { name: 'プロンプトをコピー' }).click();
+await mg.waitForTimeout(300);
+clip = await mg.evaluate(() => navigator.clipboard.readText());
+check('プロンプト: 日本語に切り替え', clip.includes('次の資料について') && clip.includes('タイトル: テスト記事') && clip.includes('回答は日本語で書いてください'), clip.slice(0, 40));
+check('プロンプト: 言語の選択が記憶される', (await ext.evaluate(async () => (await chrome.storage.local.get('settings')).settings))?.aiPromptLang === 'native');
+await det.locator('.seg').getByRole('button', { name: 'EN' }).click();
 
 // テンプレート切り替え（短く要点だけ）→ 形式が変わる、設定に記憶される
 await det.getByLabel('テンプレート').selectOption({ label: '短く要点だけ' });
