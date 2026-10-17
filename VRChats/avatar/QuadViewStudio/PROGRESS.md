@@ -8,8 +8,8 @@
   - 「Claude outputs」フォルダと Dist~ はパッケージに含めていない
   - Dist~ には、旧名の TriViewStudio_v1.1.0.zip と、確認用の画像 `_check_hint.png` `_check_panel.png` が残っている（不要なら削除してよい）
 - 導入先：シーン `Assets/ギミックテスト1.unity` の「Tutorial_Robot_三面図」（オブジェクト名は QuadViewStudio。シーン保存済み）
-  - 「テスト用アバター(旧)」のインスタンスは、名前変更の時点でシーン内に見つからなかった（別シーンにあるか、外されている可能性がある）
-- 接続フォルダ：`<UnityProjects>\GimmickAI_1\Assets\QuadViewStudio`
+  - テスト用アバター(旧。固有名は伏せている)のインスタンスは、名前変更の時点でシーン内に見つからなかった（別シーンにあるか、外されている可能性がある）
+- 接続フォルダ：`Assets/QuadViewStudio`（プロジェクト GimmickAI_1。絶対パスは伏せている）
   - device_stage_files が使える。旧フォルダ（TriViewStudio）は名前変更でなくなった
 - 各ファイルの MD5（Unity と手元で一致を確認済み）
   - Editor/QuadViewStudioBuilder.cs：19486b12a63ef47d3a128343fda1291a

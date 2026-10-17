@@ -1,7 +1,7 @@
 # EarWorld 進捗メモ v3（2026-10-02 更新、引継書v2の続き）
 
 ## 環境
-- Unity: <UnityProjects>\AIworlds_IvanMurzak / シーン Assets/Scenes/VRCDefaultWorldScene.unity
+- Unity: プロジェクト AIworlds_IvanMurzak / シーン Assets/Scenes/VRCDefaultWorldScene.unity（ユーザーフォルダ配下の絶対パスは伏せている）
 - Blender: Documents\Blender\AI_ワールド制作_v2.blend（生成スクリプト: gen_tunnels.py / gen_caves.py / gen_earcam.py / gen_lounge.py / gen_door.py）
 - FBX: bake_space_transform=True, -Z forward, Y up。Unity(x,y,z)=Blender(-x,z,-y)。トンネルは (x0+bx,-8+bz,3+by)、Y180°
 - U# .asset 自動生成: Assets/Editor/UdonSharpProgramAssetAutoGenerator.cs（abstract/generic除外済み）

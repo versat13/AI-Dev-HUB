@@ -1,6 +1,6 @@
 
 ## 2026-10-04 修正：エモートが全部ふらふらモーション（サルサ）になる不具合
-- 原因：`JS_Action_Dizzy.controller` の **Idle 状態も JS_DizzyPlaceholder を使っていた**。ビルド時の上書きでふらふらモーション（サルサ）に置き換わり、Actionレイヤーでテスト用アバター(旧)本来のエモート（ActionL2）より上の層として常に再生されていた。
+- 原因：`JS_Action_Dizzy.controller` の **Idle 状態も JS_DizzyPlaceholder を使っていた**。ビルド時の上書きでふらふらモーション（サルサ）に置き換わり、Actionレイヤーでテスト用アバター本来のエモート（ActionL2）より上の層として常に再生されていた。
 - 修正：Idle の motion を空のクリップ `Assets/JustShield/Animations/JS_ActionIdle.anim`（guid 471f4e9e296ee574687ce56130db8d62）に変更した。
   - Dizzy／Out は従来どおりプレースホルダー → ふらふらモーション。
   - ふらふらモーション（`dizzyMotion` ＝ JSP_Motion_Dizzy）は独立したまま。
@@ -29,7 +29,7 @@
 
 ## 2026-10-06 テスト用アバター に v1.0.1（配布用プレハブ）を適用
 - 照合：プロジェクト内の `Assets/JustShield` は、v1.0.1 パッケージの全179ファイルと md5 が一致（同じ内容）。そのため再インポートはしていない。
-- 適用：`Assets/JustShield/JustShieldParry.prefab`（配布用の軽量版）を テスト用アバター の直下に配置し、シーンを保存した。テスト用アバター(旧) は引き続き個人用の FullFX 版。
+- 適用：`Assets/JustShield/JustShieldParry.prefab`（配布用の軽量版）を テスト用アバター の直下に配置し、シーンを保存した。旧テスト用アバター(固有名は伏せている)は引き続き個人用の FullFX 版。
 - NDMF ビルドの確認（テスト用アバター の複製、Sandevistan と併用）：
   - エラーなし、約56秒。
   - 同期パラメーターは 102/256 bit。
