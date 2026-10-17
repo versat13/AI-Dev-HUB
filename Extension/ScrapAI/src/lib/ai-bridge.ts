@@ -13,6 +13,7 @@ export const KNOWN = {
     'button[data-testid="send-button"]', // ChatGPT
     'button[aria-label="Send message"]', // Claude
     'button[aria-label="Send prompt"]', // Gemini
+    'button[data-testid="chat-submit"]', // Grok
     'button.send-button',
   ],
   assistant: [
@@ -20,6 +21,7 @@ export const KNOWN = {
     '[data-code-block-source] code', // ChatGPT（コードブロックが pre ではなく div > code で出る）
     '.font-claude-response, [data-testid="assistant-message"]', // Claude
     'model-response, message-content', // Gemini
+    '.response-content-markdown', // Grok
   ],
 };
 

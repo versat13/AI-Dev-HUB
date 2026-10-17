@@ -135,11 +135,13 @@ export default defineContentScript({
       if (!cfg.autoSend && !cfg.auto) return;
       // 送信: 3秒ごとに「送信ボタン（押せるとき）→ Enter」を試し、入力欄が空になったら送れたとみなす（最大15秒）。
       // 裏のタブでは送信ボタンが効かないサービスがあるため、確認してから次へ進む
-      const probe = cfg.prompt.slice(0, 20);
+      // 欄によって改行の入り方が違う（段落ごとに空行が入るなど）ので、空白をそろえて比べる
+      const squash = (t: string) => t.replace(/\s+/g, ' ').trim();
+      const probe = squash(cfg.prompt).slice(0, 20);
       const sent = () => {
         if (!el.isConnected) return true;
         const text = el instanceof HTMLTextAreaElement ? el.value : el.innerText || '';
-        return !text.includes(probe);
+        return !squash(text).includes(probe);
       };
       const pressEnter = () => {
         for (const type of ['keydown', 'keypress', 'keyup']) {
