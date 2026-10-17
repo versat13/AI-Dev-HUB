@@ -38,6 +38,13 @@ describe('AIサイトの画面から入力欄・送信・回答を探す', () =>
     expect(findAnswer(document, prompt)).toBe('## Headline\nAIの見出し\n## Key points\n- 一つ目');
   });
 
+  it('回答: Grok で考え中（見出しだけ）のときは回答とみなさない', () => {
+    document.body.innerHTML = `<div data-testid="assistant-message"><h2 class="sr-only">Grok</h2><button>10s 作業しました</button></div>`;
+    expect(findAnswer(document, 'p')).toBeNull();
+    document.body.innerHTML = `<div data-testid="assistant-message"><h2>Grok</h2><button>10s 作業しました</button><pre><code>## Headline\nタイトル\n## Key points\n- 要点</code></pre></div>`;
+    expect(findAnswer(document, 'p')).toContain('## Headline');
+  });
+
   it('回答がまだなければ null（プロンプトの見本だけのとき）', () => {
     const prompt = '```markdown\n## Headline\n(x)\n## Key points\n(y)\n```';
     document.body.innerHTML = `<pre><code>## Headline\n(x)\n## Key points\n(y)</code></pre>`;

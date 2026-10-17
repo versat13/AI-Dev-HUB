@@ -14,7 +14,8 @@
 - ビルドは `wxt.config.ts` の hook で host_permissions を削除している（消さないこと）。
 - e2e：`e2e/*.mjs`（Playwright+Chromium、localhost用host_permissionsを足した複製で実行）。ヘッドレスでは拡張ページにクリップボード権限を付けられないため、ai.mjsはclipboardを代役に差し替えている。
 
-## 現在の状態（v1.3.5）
+## 現在の状態（v1.3.6）
+- v1.3.6：回答の予備探索は100字以上のものだけ採用（Grokの考え中「Grok 10s 作業しました」を回答として取り込んでいた）。Grokの回答は pre のコードブロック（`data-testid=assistant-message` 内）。
 - v1.3.5：Grok対応（一時チャットは `https://grok.com/c#private`、送信ボタン `chat-submit`、回答 `.response-content-markdown`）。送信確認の比較を空白そろえに変更（段落ごとに空行が入る入力欄で「送信済み」と誤判定していた）。回答の取り込みは実機未確認。
 - v1.3.4：Gemini設定に「一覧を取得」（ListModels、generateContent対応のみ候補に出す。実キーでは未確認）。
 - v1.3.3：Geminiの既定モデルを gemini-3.8 に（旧既定 gemini-2.5-flash は読み込み時に置き換え）。並び順は「項目（保存日/更新日/評価/タイトル/ドメイン）＋昇降順ボタン」（`SortKey` = `field-asc|desc`）。管理タブのツールバーは 列（選択式・カード時のみ）→表示切替（コンパクト/カード/カード大）、画像ボタンは常に表示（AI要約/原文の左）。一括バーは折り返さない。AIサービスの並びは 標準（ChatGPT・Claude・Gemini・Grok・Perplexity）→Gemini API→自作（`getServices`が標準を決まった順に並べる）。Gemini APIキーは前後の空白を除き、ヘッダーで拒否されたら `?key=` で1回やり直す。キー欄に「AIza… / AQ.…」の案内、空白混じり・短すぎは赤字で注意。

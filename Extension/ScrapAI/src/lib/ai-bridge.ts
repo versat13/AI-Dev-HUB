@@ -21,7 +21,7 @@ export const KNOWN = {
     '[data-code-block-source] code', // ChatGPT（コードブロックが pre ではなく div > code で出る）
     '.font-claude-response, [data-testid="assistant-message"]', // Claude
     'model-response, message-content', // Gemini
-    '.response-content-markdown', // Grok
+    '.streamdown-chat-md, .response-content-markdown', // Grok
   ],
 };
 
@@ -117,6 +117,8 @@ export function findSend(composer: HTMLElement, extra?: string): HTMLButtonEleme
  * 見出し（## ）を2つ以上含む最後のコードブロックを回答とみなす。プロンプト自身の見本は除く。
  * 見つからなければ、最後のAIの発言の文章を返す。
  */
+const MIN_ANSWER_CHARS = 100;
+
 export function findAnswer(doc: Document, prompt: string, extra?: string): string | null {
   const isHeadings = (t: string) => (t.match(/^\s*#{1,3}\s+\S/gm) ?? []).length >= 2;
   // 入力欄や表示で改行・空白が変わっても比べられるように、空白をそろえて比べる
@@ -143,7 +145,8 @@ export function findAnswer(doc: Document, prompt: string, extra?: string): strin
     }
     const last = all[all.length - 1];
     const text = last?.innerText?.trim();
-    if (text) return text;
+    // 「Grok / 10s 作業しました」のような、考え中の見出しだけの短い表示は回答とみなさない
+    if (text && squash(text).length >= MIN_ANSWER_CHARS) return text;
   }
   return null;
 }
