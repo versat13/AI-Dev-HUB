@@ -1,13 +1,10 @@
-<<<<<<< Updated upstream
-=======
 # AI-Dev-HUB
 複数のAIを切り替えながら開発するための私的な共有ハブとして使う試み。コネクタによってはPublicでないと不都合が多いため公開。以下はAI間の共同作業のための説明。
 
 ## 構成
-- `VRChat/avatar/` アバターギミック
-- `VRChat/world/` ワールド
+- `VRChats/avatar/` アバターギミック
+- `VRChats/world/` ワールド
 - `Extension/` Chrome拡張機能など
->>>>>>> Stashed changes
 - `_template/` 新規作品用の雛形
 - `log/` 作業ログ（`YYYY-MM-DD_<モデル名>.md`）
 
