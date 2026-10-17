@@ -50,6 +50,8 @@ const pages = {
         }, 600);
       };
     </script></body></html>`,
+  '/mocknosend': `<!doctype html><html><head><meta charset="utf-8"><title>No send</title></head><body>
+    <div class="composer" style="position:fixed;left:20px;right:20px;bottom:20px"><div class="ed" contenteditable="true" style="min-height:60px;border:1px solid #999"></div><button aria-label="Send" disabled>↑</button></div></body></html>`,
   '/thread': `<!doctype html><html><head><meta charset="utf-8"><title>AIスレ</title></head><body>
     <div id="res1"><p>レス1: プロンプトのコツ</p></div><div id="res2"><p>レス2: ローカルLLMの設定</p></div></body></html>`,
 };
@@ -231,6 +233,17 @@ await ext.evaluate((id) => chrome.runtime.sendMessage({ type: 'ai-run', scrapId:
 for (let i = 0; i < 130 && (await jobs())[out2.scrapId]?.state !== 'failed'; i++) await art2.waitForTimeout(250);
 check('AIボタン: 入力欄が見つからなければ失敗と記録する', (await jobs())[out2.scrapId]?.state === 'failed', JSON.stringify((await jobs())[out2.scrapId]));
 check('AIボタン: 失敗したタブは閉じずに残す', ctx.pages().some((p) => p.url().endsWith('/thread')));
+
+// 送信できないサービス（裏のタブでは効かないなど）: 失敗と記録し、タブは残す。「手前で開く」設定なら最初から手前
+await ext.evaluate((u) => chrome.storage.local.set({ settings: { locale: 'ja', articleMaxChars: 3000, aiButtonService: 'ns', aiButtonTemplateId: 'builtin-summary', aiTemporaryChat: false,
+  aiServices: [{ id: 'ns', name: 'NoSend', url: u, builtIn: false, autoSend: false, closeOnDone: true, background: false }] } }), `${base}/mocknosend`);
+await art2.bringToFront();
+await ext.evaluate((id) => chrome.runtime.sendMessage({ type: 'ai-run', scrapId: id }), out2.scrapId);
+let ns;
+for (let i = 0; i < 40 && !ns; i++) { await art2.waitForTimeout(150); ns = ctx.pages().find((p) => p.url().endsWith('/mocknosend')); }
+check('手前で開く設定: タブを手前で開く', !!ns && (await ext.evaluate(async () => (await chrome.tabs.query({ url: '*://*/mocknosend' }))[0]?.active)) === true);
+for (let i = 0; i < 120 && (await jobs())[out2.scrapId]?.reason !== 'not-sent'; i++) await art2.waitForTimeout(250);
+check('送信できなければ失敗(not-sent)と記録し、タブは残す', (await jobs())[out2.scrapId]?.reason === 'not-sent' && !ns.isClosed());
 
 await ctx.close();
 server.close();

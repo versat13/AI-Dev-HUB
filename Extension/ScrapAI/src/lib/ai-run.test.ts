@@ -21,6 +21,7 @@ describe('Gemini API', () => {
   it('失敗はステータスだけを伝え、キーは含めない。空の回答も失敗', async () => {
     await expect(callGemini('p', 'm', 'SECRET', reply({}, false, 429))).rejects.toThrow('HTTP 429');
     await expect(callGemini('p', 'm', 'SECRET', reply({ candidates: [] }))).rejects.toThrow('empty');
+    await expect(callGemini('p', 'm', 'SECRET', reply({ error: { message: 'API key not valid' } }, false, 400))).rejects.toThrow('HTTP 400: API key not valid');
     await callGemini('p', 'm', 'SECRET', reply({}, false, 400)).catch((e: Error) => expect(e.message).not.toContain('SECRET'));
   });
 });

@@ -161,6 +161,7 @@ export interface AiServiceCfg {
   answerSel?: string; // 回答の場所（空 = 自動）
   autoSend: boolean; // 入れたあと自動で送信する（AIボタンでは常に送信する）
   closeOnDone: boolean; // AIボタンで取り込みに成功したらタブを閉じる
+  background?: boolean; // AIボタンで裏のタブで開く（未指定=はい）。裏だと送信が効かないサービスは手前で開く
 }
 
 /** AIボタンの送り先: AIサービスのID、または Gemini API（タブを開かない） */

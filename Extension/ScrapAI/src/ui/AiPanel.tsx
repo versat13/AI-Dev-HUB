@@ -23,7 +23,9 @@ import { getSettings, setSettings } from '@/lib/settings';
 import type { AiAnswer, AiServiceCfg, Fragment, Scrap } from '@/lib/types';
 import { copyText } from './clipboard';
 import { formatDateTime, formatRelative, fragLabel } from './format';
-import { useLive } from './hooks';
+import { useAiJobs, useLive } from './hooks';
+import { runAi } from './ai-run-ui';
+import { getGeminiKey } from '@/lib/ai-run';
 import { Icon } from './icons';
 
 const SERVICE_NAMES: Record<string, string> = { ...Object.fromEntries(AI_SERVICES.map((s) => [s.id, s.name])), 'gemini-api': 'Gemini API' };
@@ -133,7 +135,10 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
   const [lastService, setLastService] = useState<AiServiceId | null>(null);
 
   const [applyHeadline, setApplyHeadline] = useState(true);
-  const [askOpen, setAskOpen] = useState(false);
+  const [askOpen, setAskOpen] = useState(true); // 回答があっても「もう一度AIに聞く」は開いておく（畳めます）
+  const jobs = useAiJobs();
+  const apiJob = jobs[scrap.id];
+  const hasKey = !!useLive(getGeminiKey, []);
   useEffect(() => {
     void getSettings().then((s) => {
       setTemplateId((cur) => cur ?? s.aiTemplateId); // 読み込み前に選んだものは上書きしない
@@ -280,6 +285,18 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
           )}
 
           <div class="ai-services">
+            <button
+              class="service"
+              disabled={apiJob?.state === 'running'}
+              title={t('geminiApiTitle')}
+              onClick={async () => {
+                if (!hasKey) return setNote(t('geminiNoKey'));
+                setNote(t('aiRunning'));
+                await runAi(await getSettings(), scrap.id, { serviceId: 'gemini-api', templateId: tpl.id });
+              }}
+            >
+              {t('geminiApiName')}
+            </button>
             {services.map((s) => (
               <button key={s.id} class="service" onClick={() => copyPrompt(s)} title={t('aiCopyAndOpenTitle', s.name)}>
                 {s.name} <Icon name="external" size={12} />
@@ -293,6 +310,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
               <pre class="frag-text">{prompt}</pre>
             </details>
           </div>
+          {apiJob?.state === 'failed' && apiJob.reason && <p class="note-line warn" role="status">{t('aiRunFailed')}: {apiJob.reason}</p>}
           {note && <p class="note-line" role="status">{note}</p>}
         </div>
       </div>
@@ -345,14 +363,15 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
         steps
       ) : (
         <>
-          <div class="ai-step">
-            <h4>{t('aiAnswers', answers.length)}</h4>
+          {/* 回答はAI要約の枠に出ているので、ここでは折りたたんでおく */}
+          <details class="ai-step ai-answers-fold">
+            <summary>{t('aiAnswers', answers.length)}</summary>
             <ul class="answers">
               {answers.map((a) => (
                 <AnswerCard key={a.id} a={a} scrap={scrap} />
               ))}
             </ul>
-          </div>
+          </details>
           <details class="ai-again" open={askOpen} onToggle={(e) => setAskOpen((e.target as HTMLDetailsElement).open)}>
             <summary>{t('aiAskAgain')}</summary>
             {steps}

@@ -46,11 +46,13 @@ interface AiAnswerMessage {
 interface AiRunMessage {
   type: 'ai-run';
   scrapId: string;
+  serviceId?: string; // 省略時は設定のAIボタンの送り先（詳細画面の「聞く」からは指定する）
+  templateId?: string;
 }
 interface AiJobMessage {
   type: 'ai-job';
   scrapId: string;
-  state: 'done' | 'failed';
+  state: 'running' | 'done' | 'failed'; // running は動いている間の定期連絡
   reason?: string;
 }
 interface PickerMessage {
@@ -254,11 +256,12 @@ async function handleAiRun(msg: AiRunMessage): Promise<{ ok: boolean }> {
     return { ok: false };
   };
   try {
-    const built = await promptFor(msg.scrapId, settings, settings.aiButtonTemplateId);
+    const serviceId = msg.serviceId ?? settings.aiButtonService;
+    const built = await promptFor(msg.scrapId, settings, msg.templateId ?? settings.aiButtonTemplateId);
     if (!built) return await fail('no-scrap');
-    await setJob(msg.scrapId, { state: 'running' });
+    await setJob(msg.scrapId, { state: 'running', long: serviceId === GEMINI_API });
 
-    if (settings.aiButtonService === GEMINI_API) {
+    if (serviceId === GEMINI_API) {
       const key = await getGeminiKey();
       if (!key) return await fail('no-key');
       const raw = await callGemini(built.prompt, settings.geminiModel, key);
@@ -274,12 +277,17 @@ async function handleAiRun(msg: AiRunMessage): Promise<{ ok: boolean }> {
       return { ok: true };
     }
 
-    const svc = pickService(settings);
+    const svc = pickService({ aiServices: settings.aiServices, aiButtonService: serviceId });
     if (!svc) return await fail('no-service');
+    try {
+      new URL(svc.url);
+    } catch {
+      return await fail('bad-url');
+    }
     const opened = await handleAiOpen({
       type: 'ai-open',
       url: serviceUrl(svc, settings.aiTemporaryChat),
-      background: true,
+      background: svc.background !== false,
       bridge: {
         prompt: built.prompt,
         autoSend: true,
@@ -296,6 +304,7 @@ async function handleAiRun(msg: AiRunMessage): Promise<{ ok: boolean }> {
           failed: t('bridgeFailed'),
           filled: t('bridgeSent'),
           auto: t('bridgeAuto'),
+          notSent: t('bridgeNotSent'),
         },
       },
     });
@@ -309,7 +318,9 @@ async function handleAiRun(msg: AiRunMessage): Promise<{ ok: boolean }> {
 
 /** 自動取り込みが失敗したとき: タブを手前に出して、手動の「取り込む」ボタンで続けられるようにする */
 async function handleAiJob(msg: AiJobMessage, tabId?: number): Promise<void> {
-  const prev = ((await browser.storage.session.get('aiJobs')).aiJobs as Record<string, { tabId?: number }> | undefined)?.[msg.scrapId];
+  const prev = ((await browser.storage.session.get('aiJobs')).aiJobs as Record<string, { tabId?: number; state?: string }> | undefined)?.[msg.scrapId];
+  // 定期連絡は、すでに完了・失敗と決まったものを上書きしない
+  if (msg.state === 'running' && prev?.state && prev.state !== 'running') return;
   await setJob(msg.scrapId, { state: msg.state, reason: msg.reason, tabId: tabId ?? prev?.tabId });
   const id = tabId ?? prev?.tabId;
   if (msg.state === 'failed' && id != null) {

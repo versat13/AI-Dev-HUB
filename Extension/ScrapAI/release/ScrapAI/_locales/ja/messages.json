@@ -879,7 +879,7 @@
     "message": "翻訳"
   },
   "translateUnavailable": {
-    "message": "このブラウザでは翻訳できません（Chrome 138以降が必要です）"
+    "message": "このChromeには翻訳機能（Translator）がありません"
   },
   "translateSame": {
     "message": "すでに表示言語です"
@@ -1228,5 +1228,23 @@
   },
   "svcNew": {
     "message": "新しいAIサービス"
+  },
+  "bridgeNotSent": {
+    "message": "送信できませんでした。ここで送信ボタンを押してください（回答が出たら「ScrapAIに取り込む」）"
+  },
+  "svcBackground": {
+    "message": "AIボタンで裏のタブで開く（送信が効かないときはオフ）"
+  },
+  "geminiApiTitle": {
+    "message": "Gemini APIで聞く（タブを開かずに回答を取り込みます）"
+  },
+  "geminiNoKey": {
+    "message": "Gemini APIのキーが未設定です。管理画面「AI連携」で入れてください"
+  },
+  "translatePair": {
+    "message": "この言語の組み合わせは翻訳できません"
+  },
+  "translateFailed": {
+    "message": "翻訳に失敗しました。翻訳の準備中かもしれません。少し待ってからもう一度押してください"
   }
 }

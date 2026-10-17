@@ -879,7 +879,7 @@
     "message": "Translated"
   },
   "translateUnavailable": {
-    "message": "Translation is not available in this browser (Chrome 138+ required)"
+    "message": "This Chrome has no built-in Translator API"
   },
   "translateSame": {
     "message": "Already in your language"
@@ -1228,5 +1228,23 @@
   },
   "svcNew": {
     "message": "New AI service"
+  },
+  "bridgeNotSent": {
+    "message": "Could not send. Press the send button here (then \"Import to ScrapAI\" when the answer appears)"
+  },
+  "svcBackground": {
+    "message": "Open in a background tab for the AI button (turn off if sending does not work)"
+  },
+  "geminiApiTitle": {
+    "message": "Ask the Gemini API (imports the answer without opening a tab)"
+  },
+  "geminiNoKey": {
+    "message": "No Gemini API key yet. Enter it in the AI settings of the manager"
+  },
+  "translatePair": {
+    "message": "This language pair cannot be translated"
+  },
+  "translateFailed": {
+    "message": "Translation failed. It may still be getting ready; wait a moment and press again"
   }
 }

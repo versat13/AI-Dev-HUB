@@ -568,7 +568,7 @@ export function answerExcerpt(a: Pick<AiAnswer, 'sections' | 'raw'>): string {
 // tempUrl: 一時チャット（履歴に残らない・過去の会話や記憶の影響を受けにくい）で開くURL。
 // Gemini はURLで一時チャットを指定する方法が見つからないため通常のチャットで開く
 export const AI_SERVICES: AiServiceCfg[] = [
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', tempUrl: 'https://chatgpt.com/?temporary-chat=true', builtIn: true, autoSend: false, closeOnDone: true },
+  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', tempUrl: 'https://chatgpt.com/?temporary-chat=true', builtIn: true, autoSend: false, closeOnDone: true, background: false },
   { id: 'claude', name: 'Claude', url: 'https://claude.ai/new', tempUrl: 'https://claude.ai/new?incognito', builtIn: true, autoSend: false, closeOnDone: true },
   { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app', builtIn: true, autoSend: false, closeOnDone: true },
 ];

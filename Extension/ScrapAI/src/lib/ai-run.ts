@@ -19,6 +19,7 @@ export interface Job {
   at: number;
   tabId?: number;
   reason?: string;
+  long?: boolean; // 経過を知らせてこない処理（API）。表示上の「止まった」判定を長めにする
 }
 export type Jobs = Record<string, Job>;
 
@@ -71,7 +72,11 @@ export async function callGemini(
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
     },
   );
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    // 原因が分かるよう、APIが返した説明文を添える（キーはAPIの応答に含まれない）
+    const detail = ((await res.json().catch(() => null)) as { error?: { message?: string } } | null)?.error?.message;
+    throw new Error(`HTTP ${res.status}${detail ? `: ${detail.slice(0, 120)}` : ''}`);
+  }
   const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
   const text = (data.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? '').join('').trim();
   if (!text) throw new Error('empty');

@@ -12,7 +12,7 @@ interface BridgeCfg {
   service: string;
   templateId: string;
   expected: string[];
-  labels: { capture: string; saved: string; notFound: string; failed: string; filled: string; auto: string };
+  labels: { capture: string; saved: string; notFound: string; failed: string; filled: string; auto: string; notSent?: string };
   sel?: { composer?: string; send?: string; answer?: string }; // 利用者が指定した場所（空なら自動）
   auto?: boolean; // AIボタン: 送信まで自動で行い、回答が出そろったら取り込む
 }
@@ -80,9 +80,16 @@ export default defineContentScript({
     const job = (state: 'done' | 'failed', reason?: string) =>
       browser.runtime.sendMessage({ type: 'ai-job', scrapId: cfg.scrapId, state, reason }).catch(() => undefined);
     const fail = async (reason: string) => {
-      say(cfg.labels.failed);
+      say(reason === 'not-sent' && cfg.labels.notSent ? cfg.labels.notSent : cfg.labels.failed);
       await job('failed', reason);
     };
+    // 動いている間は定期的に知らせる（ここが止まったら、ボタンの表示が「処理中」のまま残らないように）
+    if (cfg.auto) {
+      const beat = setInterval(() => {
+        if (!host.isConnected) return clearInterval(beat);
+        void browser.runtime.sendMessage({ type: 'ai-job', scrapId: cfg.scrapId, state: 'running' }).catch(() => undefined);
+      }, 8000);
+    }
     let watching = false;
     const watch = () => {
       if (watching) return;
@@ -126,17 +133,30 @@ export default defineContentScript({
       fillComposer(el, cfg.prompt);
       say(cfg.auto ? cfg.labels.auto : cfg.labels.filled);
       if (!cfg.autoSend && !cfg.auto) return;
-      let wait = 0;
-      const send = () => {
-        const b = findSend(el, cfg.sel?.send);
-        if (b && !b.disabled) {
-          b.click();
-          if (cfg.auto) watch();
-          return;
+      // 送信: 3秒ごとに「送信ボタン（押せるとき）→ Enter」を試し、入力欄が空になったら送れたとみなす（最大15秒）。
+      // 裏のタブでは送信ボタンが効かないサービスがあるため、確認してから次へ進む
+      const probe = cfg.prompt.slice(0, 20);
+      const sent = () => {
+        if (!el.isConnected) return true;
+        const text = el instanceof HTMLTextAreaElement ? el.value : el.innerText || '';
+        return !text.includes(probe);
+      };
+      const pressEnter = () => {
+        for (const type of ['keydown', 'keypress', 'keyup']) {
+          el.dispatchEvent(new KeyboardEvent(type, { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }));
         }
-        if (++wait < 20) return void setTimeout(send, 200);
-        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }));
-        if (cfg.auto) watch();
+      };
+      let n = 0;
+      const send = () => {
+        if (n > 0 && sent()) return void (cfg.auto && watch());
+        if (n >= 30) return void (cfg.auto && fail('not-sent'));
+        if (n % 6 === 0) {
+          const b = findSend(el, cfg.sel?.send);
+          if (b && !b.disabled) b.click();
+          else pressEnter();
+        }
+        n++;
+        setTimeout(send, 500);
       };
       setTimeout(send, 300);
     };

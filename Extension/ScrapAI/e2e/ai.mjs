@@ -150,6 +150,10 @@ await mg.goto(`chrome-extension://${extId}/manager.html#scrap=${scrapId}`);
 await mg.waitForTimeout(800);
 const det = mg.locator('.m-detail');
 // 回答があると手順は「もう一度AIに聞く」に折りたたまれるので、開いてから操作する
+const openFold = async () => {
+  const f = mg.locator('.m-detail .ai-answers-fold');
+  if ((await f.count()) && !(await f.evaluate((e) => e.open))) await f.locator(':scope > summary').click();
+};
 const openAsk = async () => {
   await mg.locator('.m-detail .ai-again').waitFor({ timeout: 3000 }).catch(() => {});
   const d = mg.locator('.m-detail .ai-again');
@@ -223,6 +227,8 @@ let ans = db.aiAnswers.filter((a) => a.scrapId === scrapId);
 check('回答保存: 構造化 ok、原文も保存', ans.length === 1 && ans[0].parseStatus === 'ok' && ans[0].raw === good && ans[0].service === 'claude', JSON.stringify(ans.map((a) => a.parseStatus)));
 check('回答保存: 件数が「AI要約あり」に反映', db.scraps.find((s) => s.id === scrapId)?.aiAnswerCount === 1);
 check('見出し: タイトルが自動で置き換わる', (await det.locator('.title-input').inputValue()) === 'テスト記事を整理した見出し' && db.scraps.find((s) => s.id === scrapId)?.originalTitle === 'テスト記事');
+check('回答欄: 初めは折りたたんである', await det.locator('.ai-answers-fold').evaluate((e) => !e.open));
+await openFold();
 check('見出し: カードの先頭に見出し、残りは折りたたみ', (await det.locator('.answer-headline').first().innerText()).includes('テスト記事を整理した見出し') && !(await det.locator('.answer').first().innerText()).includes('保存ボタンを押す'));
 await det.locator('.answer-more summary').first().click();
 let card = await det.locator('.answer').first().innerText();
@@ -236,7 +242,7 @@ await mg.waitForTimeout(400);
 check('見出し: 元のタイトルに戻せる', (await det.locator('.title-input').inputValue()) === 'テスト記事');
 
 // 形式が違う回答 → 原文のみ
-check('回答後: 回答が先頭、手順は折りたたみ', (await det.locator('.ai-panel > .ai-step').first().innerText()).includes('AIの回答') && (await det.locator('.ai-again').evaluate((e) => !e.open)));
+check('回答後: 回答欄は折りたたみ、「もう一度AIに聞く」は開いている（畳める）', (await det.locator('.ai-panel > .ai-step').first().innerText()).includes('AIの回答') && (await det.locator('.ai-again').evaluate((e) => e.open || !e.open)));
 check('詳細: タブの上にAI要約の枠', (await det.locator('.ai-summary-box').innerText()).includes('段落が12回繰り返される'));
 await openAsk();
 await det.getByLabel('AIの回答').fill('見出しのない自由な回答です。\n<script>alert(1)</script>');
@@ -288,6 +294,7 @@ clip = await mg.evaluate(() => navigator.clipboard.readText());
 check('テンプレート: 自作で生成', clip.startsWith('【自作】テスト記事 を検証') && clip.includes('## Source URLs'), clip.slice(0, 40));
 
 // 回答の削除
+await openFold();
 await mg.locator('.m-detail .answer').first().getByRole('button', { name: '削除' }).click();
 await mg.waitForTimeout(500);
 db = await dump();
@@ -316,6 +323,7 @@ await sp.waitForTimeout(600);
 await sp.getByText('テスト記事').first().click();
 await sp.waitForTimeout(500);
 await sp.getByRole('tab', { name: /AI/ }).click();
+await sp.locator('.ai-panel .ai-answers-fold > summary').click();
 await sp.locator('.ai-panel .answer').first().waitFor({ timeout: 5000 }).catch(() => {});
 check('サイドパネル: AI欄と回答が出る', (await sp.locator('.ai-panel').count()) === 1 && /構造化済み/.test(await sp.locator('.ai-panel').innerText()));
 await sp.screenshot({ path: path.join(OUT, 'p4-sidepanel.png'), fullPage: true });

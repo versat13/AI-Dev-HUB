@@ -65,7 +65,19 @@ export async function translateTexts(texts: string[], target = targetLang()): Pr
  * カードの翻訳を切り替える。訳がなければ訳して保存し、あれば表示/非表示を切り替える。
  * 戻り値: 'shown' / 'hidden' / 'same'（同じ言語で訳す必要なし） / 'unavailable'
  */
-export async function toggleScrapTranslation(s: Scrap): Promise<'shown' | 'hidden' | 'same' | 'unavailable'> {
+export type TranslateResult = 'shown' | 'hidden' | 'same' | 'unavailable' | 'pair' | 'failed';
+
+/** 失敗の理由ごとの案内文のキー */
+export function translateNoteKey(r: 'unavailable' | 'pair' | 'failed'): string {
+  return r === 'unavailable' ? 'translateUnavailable' : r === 'pair' ? 'translatePair' : 'translateFailed';
+}
+
+/** 失敗の理由: 言語の組み合わせが使えない（pair）か、それ以外（準備中・ダウンロード待ちなど。failed） */
+export function translateFailure(e: unknown): 'pair' | 'failed' {
+  return e instanceof Error && e.message === 'unavailable' ? 'pair' : 'failed';
+}
+
+export async function toggleScrapTranslation(s: Scrap): Promise<TranslateResult> {
   const target = targetLang();
   if (s.translation && s.translation.lang === target) {
     const on = !s.translation.on;
@@ -78,7 +90,7 @@ export async function toggleScrapTranslation(s: Scrap): Promise<'shown' | 'hidde
     if (!out) return 'same';
     await db.scraps.update(s.id, { translation: { lang: target, title: out[0]!, excerpt: out[1]!, on: true } });
     return 'shown';
-  } catch {
-    return 'unavailable';
+  } catch (e) {
+    return translateFailure(e);
   }
 }

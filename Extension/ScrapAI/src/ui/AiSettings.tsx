@@ -193,6 +193,10 @@ function ServiceEditor({ svc, onPatch, onReset, onRemove }: { svc: AiServiceCfg;
         {t('svcAutoSend')}
       </label>
       <label class="set-row check">
+        <input type="checkbox" checked={svc.background !== false} onChange={(e) => onPatch({ background: (e.target as HTMLInputElement).checked })} />
+        {t('svcBackground')}
+      </label>
+      <label class="set-row check">
         <input type="checkbox" checked={svc.closeOnDone} onChange={(e) => onPatch({ closeOnDone: (e.target as HTMLInputElement).checked })} />
         {t('svcClose')}
       </label>

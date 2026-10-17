@@ -15,7 +15,7 @@ import { t } from '@/lib/i18n';
 import { AiPanel } from './AiPanel';
 import { ConfirmDelete } from './ConfirmDelete';
 import { Snapshots } from './Snapshots';
-import { canTranslate, looksForeign, translateTexts } from './translate';
+import { canTranslate, looksForeign, translateFailure, translateNoteKey, translateTexts } from './translate';
 import { answerExcerpt, answerHeadline } from '@/lib/ai';
 import { listAiAnswers, revertTitle } from '@/lib/ai-db';
 import { fragLabel, formatDateTime } from './format';
@@ -135,8 +135,8 @@ export function DetailView(props: {
       const out = await translateTexts(frags.map((f) => f.text));
       if (!out) setTrNote(t('translateSame'));
       else setTrFrags(new Map(frags.map((f, i) => [f.id, out[i] ?? f.text])));
-    } catch {
-      setTrNote(t('translateUnavailable'));
+    } catch (e) {
+      setTrNote(t(translateNoteKey(translateFailure(e))));
     } finally {
       setTrBusy(false);
     }

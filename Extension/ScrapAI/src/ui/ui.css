@@ -682,3 +682,8 @@ button.danger.solid { background: var(--err); border-color: var(--err); color: #
 .svc { border: 1px solid var(--line); border-radius: var(--radius-m); margin: 8px 0; padding: 4px 12px; }
 .svc summary { cursor: pointer; padding: 6px 0; font-weight: 600; }
 .svc-actions { display: flex; justify-content: flex-end; padding: 6px 0 8px; }
+
+/* 「N件選択中」の幅を確保して、右のボタンの位置が動かないようにする（100件選択中が入る幅） */
+.bulk-count { display: inline-block; min-width: 9.5em; white-space: nowrap; }
+.ai-answers-fold > summary { cursor: pointer; font-weight: 600; font-size: 13px; padding: 4px 0; }
+.ai-answers-fold[open] > summary { margin-bottom: 6px; }

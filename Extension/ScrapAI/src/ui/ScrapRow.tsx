@@ -1,11 +1,11 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { t } from '@/lib/i18n';
 import type { Category, Density, Scrap, Settings } from '@/lib/types';
 import { formatDateTime } from './format';
 import type { Job } from '@/lib/ai-run';
 import type { Thumb } from './hooks';
 import { Icon, SourceMark } from './icons';
-import { canTranslate, looksForeign, targetLang, toggleScrapTranslation } from './translate';
+import { canTranslate, looksForeign, targetLang, toggleScrapTranslation, translateNoteKey } from './translate';
 
 export interface ScrapRowProps {
   scrap: Scrap;
@@ -37,7 +37,14 @@ export function Stars({ value }: { value: number | null }) {
 
 /** AIボタン: 押すだけでAIに要約させる。処理中・完了・失敗をボタンの表示で知らせる */
 function AiRunButton({ scrapId, job, onRun }: { scrapId: string; job?: Job; onRun: (id: string) => void }) {
-  const stale = job?.state === 'running' && Date.now() - job.at > 6 * 60_000; // 戻ってこなかった
+  // 動いている間は連絡が届く。届かなくなったら（タブを閉じた・止まった）失敗に戻す（API は連絡がないので長めに）
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (job?.state !== 'running') return;
+    const id = window.setInterval(() => tick((n) => n + 1), 5000);
+    return () => window.clearInterval(id);
+  }, [job?.state, job?.at]);
+  const stale = job?.state === 'running' && Date.now() - job.at > (job.long ? 120_000 : 30_000);
   const state = stale ? 'failed' : job?.state === 'done' && Date.now() - job.at > 10_000 ? undefined : job?.state;
   const running = state === 'running';
   const label = running ? t('aiRunning') : state === 'done' ? t('aiRunDone') : state === 'failed' ? t('aiRunFailed') : t('aiRun');
@@ -130,7 +137,6 @@ export function ScrapRow(p: ScrapRowProps) {
           </span>
         </span>
       </button>
-      {p.aiRun && <AiRunButton scrapId={s.id} job={p.aiRun.job} onRun={p.aiRun.onRun} />}
       {showTranslate && (
         <button
           class={`icon-btn row-tr${view.translated ? ' on' : ''}`}
@@ -139,13 +145,14 @@ export function ScrapRow(p: ScrapRowProps) {
           onClick={async () => {
             setNote('');
             const r = await toggleScrapTranslation(s);
-            if (r === 'unavailable') setNote(t('translateUnavailable'));
             if (r === 'same') setNote(t('translateSame'));
+            else if (r === 'unavailable' || r === 'pair' || r === 'failed') setNote(t(translateNoteKey(r)));
           }}
         >
           <Icon name="translate" size={15} />
         </button>
       )}
+      {p.aiRun && <AiRunButton scrapId={s.id} job={p.aiRun.job} onRun={p.aiRun.onRun} />}
     </li>
   );
 }
