@@ -19,7 +19,7 @@
 - **テスト用アバター(旧)での負荷**：（v0.3：5体の時点）Constraint 105個、複製SMR 10個、ポリゴン約3.2万。
 - **再生モード（Gesture Manager）で動作確認済み**：VelocityZ=4 で走らせ、Rigidbody で秒速4m移動すると、0.48m間隔で本人の走る姿勢が残り、崩れて消える。
 - Gesture Manager でのパラメータ操作：`GestureManager.Module.GetParam(name).Set(module, value, null)`。
-- ALYX（AlyxLiquidTests）はシーンの「テスト用アバター(旧)」から削除済み（素材のファイルは残してある）。
+- ALYX（AlyxLiquidTests）はシーンのテスト用アバター(旧)から削除済み（素材のファイルは残してある）。
 - 制限：表情などアニメーションするシェイプキーは残像に反映されない（ビルド時の値で固定）。
 
 ## 名称変更（2026-10-04）
@@ -286,7 +286,7 @@
 - パーティクル数の評価は Very Poor 寄りになる。配布時はREADMEに明記する。
 
 ## 判明した落とし穴
-- **FBXのスケールが100のSMR（テスト用アバター(旧)）**：Shapeのスケールが粒サイズや normalOffset に乗る。`scalingMode = Shape` と `normalOffset = 0` で回避した。骨の子にするPSやトレイルは `UnitScale` で親のスケールを打ち消す。
+- **FBXのスケールが100のSMR（旧テスト用アバター）**：Shapeのスケールが粒サイズや normalOffset に乗る。`scalingMode = Shape` と `normalOffset = 0` で回避した。骨の子にするPSやトレイルは `UnitScale` で親のスケールを打ち消す。
 - エディタでの確認：毎フレーム `cam.Render()` でスキニングを更新し、`ps.Simulate(dt, false, false)` で進める。走りは proxy_run_forward を一時的なコントローラーで `Animator.Update` して再生する（`SampleAnimation` だとNaNになる）。
 - screenshot-isolated は ScreenTint の巨大なバウンズで画角が崩れる。自前のカメラ→RenderTexture→クアッドで確認する。
 - device_commit_files は**同じ stagedPath を使い回すと古い内容が書かれることがある**。毎回別のファイル名で stage する。
