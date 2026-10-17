@@ -8,7 +8,7 @@
 
 ## 環境
 - Unity 2022.3.22f1 / VRChat SDK 3.10.5 / MA / NDMF / AAO。プロジェクト GimmickAI_1、シーン `Assets/ギミックテスト1.unity`。
-- 検証アバター：ゆめか（Yumeka_v1.0）、Robot_Sandevistan（SDKサンプルのロボット）。テスト用アバター は過去の検証。
+- 検証アバター：ゆめか（Yumeka_v1.0）、Robot_Sandevistan（SDKサンプルのロボット）。テスト用アバター(別)は過去の検証。
 - 主なファイル：`Assets/Sandevistan/`（Sandevistan.prefab、Scripts/SandevistanSettings.cs、Scripts/Editor/SandevistanBuild.cs・SandevistanPlugin.cs・SandevistanSettingsEditor.cs、Shaders/、README_Sandevistan.txt）。
 - Unity MCP は unityMCP に統一。Unity が2つ開いているときは set_active_instance で GimmickAI_1@… を指定。
 - 任意依存：Meshia Mesh Simplification（残像用メッシュだけ間引く。リフレクションで呼ぶ）。
