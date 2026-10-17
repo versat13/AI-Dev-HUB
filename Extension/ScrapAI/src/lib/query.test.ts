@@ -100,7 +100,10 @@ describe('filterScraps: 並び替え', () => {
     expect(order('created-desc')).toEqual(['c', 'b', 'a']);
     expect(order('created-asc')).toEqual(['a', 'b', 'c']);
   });
-  it('更新日時', () => expect(order('updated-desc')).toEqual(['a', 'c', 'b']));
+  it('更新日時', () => {
+    expect(order('updated-desc')).toEqual(['a', 'c', 'b']);
+    expect(order('updated-asc')).toEqual(['b', 'c', 'a']);
+  });
   it('星評価（未評価は最後）', () => expect(order('stars-desc')).toEqual(['b', 'a', 'c']));
   it('タイトル', () => expect(order('title-asc')).toEqual(['b', 'a', 'c']));
 

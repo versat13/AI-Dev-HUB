@@ -143,20 +143,11 @@
   "pinned": {
     "message": "Pinned"
   },
-  "sortCreatedDesc": {
-    "message": "Newest saved"
-  },
-  "sortCreatedAsc": {
-    "message": "Oldest saved"
-  },
-  "sortUpdatedDesc": {
-    "message": "Recently updated"
-  },
   "sortStars": {
-    "message": "Highest rated"
+    "message": "Rating"
   },
   "sortTitle": {
-    "message": "Title (A–Z)"
+    "message": "Title"
   },
   "emptyList": {
     "message": "Nothing saved yet. Press “Scrap this page” to start."
@@ -777,7 +768,7 @@
     "message": "Remove {0}"
   },
   "sortDomain": {
-    "message": "By domain"
+    "message": "Domain"
   },
   "bulkMore": {
     "message": "More"
@@ -1246,5 +1237,23 @@
   },
   "translateFailed": {
     "message": "Translation failed. It may still be getting ready; wait a moment and press again"
+  },
+  "sortCreated": {
+    "message": "Saved"
+  },
+  "sortUpdated": {
+    "message": "Updated"
+  },
+  "sortAsc": {
+    "message": "Ascending"
+  },
+  "sortDesc": {
+    "message": "Descending"
+  },
+  "geminiKeyHint": {
+    "message": "Usually starts with \"AIza…\" or \"AQ.…\" (issued in Google AI Studio)."
+  },
+  "geminiKeyBad": {
+    "message": "This does not look like an API key. Check for spaces or line breaks and that you copied all of it."
   }
 }

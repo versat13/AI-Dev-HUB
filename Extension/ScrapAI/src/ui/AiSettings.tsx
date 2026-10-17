@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { browser } from 'wxt/browser';
 import { AI_SERVICES, getServices, resolveTemplates } from '@/lib/ai';
 import { listCustomTemplates } from '@/lib/ai-db';
-import { getGeminiKey, setGeminiKey } from '@/lib/ai-run';
+import { geminiKeyLooksWrong, getGeminiKey, setGeminiKey } from '@/lib/ai-run';
 import { getLocale, t } from '@/lib/i18n';
 import { getSettings } from '@/lib/settings';
 import { GEMINI_API, type AiServiceCfg, type Settings } from '@/lib/types';
@@ -34,10 +34,13 @@ export function AiSettings({ settings, onChange }: { settings: Settings; onChang
         <label class="set-row">
           <span>{t('aiButtonService')}</span>
           <select value={settings.aiButtonService} onChange={(e) => onChange({ aiButtonService: input(e) })}>
-            {services.map((s) => (
+            {services.filter((s) => s.builtIn).map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
             <option value={GEMINI_API}>{t('geminiApiName')}</option>
+            {services.filter((s) => !s.builtIn).map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
           </select>
         </label>
         <label class="set-row">
@@ -138,6 +141,7 @@ function GeminiCard({ settings, onChange }: { settings: Settings; onChange: (pat
   const stored = useLive(getGeminiKey, []);
   const [key, setKey] = useState<string | null>(null);
   const shown = key ?? stored ?? '';
+  const bad = geminiKeyLooksWrong(shown);
   const [model, setModel] = useState(settings.geminiModel);
   return (
     <div class="set-card">
@@ -149,7 +153,8 @@ function GeminiCard({ settings, onChange }: { settings: Settings; onChange: (pat
           type="password"
           autocomplete="off"
           value={shown}
-          placeholder="AIza…"
+          placeholder="AIza… / AQ.…"
+          aria-invalid={bad}
           onInput={(e) => setKey(input(e))}
           onBlur={async () => {
             if (key == null) return;
@@ -159,6 +164,7 @@ function GeminiCard({ settings, onChange }: { settings: Settings; onChange: (pat
           }}
         />
       </label>
+      <p class={`help${bad ? ' err' : ''}`}>{bad ? t('geminiKeyBad') : t('geminiKeyHint')}</p>
       <label class="set-row">
         <span>{t('geminiModel')}</span>
         <input

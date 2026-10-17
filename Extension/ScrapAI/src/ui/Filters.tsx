@@ -1,6 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { t } from '@/lib/i18n';
-import { DEFAULT_PARAMS, isFiltered, type ListParams, type SortKey, type ViewMode } from '@/lib/query';
+import { DEFAULT_PARAMS, isFiltered, type ListParams, type SortField, type SortKey, type ViewMode } from '@/lib/query';
 import type { Category } from '@/lib/types';
 
 export function SearchBox({ value, onInput }: { value: string; onInput: (v: string) => void }) {
@@ -111,19 +111,29 @@ export function FilterPanel({ params, onChange, domains, categories, hide = [] }
 }
 
 export function SortSelect({ value, onChange, labelled }: { value: SortKey; onChange: (v: SortKey) => void; labelled?: boolean }) {
+  const [field, dir] = value.split('-') as [SortField, 'asc' | 'desc'];
   const sel = (
-    <select
-      value={value}
-      aria-label={labelled ? undefined : t('labelSort')}
-      onChange={(e) => onChange((e.target as HTMLSelectElement).value as SortKey)}
-    >
-      <option value="created-desc">{t('sortCreatedDesc')}</option>
-      <option value="created-asc">{t('sortCreatedAsc')}</option>
-      <option value="updated-desc">{t('sortUpdatedDesc')}</option>
-      <option value="stars-desc">{t('sortStars')}</option>
-      <option value="title-asc">{t('sortTitle')}</option>
-      <option value="domain-asc">{t('sortDomain')}</option>
-    </select>
+    <span class="sort-pair">
+      <select
+        value={field}
+        aria-label={labelled ? undefined : t('labelSort')}
+        onChange={(e) => onChange(`${(e.target as HTMLSelectElement).value as SortField}-${dir}`)}
+      >
+        <option value="created">{t('sortCreated')}</option>
+        <option value="updated">{t('sortUpdated')}</option>
+        <option value="stars">{t('sortStars')}</option>
+        <option value="title">{t('sortTitle')}</option>
+        <option value="domain">{t('sortDomain')}</option>
+      </select>
+      <button
+        class="sort-dir"
+        aria-label={dir === 'asc' ? t('sortAsc') : t('sortDesc')}
+        title={dir === 'asc' ? t('sortAsc') : t('sortDesc')}
+        onClick={() => onChange(`${field}-${dir === 'asc' ? 'desc' : 'asc'}`)}
+      >
+        {dir === 'asc' ? '↑' : '↓'}
+      </button>
+    </span>
   );
   return labelled ? <Field label={t('labelSort')}>{sel}</Field> : sel;
 }

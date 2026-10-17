@@ -3,7 +3,8 @@ import type { Scrap } from './types';
 // 一覧の検索・絞り込み・並び替え（仕様書5章）。DBに依存しない純粋関数にしてテストしやすくする。
 
 export type ViewMode = 'active' | 'archived' | 'all';
-export type SortKey = 'created-desc' | 'created-asc' | 'updated-desc' | 'stars-desc' | 'title-asc' | 'domain-asc';
+export type SortField = 'created' | 'updated' | 'stars' | 'title' | 'domain';
+export type SortKey = `${SortField}-${'asc' | 'desc'}`;
 
 export interface ListParams {
   q: string;
@@ -56,19 +57,20 @@ function matchesQuery(s: Scrap, q: string, fragText?: Map<string, string>): bool
 }
 
 function compare(a: Scrap, b: Scrap, sort: SortKey): number {
-  switch (sort) {
-    case 'created-asc':
-      return a.createdAt - b.createdAt;
-    case 'updated-desc':
-      return b.updatedAt - a.updatedAt;
-    case 'stars-desc':
-      return (b.stars ?? 0) - (a.stars ?? 0) || b.createdAt - a.createdAt;
-    case 'domain-asc':
-      return a.domain.localeCompare(b.domain) || b.createdAt - a.createdAt;
-    case 'title-asc':
-      return a.title.localeCompare(b.title) || b.createdAt - a.createdAt;
+  const [field, dir] = sort.split('-') as [SortField, 'asc' | 'desc'];
+  const sign = dir === 'asc' ? 1 : -1;
+  const tie = b.createdAt - a.createdAt;
+  switch (field) {
+    case 'updated':
+      return sign * (a.updatedAt - b.updatedAt) || tie;
+    case 'stars':
+      return sign * ((a.stars ?? 0) - (b.stars ?? 0)) || tie;
+    case 'domain':
+      return sign * a.domain.localeCompare(b.domain) || tie;
+    case 'title':
+      return sign * a.title.localeCompare(b.title) || tie;
     default:
-      return b.createdAt - a.createdAt;
+      return sign * (a.createdAt - b.createdAt);
   }
 }
 

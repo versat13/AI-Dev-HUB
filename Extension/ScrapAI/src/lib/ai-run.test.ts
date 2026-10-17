@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AI_SERVICES, getServices } from './ai';
-import { callGemini } from './ai-run';
+import { callGemini, geminiKeyLooksWrong } from './ai-run';
 
 const reply = (body: unknown, ok = true, status = 200) => (async () => ({ ok, status, json: async () => body }) as Response) as unknown as typeof fetch;
 
@@ -26,12 +26,33 @@ describe('Gemini API', () => {
   });
 });
 
+describe('Gemini APIキーの形', () => {
+  it('空白・改行を含む、または極端に短いものだけ疑う', () => {
+    expect(geminiKeyLooksWrong('')).toBe(false);
+    expect(geminiKeyLooksWrong('AIzaSyA_abcdefghijklmnopqrstuvwxyz0123')).toBe(false);
+    expect(geminiKeyLooksWrong('AQ.Ab8RN6JbtpVGyspKjwTRDxC4m_7teLvUZ')).toBe(false);
+    expect(geminiKeyLooksWrong('AIza abc def ghijklmnopqrstuvwxyz')).toBe(true);
+    expect(geminiKeyLooksWrong('abc')).toBe(true);
+  });
+  it('ヘッダーで拒否されたらURL指定で1回やり直す', async () => {
+    const urls: string[] = [];
+    const f = (async (url: string) => {
+      urls.push(url);
+      return urls.length === 1
+        ? ({ ok: false, status: 401, json: async () => ({}) } as Response)
+        : ({ ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: 'ok' }] } }] }) } as Response);
+    }) as unknown as typeof fetch;
+    expect(await callGemini('p', 'm', ' K1 ', f)).toBe('ok');
+    expect(urls[1]).toContain('?key=K1');
+  });
+});
+
 describe('AIサービスの設定', () => {
-  it('未設定なら標準の3つ。標準が消えていれば補い、自作は残す', () => {
-    expect(getServices(null).map((s) => s.id)).toEqual(['chatgpt', 'claude', 'gemini']);
-    const custom = { id: 'grok', name: 'Grok', url: 'https://grok.com/', builtIn: false, autoSend: false, closeOnDone: true };
+  it('未設定なら標準のもの。標準が消えていれば補い、自作は標準の後ろに残す', () => {
+    expect(getServices(null).map((s) => s.id)).toEqual(['chatgpt', 'claude', 'gemini', 'grok', 'perplexity']);
+    const custom = { id: 'custom-1', name: 'X', url: 'https://x.example/', builtIn: false, autoSend: false, closeOnDone: true };
     const list = getServices([custom, { ...AI_SERVICES[0]!, name: 'GPT' }]);
-    expect(list.map((s) => s.id)).toEqual(['grok', 'chatgpt', 'claude', 'gemini']);
+    expect(list.map((s) => s.id)).toEqual(['chatgpt', 'claude', 'gemini', 'grok', 'perplexity', 'custom-1']);
     expect(list.find((s) => s.id === 'chatgpt')!.name).toBe('GPT');
   });
 });

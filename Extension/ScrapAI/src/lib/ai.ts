@@ -571,15 +571,18 @@ export const AI_SERVICES: AiServiceCfg[] = [
   { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', tempUrl: 'https://chatgpt.com/?temporary-chat=true', builtIn: true, autoSend: false, closeOnDone: true, background: false },
   { id: 'claude', name: 'Claude', url: 'https://claude.ai/new', tempUrl: 'https://claude.ai/new?incognito', builtIn: true, autoSend: false, closeOnDone: true },
   { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app', builtIn: true, autoSend: false, closeOnDone: true },
+  { id: 'grok', name: 'Grok', url: 'https://grok.com/', builtIn: true, autoSend: false, closeOnDone: true },
+  { id: 'perplexity', name: 'Perplexity', url: 'https://www.perplexity.ai/', builtIn: true, autoSend: false, closeOnDone: true },
 ];
 
 export type AiServiceId = string;
 
-/** 設定のAIサービス一覧。未設定なら標準の3つ。標準のものが消えていれば補う */
+/** 設定のAIサービス一覧。未設定なら標準のもの。標準のものが消えていれば補う */
 export function getServices(list: AiServiceCfg[] | null | undefined): AiServiceCfg[] {
   if (!list) return AI_SERVICES.map((s) => ({ ...s }));
-  const missing = AI_SERVICES.filter((d) => !list.some((s) => s.id === d.id)).map((s) => ({ ...s }));
-  return [...list, ...missing];
+  // 標準のもの（決まった順。保存済みの設定があればそれを使う）→ 自分で追加したもの
+  const builtIns = AI_SERVICES.map((d) => ({ ...(list.find((s) => s.id === d.id) ?? d) }));
+  return [...builtIns, ...list.filter((s) => !AI_SERVICES.some((d) => d.id === s.id))];
 }
 
 /** AIサービスを開くURL。一時チャットを選んでいて、そのサービスが対応していれば一時チャットのURL */

@@ -443,10 +443,10 @@ await cm.waitForTimeout(600);
 await cm.getByRole('button', { name: 'カード', exact: true }).click();
 await cm.waitForTimeout(300);
 const colsOf = () => cm.locator('.rows.grid').evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length);
-await cm.getByRole('button', { name: '2列' }).click();
+await cm.getByRole('combobox', { name: '列' }).selectOption('2');
 await cm.waitForTimeout(300);
 check('カード: 2列に切り替え', (await colsOf()) === 2);
-await cm.getByRole('button', { name: '3列' }).click();
+await cm.getByRole('combobox', { name: '列' }).selectOption('3');
 await cm.waitForTimeout(300);
 check('カード: 3列に切り替え', (await colsOf()) === 3);
 await cm.screenshot({ path: path.join(OUT, 'p6-columns.png') });
@@ -455,14 +455,14 @@ await cm.waitForTimeout(500);
 check('カード: 列数が記憶される', (await colsOf()) === 3);
 await cm.getByRole('button', { name: 'コンパクト', exact: true }).click();
 await cm.waitForTimeout(300);
-check('コンパクト時は列ボタンが出ない', (await cm.getByRole('button', { name: '3列' }).count()) === 0);
+check('コンパクト時は列ボタンが出ない', (await cm.getByRole('combobox', { name: '列' }).count()) === 0);
 
-// カード（大）と、下段の位置そろえ
-await cm.getByRole('button', { name: 'カード（大）', exact: true }).click();
+// カード大と、下段の位置そろえ
+await cm.getByRole('button', { name: 'カード大', exact: true }).click();
 await cm.waitForTimeout(400);
-check('カード（大）: 切り替えられる', (await cm.locator('.rows .row.large').count()) > 0);
+check('カード大: 切り替えられる', (await cm.locator('.rows .row.large').count()) > 0);
 const bigText = await cm.locator('.rows .row.large', { hasText: 'テスト記事' }).first().locator('.row-excerpt').innerText();
-check('カード（大）: 本文が長く出る（200字以上）', bigText.length >= 200, String(bigText.length));
+check('カード大: 本文が長く出る（200字以上）', bigText.length >= 200, String(bigText.length));
 await cm.screenshot({ path: path.join(OUT, 'p11-large.png') });
 await cm.getByRole('button', { name: 'コンパクト', exact: true }).click();
 await cm.waitForTimeout(300);
@@ -494,7 +494,8 @@ await ext.evaluate(async () => {
 await cm.waitForTimeout(300);
 
 // 並び順: ドメイン順
-await cm.getByLabel('並び順').selectOption('domain-asc');
+await cm.getByLabel('並び順').selectOption('domain');
+await cm.getByRole('button', { name: /昇順|降順/ }).click();
 await cm.waitForTimeout(300);
 check('並び順: ドメイン順を選べる', (await cm.locator('.rows .row').count()) > 0);
 
@@ -558,7 +559,7 @@ check('AI連携: AIボタン・Gemini API・AIサービスの設定がある', /
 check('AI連携: 「AIサイト」という言い方を使わない', !/AIサイト/.test(aiTxt));
 await cm.getByRole('button', { name: 'AIサービスを追加' }).click();
 await cm.waitForTimeout(400);
-check('AI連携: AIサービスを追加できる', (await cm.locator('.svc').count()) === 4);
+check('AI連携: AIサービスを追加できる', (await cm.locator('.svc').count()) === 6);
 await cm.locator('.svc').last().locator('summary').click();
 await cm.locator('.svc').last().getByLabel('名前').fill('Grok');
 await cm.locator('.svc').last().getByLabel('開くURL').fill('https://grok.com/');

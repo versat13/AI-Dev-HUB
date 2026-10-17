@@ -256,6 +256,21 @@ function Library(props: {
         </button>
         <SortSelect value={params.sort} onChange={(sort) => props.setParams({ ...params, sort })} />
         <span class="spacer" />
+        {props.settings.listStyle !== 'compact' && (
+          <label class="columns-sel">
+            <span class="muted">{t('columnsLabel')}</span>
+            <select
+              aria-label={t('columnsLabel')}
+              value={props.settings.cardColumns}
+              onChange={(e) => props.onColumns(Number((e.target as HTMLSelectElement).value))}
+            >
+              <option value={0}>{t('columnsAuto')}</option>
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <div class="seg density" role="group" aria-label={t('densityLabel')}>
           {(['compact', 'card', 'large'] as const).map((d) => (
             <button key={d} aria-pressed={props.settings.listStyle === d} onClick={() => props.onDensity(d)}>
@@ -263,31 +278,6 @@ function Library(props: {
             </button>
           ))}
         </div>
-        {props.settings.listStyle !== 'compact' && (
-          <button
-            class="toggle bulk-btn"
-            aria-pressed={props.settings.listSnapshots}
-            title={t('showSnapshotsTitle')}
-            onClick={() => props.onSnapshots(!props.settings.listSnapshots)}
-          >
-            <Icon name="image" size={14} /> {t('showSnapshots')}
-          </button>
-        )}
-        {props.settings.listStyle !== 'compact' && (
-          <div class="columns" role="group" aria-label={t('columnsLabel')}>
-            <span class="muted">{t('columnsLabel')}</span>
-            {[0, 1, 2, 3, 4, 5, 6].map((n) => (
-              <button
-                key={n}
-                aria-pressed={props.settings.cardColumns === n}
-                aria-label={n === 0 ? t('columnsAuto') : t('columnsN', n)}
-                onClick={() => props.onColumns(n)}
-              >
-                {n === 0 ? t('columnsAuto') : n}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
       {filtersOpen && (
         <div class="filter-pop">
@@ -304,6 +294,14 @@ function Library(props: {
         <span class="count" aria-live="polite">{props.data ? t('itemCount', props.data.items.length) : ''}</span>
         <ActiveFilters params={params} onChange={props.setParams} categories={props.categories} hide={['view', 'category']} />
         <span class="spacer" />
+        <button
+          class="toggle bulk-btn"
+          aria-pressed={props.settings.listSnapshots}
+          title={t('showSnapshotsTitle')}
+          onClick={() => props.onSnapshots(!props.settings.listSnapshots)}
+        >
+          <Icon name="image" size={14} /> {t('showSnapshots')}
+        </button>
         <FaceToggle value={props.settings.listFace} onChange={(listFace) => props.onFace(listFace)} />
       </div>
 

@@ -684,6 +684,12 @@ button.danger.solid { background: var(--err); border-color: var(--err); color: #
 .svc-actions { display: flex; justify-content: flex-end; padding: 6px 0 8px; }
 
 /* 「N件選択中」の幅を確保して、右のボタンの位置が動かないようにする（100件選択中が入る幅） */
-.bulk-count { display: inline-block; min-width: 9.5em; white-space: nowrap; }
+.bulk-count { display: inline-block; min-width: 6em; white-space: nowrap; }
+.bulkbar { flex-wrap: nowrap; }
+@media (max-width: 1000px) { .bulkbar .bulk-label { display: none; } }
+.sort-pair { display: inline-flex; gap: 2px; align-items: center; }
+.sort-dir { padding: 4px 8px; min-width: 28px; }
+.columns-sel { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
 .ai-answers-fold > summary { cursor: pointer; font-weight: 600; font-size: 13px; padding: 4px 0; }
 .ai-answers-fold[open] > summary { margin-bottom: 6px; }
+.help.err { color: var(--err); }

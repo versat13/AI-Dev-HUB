@@ -14,8 +14,9 @@
 - ビルドは `wxt.config.ts` の hook で host_permissions を削除している（消さないこと）。
 - e2e：`e2e/*.mjs`（Playwright+Chromium、localhost用host_permissionsを足した複製で実行）。ヘッドレスでは拡張ページにクリップボード権限を付けられないため、ai.mjsはclipboardを代役に差し替えている。
 
-## 現在の状態（v1.3.1）
-- P0〜P6 完了（ストア申請の素材を除く）。ユニットテスト159件、e2e（ui/profiles/ai/data/snapshot/sync/bridge）全通過。`npm run test:e2e`で一括実行。
+## 現在の状態（v1.3.2）
+- v1.3.2：並び順は「項目（保存日/更新日/評価/タイトル/ドメイン）＋昇降順ボタン」（`SortKey` = `field-asc|desc`）。管理タブのツールバーは 列（選択式・カード時のみ）→表示切替（コンパクト/カード/カード大）、画像ボタンは常に表示（AI要約/原文の左）。一括バーは折り返さない。AIサービスの並びは 標準（ChatGPT・Claude・Gemini・Grok・Perplexity）→Gemini API→自作（`getServices`が標準を決まった順に並べる）。Gemini APIキーは前後の空白を除き、ヘッダーで拒否されたら `?key=` で1回やり直す。キー欄に「AIza… / AQ.…」の案内、空白混じり・短すぎは赤字で注意。
+- P0〜P6 完了（ストア申請の素材を除く）。ユニットテスト161件、e2e（ui/profiles/ai/data/snapshot/sync/bridge）全通過。`npm run test:e2e`で一括実行。
 - P1：保存（URL+タイトルを先に確定、抽出失敗でも残る）、重複検出、範囲選択の断片追加、取り消し。
 - P2：ポップアップ=一覧+「このページをスクラップ」ボタン。サイドパネル=一覧+詳細（保存ボタンなし）。管理タブ=一覧/詳細/絞り込み/一括操作/カテゴリ/設定。
 - P4：AIテンプレート（組み込み3種+自作）、プロンプトをコピー/ChatGPT・Claude・Geminiを開く（自動入力・送信なし）、回答の貼り付け→固定見出しで構造化（原文は常に保存）、AI要約あり/なし連動、検索対象。
@@ -73,6 +74,7 @@
 2. ストア申請の素材：スクリーンショット（1280×800）、プロモ画像、プライバシーポリシーの公開URL（STORE.md参照）。
 
 ## 注意・落とし穴
+- Gemini APIの「AQ.」形式キーは実キーで未確認（REST で拒否される報告あり）。Grok/Perplexity の入力欄・送信の自動検出も実サイトで未確認。「Gemini APIボタンでClaudeが使われた」は原因を再現できず未確認。
 - activeTab はアイコンをクリックしたタブにだけ付与される → サイドパネルには保存ボタンを置けない。
 - IndexedDBは boolean/null をインデックスできない → pinned/archived はメモリ内フィルタ。
 - 抽出テキストは必ずプレーンテキストで表示（HTMLとして解釈しない）。

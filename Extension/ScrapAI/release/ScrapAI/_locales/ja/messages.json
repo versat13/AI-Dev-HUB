@@ -143,17 +143,8 @@
   "pinned": {
     "message": "ピン留め中"
   },
-  "sortCreatedDesc": {
-    "message": "保存が新しい順"
-  },
-  "sortCreatedAsc": {
-    "message": "保存が古い順"
-  },
-  "sortUpdatedDesc": {
-    "message": "更新が新しい順"
-  },
   "sortStars": {
-    "message": "評価が高い順"
+    "message": "評価順"
   },
   "sortTitle": {
     "message": "タイトル順"
@@ -939,7 +930,7 @@
     "message": "サイドパネルを自動で閉じない"
   },
   "densityLarge": {
-    "message": "カード（大）"
+    "message": "カード大"
   },
   "densityLabel": {
     "message": "一覧の表示"
@@ -1246,5 +1237,23 @@
   },
   "translateFailed": {
     "message": "翻訳に失敗しました。翻訳の準備中かもしれません。少し待ってからもう一度押してください"
+  },
+  "sortCreated": {
+    "message": "保存日順"
+  },
+  "sortUpdated": {
+    "message": "更新日順"
+  },
+  "sortAsc": {
+    "message": "昇順（古い・低い・A→Z）"
+  },
+  "sortDesc": {
+    "message": "降順（新しい・高い・Z→A）"
+  },
+  "geminiKeyHint": {
+    "message": "通常「AIza…」か「AQ.…」で始まります（Google AI Studioで発行）。"
+  },
+  "geminiKeyBad": {
+    "message": "APIキーではないようです。空白や改行が入っていないか、全体をコピーできているか確認してください。"
   }
 }

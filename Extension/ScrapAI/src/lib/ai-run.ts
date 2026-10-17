@@ -57,6 +57,12 @@ export async function promptFor(
   return { prompt: buildPrompt(tpl, scrap, frags, langs, (l) => fragLabel(l, langs.bodyLang)), tpl };
 }
 
+/** Gemini API のキーとして明らかにおかしい（途中に空白や改行がある・極端に短い）か。形式（AIza / AQ.）は決め打ちしない */
+export function geminiKeyLooksWrong(key: string): boolean {
+  const k = key.trim();
+  return k !== '' && (/\s/.test(k) || k.length < 20);
+}
+
 /** Gemini API にプロンプトを送り、回答の文章を返す。失敗は Error（メッセージにキーは含めない） */
 export async function callGemini(
   prompt: string,
@@ -64,14 +70,15 @@ export async function callGemini(
   key: string,
   doFetch: typeof fetch = fetch,
 ): Promise<string> {
-  const res = await doFetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    },
-  );
+  const base = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
+  const k = key.trim();
+  let res = await doFetch(base, { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': k }, body });
+  // 新しい形式のキー（AQ.…）はヘッダーで通らないことがあると報告されているため、拒否されたらURLのキー指定で1回だけやり直す
+  if (!res.ok && (res.status === 400 || res.status === 401 || res.status === 403)) {
+    const retry = await doFetch(`${base}?key=${encodeURIComponent(k)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
+    if (retry.ok) res = retry;
+  }
   if (!res.ok) {
     // 原因が分かるよう、APIが返した説明文を添える（キーはAPIの応答に含まれない）
     const detail = ((await res.json().catch(() => null)) as { error?: { message?: string } } | null)?.error?.message;

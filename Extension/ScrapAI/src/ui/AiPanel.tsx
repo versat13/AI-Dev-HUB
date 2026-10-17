@@ -285,6 +285,11 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
           )}
 
           <div class="ai-services">
+            {services.filter((s) => s.builtIn).map((s) => (
+              <button key={s.id} class="service" onClick={() => copyPrompt(s)} title={t('aiCopyAndOpenTitle', s.name)}>
+                {s.name} <Icon name="external" size={12} />
+              </button>
+            ))}
             <button
               class="service"
               disabled={apiJob?.state === 'running'}
@@ -297,7 +302,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
             >
               {t('geminiApiName')}
             </button>
-            {services.map((s) => (
+            {services.filter((s) => !s.builtIn).map((s) => (
               <button key={s.id} class="service" onClick={() => copyPrompt(s)} title={t('aiCopyAndOpenTitle', s.name)}>
                 {s.name} <Icon name="external" size={12} />
               </button>
