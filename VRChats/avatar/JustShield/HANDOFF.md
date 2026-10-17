@@ -4,7 +4,7 @@
 
 ## 目的と方針
 - VRChatアバターギミック。スマブラ風ジャストシールド。BOOTH配布予定。商品名「**Just Shield Parry**」、メニュー表示名「**Just シールド**」（内部名・シェーダー名・フォルダは JustShield のまま）。
-- 開発用アバター「テスト用アバター」。シーン `Assets/テスト用アバターギミックテスト2.unity`、素材 `Assets/JustShield/`。
+- 開発用アバター：テスト用アバター(旧。固有名は伏せている)。シーンは Assets 直下のギミックテスト用シーン、素材 `Assets/JustShield/`。
 - Unity MCP（ai-game-developer）で作業。Modular Avatar 1.18.7 / NDMF 1.14.8 / VRChat SDK Avatars 3.10.5。
 - ユーザー指示：簡潔に結論から。コード前に方針提示→許可。
 - 意向：原作再現＋3Dの外連味OK。エフェクトは「くっきりメリハリ」。モーション再生はふらふら中のみ有効。
