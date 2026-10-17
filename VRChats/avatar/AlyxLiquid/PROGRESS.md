@@ -1,5 +1,8 @@
 # AlyxLiquid(VRChatアバター用 Alyx風ウォッカ瓶)進捗メモ
 
+> **このプロジェクトは中止中(2026-10時点)。以下は古い情報。**
+> テスト用アバターとして、改変公開が許可された無料Humanoidアバターを使用している(固有名は伏せている)。
+
 更新: 2026-10-03 / Unity 2022.3.22f1, VRCSDK 3.10.5, MA 1.18.7, Built-in RP, プロジェクト GimmickAI_1(AAO も導入済みだがアバターには未使用)
 要点だけ知りたいときは同じフォルダの `HANDOFF.md` を参照
 
@@ -102,19 +105,19 @@
 ## 検証の手段
 - `GimmickAI_1/AlyxDebug/`(プロジェクト外)にデバッグ画像を書き出し、Cowork から読み取り可(フォルダアクセス許可済み)
 - 大量に書き出す前に C ドライブの空きを確認(満杯になったことがある)
-- テスト用アバター(旧) 上の瓶の確認は Play モードで行う(編集モードでは NDMF プレビューが元の描画を隠すため、デバッグカメラに瓶が映らないことがある)
+- テスト用アバター上の瓶の確認は Play モードで行う(編集モードでは NDMF プレビューが元の描画を隠すため、デバッグカメラに瓶が映らないことがある)
   - Play 中に瓶を握った立ち姿勢で見るには、Hand.L 配下の VodkaBottle_L の rotation を identity にする
 - デバッグ撮影時は ShaderUtil.allowAsyncCompilation=false にする(非同期コンパイル中は水色の仮表示や液面の欠けが出る。Play 直後も同様)
 - Play 開始直後やスクリプト追加時はドメインリロードで MCP が 1 分ほど切断されることがある
 - 編集モードで瓶を表示した直後に Unity が数分応答しなくなったことがある(シェーダーの準備か NDMF プレビューの再構築と推定)
 - 書き換えは C# の File IO で行う場合 CRLF に注意(以前 CRLF 前提ミスでファイルを壊した)。正規化 + 一致数を確認する置換で行う
 
-## テスト用アバター(旧) テスト組み込み(テスト用アバター(旧) / シーン「テスト用アバターギミックテスト2」)
-- `テスト用アバター(旧)/AlyxLiquidTests/Menu`: MA MenuInstaller + サブメニュー「AlyxLiquid Test」(子をメニュー化)
+## テスト用アバターへの組み込み(旧。固有名は伏せている)
+- `<テスト用アバター>/AlyxLiquidTests/Menu`: MA MenuInstaller + サブメニュー「AlyxLiquid Test」(子をメニュー化)
   - `Vodka_LeftHand`: トグル「Vodka 左手」+ MA ObjectToggle(同期・非保存・既定OFF)
   - `Wine_Color`: トグル「赤ワイン色」+ MA MaterialSetter(液体マテリアルを AlyxLiquid_RedWine_Gimbal に差し替え)
   - 今後の注ぎテスト等は Menu の子にトグルを追加する
-- `テスト用アバター(旧)/AlyxLiquidTests/Props/VodkaBottle_L`: MA BoneProxy(LeftHand, KeepWorldPose)、瓶 0.8 倍、残量 0.6(プレハブ AlyxBottle_Gimbal のインスタンス。プレハブの変更は自動で反映)
+- `<テスト用アバター>/AlyxLiquidTests/Props/VodkaBottle_L`: MA BoneProxy(LeftHand, KeepWorldPose)、瓶 0.8 倍、残量 0.6(プレハブ AlyxBottle_Gimbal のインスタンス。プレハブの変更は自動で反映)
   - 配置: 普通に握る向き。T ポーズ(手のひら下・親指前)で手のひらの下、瓶軸 = +Z(首が親指側)。world pos (-0.413, 0.526, -0.059), rot (90,0,0)
   - VR で手を前に出して握ると首が上を向く想定
 - NDMF 手動ベイクで確認済み

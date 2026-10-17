@@ -1,5 +1,7 @@
 # AlyxLiquid 引き継ぎ(2026-10-03 時点)
 
+> **このプロジェクトは中止中(2026-10時点)。以下は古い情報。**
+
 詳細は同じフォルダの `PROGRESS.md`（必要になったときだけ読む）。
 
 ## 目的とユーザーの方針
@@ -10,8 +12,9 @@
 
 ## 環境
 - Unity 2022.3.22f1 / VRCSDK 3.10.5 / MA 1.18.7 / Built-in RP。プロジェクト GimmickAI_1(メインPC、Unity MCP "ai-game-developer" と Blender MCP)
+- テスト用アバターとして、改変公開が許可された無料Humanoidアバターを使用している
 - 主要アセット: `Assets/AlyxLiquid/`(AlyxLiquid.shader、AlyxBottle_Gimbal.prefab、Vodka/RedWine の Gimbal マテリアル、AlyxGlass_lilToon.mat)
-- テスト用アバター(旧) シーン「テスト用アバターギミックテスト2」: メニュー「AlyxLiquid Test」(Vodka 左手 / 赤ワイン色)、瓶 0.8 倍・残量 0.6
+- テスト用シーン: メニュー「AlyxLiquid Test」(Vodka 左手 / 赤ワイン色)、瓶 0.8 倍・残量 0.6
 - ユーザーの C ドライブが満杯になったことがある。大量に書き出す前に空きを確認
 
 ## 仕組み(要点)
@@ -40,6 +43,6 @@
 
 ## 作業上の注意
 - シェーダーの書き換えは C# の File IO で、改行を正規化し、置換は一致数を確認する方式(以前 CRLF で壊した)
-- 撮影時は ShaderUtil.allowAsyncCompilation=false。テスト用アバター(旧) 上の確認は Play モードで(編集モードは NDMF プレビューが邪魔)
+- 撮影時は ShaderUtil.allowAsyncCompilation=false。テスト用アバター上の確認は Play モードで(編集モードは NDMF プレビューが邪魔)
 - Play 開始やスクリプト追加の直後は MCP が 1 分ほど切断される
 - Play 中の PhysBone 設定変更は反映されない。プレハブを変えて Play し直す
