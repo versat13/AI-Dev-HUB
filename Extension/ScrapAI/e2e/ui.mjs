@@ -197,9 +197,10 @@ async function openUi(file, w = 380, h = 600, tabId) {
 
 // ポップアップ: 開くだけでは保存されず、一覧が見える
 const n0 = (await dump()).scraps.length;
-let pop = await openUi('popup.html', 380, 600, oTab);
+let pop = await openUi('popup.html', 460, 600, oTab);
 check('ポップアップ: 開いただけでは保存されない', (await dump()).scraps.length === n0);
 check('ポップアップ: 一覧に既存項目が出る', (await pop.locator('main').innerText()).includes('テスト記事'));
+check('ポップアップ: カードの右側にAIボタンがある', (await pop.locator('.browser-list .ai-run').count()) > 0);
 check('ポップアップ: 保存ボタンがある', await pop.getByRole('button', { name: 'このページをスクラップ' }).isVisible());
 await pop.screenshot({ path: path.join(OUT, 'p2-popup-list.png') });
 await pop.getByRole('button', { name: 'このページをスクラップ' }).click();
@@ -414,7 +415,7 @@ check('サイドパネル: 戻っても見出しを出さない（Chromeが出�
 await sp.screenshot({ path: path.join(OUT, 'p9-sidepanel.png') });
 
 // ポップアップ→詳細（sidePanel.open が使えない環境ではフォールバックで管理タブ）
-const pop2 = await openUi('popup.html', 380, 600, oTab);
+const pop2 = await openUi('popup.html', 460, 600, oTab);
 check('ポップアップ: 注意書きを出さない', !(await pop2.locator('body').innerText()).includes('ブラウザ内にのみ保存'));
 check('ポップアップ: サイドパネル/管理画面ボタン', (await pop2.getByRole('button', { name: 'サイドパネル' }).count()) === 1 && (await pop2.getByRole('button', { name: '管理画面' }).count()) === 1);
 await pop2.screenshot({ path: path.join(OUT, 'p2-popup-ja.png') });
@@ -549,6 +550,28 @@ await cm.getByRole('button', { name: 'もう一度押すと削除' }).click();
 await cm.waitForTimeout(700);
 check('一括削除: 表示中の項目が消える', (await dump()).scraps.filter((x) => x.archivedAt == null).length === 0, String((await dump()).scraps.length));
 
+// 管理画面「AI連携」
+await cm.locator('.m-nav').getByRole('button', { name: 'AI連携' }).click().catch(async () => { await cm.getByRole('button', { name: 'AI連携' }).click(); });
+await cm.waitForSelector('.settings');
+const aiTxt = await cm.locator('.m-main').innerText();
+check('AI連携: AIボタン・Gemini API・AIサービスの設定がある', /AIボタン/.test(aiTxt) && /Gemini API/.test(aiTxt) && /AIサービス/.test(aiTxt));
+check('AI連携: 「AIサイト」という言い方を使わない', !/AIサイト/.test(aiTxt));
+await cm.getByRole('button', { name: 'AIサービスを追加' }).click();
+await cm.waitForTimeout(400);
+check('AI連携: AIサービスを追加できる', (await cm.locator('.svc').count()) === 4);
+await cm.locator('.svc').last().locator('summary').click();
+await cm.locator('.svc').last().getByLabel('名前').fill('Grok');
+await cm.locator('.svc').last().getByLabel('開くURL').fill('https://grok.com/');
+await cm.locator('.svc').last().getByLabel('開くURL').press('Tab');
+await cm.waitForTimeout(1200);
+const saved = await ext.evaluate(async () => (await chrome.storage.local.get('settings')).settings?.aiServices ?? null);
+check('AI連携: 追加したAIサービスが保存される', saved?.some((x) => x.name === 'Grok' && x.url === 'https://grok.com/' && x.builtIn === false), JSON.stringify(saved?.find((x) => x.name === 'Grok')));
+await cm.locator('.m-main').getByLabel('APIキー').fill('AIza-test-key');
+await cm.locator('.m-main').getByLabel('APIキー').blur();
+await cm.waitForTimeout(400);
+const keyStored = await ext.evaluate(async () => (await chrome.storage.local.get(['geminiApiKey', 'settings']))); 
+check('AI連携: APIキーは設定とは別に保存し、設定には入れない', keyStored.geminiApiKey === 'AIza-test-key' && !JSON.stringify(keyStored.settings ?? {}).includes('AIza'));
+await cm.screenshot({ path: path.join(OUT, 'p17-ai-settings.png') });
 check('アイコン: 項目が全部なくなればアイコンも消える', (await dump()).favicons.length === 0, JSON.stringify((await dump()).favicons.map((f) => f.domain)));
 check('JSエラーなし', errs.length === 0, errs.join(' | '));
 

@@ -3,6 +3,7 @@ import { browser } from 'wxt/browser';
 import {
   AI_SERVICES,
   buildPrompt,
+  getServices,
   promptLangs,
   serviceUrl,
   resolveTemplates,
@@ -19,13 +20,13 @@ import {
 } from '@/lib/ai-db';
 import { getLocale, t } from '@/lib/i18n';
 import { getSettings, setSettings } from '@/lib/settings';
-import type { AiAnswer, Fragment, Scrap } from '@/lib/types';
+import type { AiAnswer, AiServiceCfg, Fragment, Scrap } from '@/lib/types';
 import { copyText } from './clipboard';
 import { formatDateTime, formatRelative, fragLabel } from './format';
 import { useLive } from './hooks';
 import { Icon } from './icons';
 
-const SERVICE_NAMES: Record<string, string> = Object.fromEntries(AI_SERVICES.map((s) => [s.id, s.name]));
+const SERVICE_NAMES: Record<string, string> = { ...Object.fromEntries(AI_SERVICES.map((s) => [s.id, s.name])), 'gemini-api': 'Gemini API' };
 
 function AnswerCard({ a, scrap }: { a: AiAnswer; scrap: Scrap }) {
   const [showRaw, setShowRaw] = useState(a.parseStatus === 'failed');
@@ -53,7 +54,7 @@ function AnswerCard({ a, scrap }: { a: AiAnswer; scrap: Scrap }) {
   return (
     <li class="answer">
       <div class="answer-head">
-        <span>{SERVICE_NAMES[a.service ?? ''] ?? t('aiServiceOther')}</span>
+        <span>{SERVICE_NAMES[a.service ?? ''] ?? (a.service || t('aiServiceOther'))}</span>
         <time title={formatDateTime(a.createdAt)}>{formatRelative(a.createdAt)}</time>
         <span class={`badge parse-${a.parseStatus}`}>{status}</span>
         <span class="spacer" />
@@ -117,6 +118,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
   const lang = getLocale();
   const [promptMode, setPromptMode] = useState<'en' | 'native'>('en');
   const [temporaryChat, setTemporaryChat] = useState(true);
+  const [services, setServices] = useState<AiServiceCfg[]>(AI_SERVICES);
   const [direct, setDirect] = useState(true);
   const [autoSend, setAutoSend] = useState(false);
   const [uiCode, setUiCode] = useState<string>(lang);
@@ -139,6 +141,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
       setPromptMode(s.aiPromptLang);
       setTemporaryChat(s.aiTemporaryChat);
       setDirect(s.aiDirect);
+      setServices(getServices(s.aiServices));
       setAutoSend(s.aiAutoSend);
       // 回答の言語: 表示言語を固定していればそれ、自動ならブラウザの言語（日英以外も可）
       setUiCode(s.locale === 'auto' ? browser.i18n.getUILanguage() : lang);
@@ -156,7 +159,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
     await setSettings({ aiTemplateId: id });
   }
 
-  async function copyPrompt(open?: (typeof AI_SERVICES)[number]) {
+  async function copyPrompt(open?: AiServiceCfg) {
     // ボタン一つ方式: そのサイトへのアクセスを（初回だけ）許可してもらい、入力と取り込みを自動にする。
     // 許可の確認はクリックの直後に出す必要があるので、コピーより先に行う
     if (open && direct) {
@@ -177,7 +180,8 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
           url: serviceUrl(open, temporaryChat),
           bridge: {
             prompt,
-            autoSend,
+            autoSend: autoSend || open.autoSend,
+            sel: { composer: open.composerSel, send: open.sendSel, answer: open.answerSel },
             scrapId: scrap.id,
             service: open.id,
             templateId: tpl.id,
@@ -187,7 +191,8 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
               saved: t('bridgeSaved'),
               notFound: t('bridgeNotFound'),
               failed: t('bridgeFailed'),
-              filled: autoSend ? t('bridgeSent') : t('bridgeFilled'),
+              filled: autoSend || open.autoSend ? t('bridgeSent') : t('bridgeFilled'),
+              auto: t('bridgeAuto'),
             },
           },
         });
@@ -275,7 +280,7 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
           )}
 
           <div class="ai-services">
-            {AI_SERVICES.map((s) => (
+            {services.map((s) => (
               <button key={s.id} class="service" onClick={() => copyPrompt(s)} title={t('aiCopyAndOpenTitle', s.name)}>
                 {s.name} <Icon name="external" size={12} />
               </button>
@@ -306,9 +311,9 @@ export function AiPanel({ scrap, frags }: { scrap: Scrap; frags: Fragment[] }) {
             <select
               aria-label={t('aiService')}
               value={service}
-              onChange={(e) => setService((e.target as HTMLSelectElement).value as AiServiceId)}
+              onChange={(e) => setService((e.target as HTMLSelectElement).value)}
             >
-              {AI_SERVICES.map((s) => (
+              {services.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
               <option value="other">{t('aiServiceOther')}</option>

@@ -9,8 +9,10 @@ import { seedSamples } from '@/lib/samples';
 import { saveFromPage } from '@/lib/save';
 import { getSettings } from '@/lib/settings';
 import { addSnapshot, cropScreenshot, type SnapRect } from '@/lib/snapshot';
-import type { SectionKey } from '@/lib/ai';
+import { getServices, serviceUrl, type SectionKey } from '@/lib/ai';
 import { addAiAnswer } from '@/lib/ai-db';
+import { callGemini, getGeminiKey, pickService, promptFor, setJob } from '@/lib/ai-run';
+import { GEMINI_API } from '@/lib/types';
 import type { AiAnswer, SaveMode, SaveOutcome, SiteProfile } from '@/lib/types';
 import { openManager, PENDING_PICK_KEY } from '@/ui/nav';
 
@@ -29,6 +31,7 @@ interface SnapshotMessage {
 interface AiOpenMessage {
   type: 'ai-open';
   url: string;
+  background?: boolean; // 手前に出さずに開く（AIボタン）
   bridge: Record<string, unknown>; // aibridge.content.ts の BridgeCfg
 }
 interface AiAnswerMessage {
@@ -38,6 +41,17 @@ interface AiAnswerMessage {
   service?: AiAnswer['service'];
   templateId?: string;
   expected?: SectionKey[];
+  auto?: boolean; // AIボタンの自動取り込み
+}
+interface AiRunMessage {
+  type: 'ai-run';
+  scrapId: string;
+}
+interface AiJobMessage {
+  type: 'ai-job';
+  scrapId: string;
+  state: 'done' | 'failed';
+  reason?: string;
 }
 interface PickerMessage {
   type: 'start-picker';
@@ -177,9 +191,9 @@ async function handleSnapshot(msg: SnapshotMessage): Promise<{ ok: boolean; id?:
 }
 
 /** AIサービスを開き、読み込みが終わったら入力と取り込みボタンの仕組みを入れる */
-async function handleAiOpen(msg: AiOpenMessage): Promise<{ ok: boolean }> {
+async function handleAiOpen(msg: AiOpenMessage): Promise<{ ok: boolean; tabId?: number }> {
   try {
-    const tab = await browser.tabs.create({ url: msg.url });
+    const tab = await browser.tabs.create({ url: msg.url, active: !msg.background });
     const tabId = tab.id!;
     await new Promise<void>((resolve) => {
       const done = (id: number, info: { status?: string }) => {
@@ -202,13 +216,13 @@ async function handleAiOpen(msg: AiOpenMessage): Promise<{ ok: boolean }> {
       args: [msg.bridge],
     });
     await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/aibridge.js'] });
-    return { ok: true };
+    return { ok: true, tabId };
   } catch {
     return { ok: false };
   }
 }
 
-async function handleAiAnswer(msg: AiAnswerMessage): Promise<{ ok: boolean }> {
+async function handleAiAnswer(msg: AiAnswerMessage, tabId?: number): Promise<{ ok: boolean }> {
   try {
     if (!msg.raw?.trim() || !(await db.scraps.get(msg.scrapId))) return { ok: false };
     const settings = await getSettings();
@@ -220,9 +234,87 @@ async function handleAiAnswer(msg: AiAnswerMessage): Promise<{ ok: boolean }> {
       expected: msg.expected,
       applyToScrap: settings.aiApplyHeadline,
     });
+    if (msg.auto) {
+      await setJob(msg.scrapId, { state: 'done' });
+      // 成功したらタブを閉じる（サービスごとの設定）
+      const svc = getServices(settings.aiServices).find((s) => s.id === msg.service);
+      if (tabId != null && svc?.closeOnDone !== false) await browser.tabs.remove(tabId).catch(() => undefined);
+    }
     return { ok: true };
   } catch {
     return { ok: false };
+  }
+}
+
+/** AIボタン: Gemini API を呼ぶか、AIサービスのタブを裏で開いて送信〜取り込みまで任せる */
+async function handleAiRun(msg: AiRunMessage): Promise<{ ok: boolean }> {
+  const settings = await getSettings();
+  const fail = async (reason: string) => {
+    await setJob(msg.scrapId, { state: 'failed', reason });
+    return { ok: false };
+  };
+  try {
+    const built = await promptFor(msg.scrapId, settings, settings.aiButtonTemplateId);
+    if (!built) return await fail('no-scrap');
+    await setJob(msg.scrapId, { state: 'running' });
+
+    if (settings.aiButtonService === GEMINI_API) {
+      const key = await getGeminiKey();
+      if (!key) return await fail('no-key');
+      const raw = await callGemini(built.prompt, settings.geminiModel, key);
+      await addAiAnswer({
+        scrapId: msg.scrapId,
+        raw,
+        service: GEMINI_API,
+        templateId: built.tpl.id,
+        expected: built.tpl.sections,
+        applyToScrap: settings.aiApplyHeadline,
+      });
+      await setJob(msg.scrapId, { state: 'done' });
+      return { ok: true };
+    }
+
+    const svc = pickService(settings);
+    if (!svc) return await fail('no-service');
+    const opened = await handleAiOpen({
+      type: 'ai-open',
+      url: serviceUrl(svc, settings.aiTemporaryChat),
+      background: true,
+      bridge: {
+        prompt: built.prompt,
+        autoSend: true,
+        auto: true,
+        scrapId: msg.scrapId,
+        service: svc.id,
+        templateId: built.tpl.id,
+        expected: built.tpl.sections,
+        sel: { composer: svc.composerSel, send: svc.sendSel, answer: svc.answerSel },
+        labels: {
+          capture: t('bridgeCapture'),
+          saved: t('bridgeSaved'),
+          notFound: t('bridgeNotFound'),
+          failed: t('bridgeFailed'),
+          filled: t('bridgeSent'),
+          auto: t('bridgeAuto'),
+        },
+      },
+    });
+    if (!opened.ok) return await fail('open');
+    await setJob(msg.scrapId, { state: 'running', tabId: opened.tabId });
+    return { ok: true };
+  } catch (e) {
+    return await fail(e instanceof Error ? e.message : 'error');
+  }
+}
+
+/** 自動取り込みが失敗したとき: タブを手前に出して、手動の「取り込む」ボタンで続けられるようにする */
+async function handleAiJob(msg: AiJobMessage, tabId?: number): Promise<void> {
+  const prev = ((await browser.storage.session.get('aiJobs')).aiJobs as Record<string, { tabId?: number }> | undefined)?.[msg.scrapId];
+  await setJob(msg.scrapId, { state: msg.state, reason: msg.reason, tabId: tabId ?? prev?.tabId });
+  const id = tabId ?? prev?.tabId;
+  if (msg.state === 'failed' && id != null) {
+    const tab = await browser.tabs.update(id, { active: true }).catch(() => undefined);
+    if (tab?.windowId != null) await browser.windows.update(tab.windowId, { focused: true }).catch(() => undefined);
   }
 }
 
@@ -348,8 +440,16 @@ export default defineBackground(() => {
       return true;
     }
     if (type === 'ai-answer') {
-      handleAiAnswer(message as AiAnswerMessage).then(sendResponse);
+      handleAiAnswer(message as AiAnswerMessage, _sender.tab?.id).then(sendResponse);
       return true;
+    }
+    if (type === 'ai-run') {
+      handleAiRun(message as AiRunMessage).then(sendResponse);
+      return true;
+    }
+    if (type === 'ai-job') {
+      void handleAiJob(message as AiJobMessage, _sender.tab?.id);
+      return undefined;
     }
     if (type === 'snapshot') {
       handleSnapshot(message as SnapshotMessage).then(sendResponse);

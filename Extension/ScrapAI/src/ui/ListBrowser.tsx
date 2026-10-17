@@ -9,7 +9,8 @@ import type { Category, Density, Settings } from '@/lib/types';
 import { ActiveFilters, FilterPanel, SearchBox } from './Filters';
 import { Icon } from './icons';
 import { setSettings } from '@/lib/settings';
-import { useCategories, useListData, useLive, useThumbs } from './hooks';
+import { useAiJobs, useCategories, useListData, useLive, useThumbs } from './hooks';
+import { useAiRun } from './ai-run-ui';
 import { Pager, pageSlice } from './Pager';
 import { MAX_CATS, ScrapRow } from './ScrapRow';
 
@@ -23,6 +24,7 @@ export function ScrapList(props: {
   categories: Category[];
   density: Density;
   columns?: number;
+  aiRun?: (id: string) => void; // AIボタンを出す（ポップアップ・サイドパネル）
   showSnapshots?: boolean; // カードにスナップショットを小さく出す（カード・カード（大）のみ）
   hideCount?: boolean; // 件数を呼び出し側で出す（管理タブ）
   face?: Settings['listFace']; // カード表示の列数（0または未指定 = 1列。管理タブでのみ指定する）
@@ -44,6 +46,7 @@ export function ScrapList(props: {
     // 本文にあたる断片（タイトルだけの断片は飛ばす）の冒頭
     return new Map([...by].map(([k, list]) => [k, (bodyFragment(list, true)?.text ?? '').replace(/\s+/g, ' ').slice(0, 600)]));
   }, [wantPreview, ids]);
+  const jobs = useAiJobs();
   const thumbs = useThumbs(props.showSnapshots && props.density !== 'compact' ? ids : '');
   if (!data) return <p class="empty" role="status">…</p>;
   // ドメインの欄は、表示中で最も長いドメインに幅を合わせる（カードごとに位置がずれないように）
@@ -102,6 +105,7 @@ export function ScrapList(props: {
               face={props.face}
               preview={previews?.get(s.id)}
               thumb={thumbs.get(s.id)}
+              aiRun={props.aiRun ? { job: jobs[s.id], onRun: props.aiRun } : undefined}
               active={props.activeId === s.id}
               selectable={props.selectable}
               selected={props.selection?.has(s.id)}
@@ -135,6 +139,7 @@ export function ListBrowser(props: {
   const [showFilters, setShowFilters] = useState(false);
   const [face, setFace] = useState<Settings['listFace']>(props.settings.listFace);
   const categories = useCategories();
+  const runAi = useAiRun();
   const data = useListData(params);
   const paged = pageSlice(data?.items ?? [], page, BROWSER_PAGE_SIZE);
   const shown = data ? { ...data, items: paged.items } : undefined;
@@ -183,6 +188,7 @@ export function ListBrowser(props: {
           density="compact"
           face={face}
           hideCount
+          aiRun={runAi}
           activeId={props.activeId}
           onOpen={props.onOpen}
         />

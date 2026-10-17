@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import { t } from '@/lib/i18n';
 import type { Category, Density, Scrap, Settings } from '@/lib/types';
 import { formatDateTime } from './format';
+import type { Job } from '@/lib/ai-run';
 import type { Thumb } from './hooks';
 import { Icon, SourceMark } from './icons';
 import { canTranslate, looksForeign, targetLang, toggleScrapTranslation } from './translate';
@@ -11,6 +12,7 @@ export interface ScrapRowProps {
   categories: Map<string, Category>;
   density: Density;
   preview?: string; // カード（大）・原文表示で出す本文の冒頭
+  aiRun?: { job?: Job; onRun: (id: string) => void }; // AIボタン（ポップアップ・サイドパネルのカード右側）
   thumb?: Thumb; // スナップショット（カードに小さく出す。文字を押しのけない大きさに収める）
   face?: Settings['listFace'];
   active?: boolean;
@@ -30,6 +32,24 @@ export function Stars({ value }: { value: number | null }) {
       <span class="on">{'★'.repeat(n)}</span>
       <span class="off">{'★'.repeat(5 - n)}</span>
     </span>
+  );
+}
+
+/** AIボタン: 押すだけでAIに要約させる。処理中・完了・失敗をボタンの表示で知らせる */
+function AiRunButton({ scrapId, job, onRun }: { scrapId: string; job?: Job; onRun: (id: string) => void }) {
+  const stale = job?.state === 'running' && Date.now() - job.at > 6 * 60_000; // 戻ってこなかった
+  const state = stale ? 'failed' : job?.state === 'done' && Date.now() - job.at > 10_000 ? undefined : job?.state;
+  const running = state === 'running';
+  const label = running ? t('aiRunning') : state === 'done' ? t('aiRunDone') : state === 'failed' ? t('aiRunFailed') : t('aiRun');
+  return (
+    <button
+      class={`ai-run${state ? ` ${state}` : ''}`}
+      disabled={running}
+      title={state === 'failed' ? `${t('aiRunFailedHelp')}${job?.reason ? ` (${job.reason})` : ''}` : t('aiRunHelp')}
+      onClick={() => onRun(scrapId)}
+    >
+      <span class="mark" aria-hidden="true">{state === 'done' ? '✓' : '✦'}</span> {label}
+    </button>
   );
 }
 
@@ -110,6 +130,7 @@ export function ScrapRow(p: ScrapRowProps) {
           </span>
         </span>
       </button>
+      {p.aiRun && <AiRunButton scrapId={s.id} job={p.aiRun.job} onRun={p.aiRun.onRun} />}
       {showTranslate && (
         <button
           class={`icon-btn row-tr${view.translated ? ' on' : ''}`}

@@ -17,7 +17,7 @@ import { addAiAnswer, deleteAiAnswer, deleteTemplate, listAiAnswers, listCustomT
 import { db, deleteScraps } from './db';
 import { loadList } from './list';
 import { DEFAULT_PARAMS } from './query';
-import type { Scrap } from './types';
+import type { AiServiceCfg, Scrap } from './types';
 
 const scrap = {
   title: 'Claude Codeの小技',
@@ -85,7 +85,7 @@ describe('プロンプト生成', () => {
 
 describe('AIサイトのURL', () => {
   it('一時チャット: ChatGPT・Claudeは専用URL、Geminiは通常', () => {
-    const [gpt, claude, gemini] = AI_SERVICES;
+    const [gpt, claude, gemini] = AI_SERVICES as [AiServiceCfg, AiServiceCfg, AiServiceCfg];
     expect(serviceUrl(gpt, true)).toBe('https://chatgpt.com/?temporary-chat=true');
     expect(serviceUrl(claude, true)).toBe('https://claude.ai/new?incognito');
     expect(serviceUrl(gemini, true)).toBe('https://gemini.google.com/app');

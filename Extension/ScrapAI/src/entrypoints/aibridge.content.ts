@@ -12,11 +12,16 @@ interface BridgeCfg {
   service: string;
   templateId: string;
   expected: string[];
-  labels: { capture: string; saved: string; notFound: string; failed: string; filled: string };
+  labels: { capture: string; saved: string; notFound: string; failed: string; filled: string; auto: string };
+  sel?: { composer?: string; send?: string; answer?: string }; // 利用者が指定した場所（空なら自動）
+  auto?: boolean; // AIボタン: 送信まで自動で行い、回答が出そろったら取り込む
 }
 
+const AUTO_STABLE_MS = 6000; // 回答の文章がこの間変わらなければ「出そろった」とみなす
+const AUTO_TIMEOUT_MS = 240_000;
+
 export default defineContentScript({
-  matches: ['https://chatgpt.com/*', 'https://claude.ai/*', 'https://gemini.google.com/*'],
+  matches: ['https://*/*'],
   registration: 'runtime',
   main() {
     const g = globalThis as unknown as { __scrapaiBridge?: BridgeCfg; __scrapaiBridgeOff?: () => void };
@@ -48,7 +53,7 @@ export default defineContentScript({
     document.documentElement.appendChild(host);
 
     // 回答が出たら、ボタンを目立たせる
-    const obs = new MutationObserver(() => go.classList.toggle('ready', !!findAnswer(document, cfg.prompt)));
+    const obs = new MutationObserver(() => go.classList.toggle('ready', !!findAnswer(document, cfg.prompt, cfg.sel?.answer)));
     obs.observe(document.body, { childList: true, subtree: true });
     const off = () => {
       obs.disconnect();
@@ -58,7 +63,7 @@ export default defineContentScript({
     root.querySelector('.x')!.addEventListener('click', off);
 
     go.addEventListener('click', async () => {
-      const raw = findAnswer(document, cfg.prompt);
+      const raw = findAnswer(document, cfg.prompt, cfg.sel?.answer);
       if (!raw) return say(cfg.labels.notFound);
       const res = (await browser.runtime.sendMessage({
         type: 'ai-answer',
@@ -71,23 +76,67 @@ export default defineContentScript({
       say(res?.ok ? cfg.labels.saved : cfg.labels.failed);
     });
 
+    // ---- AIボタン: 回答の文章が変わらなくなったら取り込む。うまくいかなければ失敗を知らせる ----
+    const job = (state: 'done' | 'failed', reason?: string) =>
+      browser.runtime.sendMessage({ type: 'ai-job', scrapId: cfg.scrapId, state, reason }).catch(() => undefined);
+    const fail = async (reason: string) => {
+      say(cfg.labels.failed);
+      await job('failed', reason);
+    };
+    let watching = false;
+    const watch = () => {
+      if (watching) return;
+      watching = true;
+      const started = Date.now();
+      let last = '';
+      let since = Date.now();
+      const tick = async () => {
+        const now = Date.now();
+        const cur = findAnswer(document, cfg.prompt, cfg.sel?.answer) ?? '';
+        if (cur !== last) [last, since] = [cur, now];
+        if (cur && now - since >= AUTO_STABLE_MS) {
+          const res = (await browser.runtime.sendMessage({
+            type: 'ai-answer',
+            scrapId: cfg.scrapId,
+            raw: cur,
+            service: cfg.service,
+            templateId: cfg.templateId,
+            expected: cfg.expected,
+            auto: true,
+          })) as { ok: boolean } | undefined;
+          say(res?.ok ? cfg.labels.saved : cfg.labels.failed);
+          if (!res?.ok) await job('failed', 'save');
+          return;
+        }
+        if (now - started > AUTO_TIMEOUT_MS) return void fail('timeout');
+        setTimeout(tick, 1000);
+      };
+      setTimeout(tick, 1000);
+    };
+
     // ---- 入力欄にプロンプトを入れる（画面の準備ができるまで最大20秒待つ） ----
     let tries = 0;
     const fill = () => {
-      const el = findComposer(document);
+      const el = findComposer(document, cfg.sel?.composer);
       if (!el) {
         if (++tries < 80) setTimeout(fill, 250);
+        else if (cfg.auto) void fail('no-composer');
         return;
       }
       fillComposer(el, cfg.prompt);
-      say(cfg.labels.filled);
-      if (!cfg.autoSend) return;
+      say(cfg.auto ? cfg.labels.auto : cfg.labels.filled);
+      if (!cfg.autoSend && !cfg.auto) return;
       let wait = 0;
       const send = () => {
-        const b = findSend(el);
-        if (b && !b.disabled) return b.click();
+        const b = findSend(el, cfg.sel?.send);
+        if (b && !b.disabled) {
+          b.click();
+          if (cfg.auto) watch();
+          return;
+        }
         if (++wait < 20) return void setTimeout(send, 200);
         el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }));
+        if (cfg.auto) watch();
       };
       setTimeout(send, 300);
     };

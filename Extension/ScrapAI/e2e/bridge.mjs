@@ -192,6 +192,46 @@ const ans = db.answers[0];
 check('ボタン一つ: 回答を見出しごとに保存（送ったプロンプトの見本ではなく回答）', db.answers.length === 1 && ans.parseStatus === 'ok' && ans.raw.includes('モックAIの見出し') && ans.service === 'claude', JSON.stringify(db.answers.map((a) => a.parseStatus)));
 check('ボタン一つ: タイトルを見出しに置き換える', db.scraps.find((s) => s.id === out.scrapId)?.title === 'モックAIの見出し');
 
+// ===== AIボタン（裏でタブを開く → 送信 → 回答が出そろったら取り込む → タブを閉じる）=====
+await ai.close();
+const art2 = await ctx.newPage();
+await art2.goto(`${base}/other`);
+const out2 = await save(await tabIdOf(`${base}/other*`), 'auto');
+await ext.evaluate((u) => chrome.storage.local.set({ settings: { locale: 'ja', articleMaxChars: 3000, aiApplyHeadline: true, aiButtonService: 'mock', aiButtonTemplateId: 'builtin-summary', aiTemporaryChat: false,
+  aiServices: [{ id: 'mock', name: 'Mock', url: u, builtIn: false, autoSend: false, closeOnDone: true }] } }), `${base}/mockai`);
+const jobs = () => ext.evaluate(async () => (await chrome.storage.session.get('aiJobs')).aiJobs ?? {});
+await art2.bringToFront();
+const t0 = Date.now();
+await ext.evaluate((id) => chrome.runtime.sendMessage({ type: 'ai-run', scrapId: id }), out2.scrapId);
+let mock;
+for (let i = 0; i < 40 && !mock; i++) { await art2.waitForTimeout(150); mock = ctx.pages().find((p) => p.url().endsWith('/mockai')); }
+check('AIボタン: AIのタブを開く', !!mock);
+check('AIボタン: 手前に出さない（今のタブのまま）', (await ext.evaluate(async () => (await chrome.tabs.query({ url: '*://*/mockai' }))[0]?.active)) === false);
+check('AIボタン: 処理中と記録される', (await jobs())[out2.scrapId]?.state === 'running');
+for (let i = 0; i < 80 && !mock.isClosed(); i++) await art2.waitForTimeout(250); // 回答が出そろうまで（約7秒）
+check('AIボタン: 取り込めたらタブを自動で閉じる', mock.isClosed(), String(Date.now() - t0) + 'ms');
+const after = await ext.evaluate(() => new Promise((resolve) => {
+  const open = indexedDB.open('scrapai');
+  open.onsuccess = () => {
+    const tx = open.result.transaction(['aiAnswers', 'scraps'], 'readonly');
+    const o = {};
+    tx.objectStore('aiAnswers').getAll().onsuccess = (e) => (o.answers = e.target.result);
+    tx.objectStore('scraps').getAll().onsuccess = (e) => (o.scraps = e.target.result);
+    tx.oncomplete = () => resolve(o);
+  };
+}));
+const a2 = after.answers.find((a) => a.scrapId === out2.scrapId);
+check('AIボタン: 回答を保存（サービスは mock、見出しも置換）', !!a2 && a2.service === 'mock' && a2.parseStatus === 'ok' && after.scraps.find((x) => x.id === out2.scrapId)?.title === 'モックAIの見出し');
+check('AIボタン: 完了と記録される', (await jobs())[out2.scrapId]?.state === 'done');
+
+// 失敗: 入力欄のないページでは、失敗と記録してタブを残す（手前に出す）
+await ext.evaluate((u) => chrome.storage.local.set({ settings: { locale: 'ja', articleMaxChars: 3000, aiButtonService: 'bad', aiButtonTemplateId: 'builtin-summary', aiTemporaryChat: false,
+  aiServices: [{ id: 'bad', name: 'Bad', url: u, builtIn: false, autoSend: false, closeOnDone: true }] } }), `${base}/thread`);
+await ext.evaluate((id) => chrome.runtime.sendMessage({ type: 'ai-run', scrapId: id }), out2.scrapId);
+for (let i = 0; i < 130 && (await jobs())[out2.scrapId]?.state !== 'failed'; i++) await art2.waitForTimeout(250);
+check('AIボタン: 入力欄が見つからなければ失敗と記録する', (await jobs())[out2.scrapId]?.state === 'failed', JSON.stringify((await jobs())[out2.scrapId]));
+check('AIボタン: 失敗したタブは閉じずに残す', ctx.pages().some((p) => p.url().endsWith('/thread')));
+
 await ctx.close();
 server.close();
 const failed = results.filter((r) => !r.ok);

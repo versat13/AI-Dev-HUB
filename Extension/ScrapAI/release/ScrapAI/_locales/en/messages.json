@@ -1123,5 +1123,110 @@
   },
   "bulkHint": {
     "message": "Select items to act on them"
+  },
+  "aiRun": {
+    "message": "Summarize"
+  },
+  "aiRunning": {
+    "message": "Working…"
+  },
+  "aiRunDone": {
+    "message": "Done"
+  },
+  "aiRunFailed": {
+    "message": "Failed"
+  },
+  "aiRunHelp": {
+    "message": "Opens the AI tab in the background, asks for a summary and imports it (the tab closes on success)"
+  },
+  "aiRunFailedHelp": {
+    "message": "Could not import automatically. Press again, or use \"Import to ScrapAI\" on the opened tab"
+  },
+  "bridgeAuto": {
+    "message": "ScrapAI is working on it and will import the answer once it is complete"
+  },
+  "navAi": {
+    "message": "AI"
+  },
+  "aiGeneral": {
+    "message": "General"
+  },
+  "aiIntro": {
+    "message": "Settings for the card \"Summarize\" button and the \"Ask\" section of the detail view."
+  },
+  "aiButtonTitle": {
+    "message": "AI button"
+  },
+  "aiButtonService": {
+    "message": "Send to"
+  },
+  "aiButtonPrompt": {
+    "message": "Prompt to use"
+  },
+  "geminiApiName": {
+    "message": "Gemini API (no tab)"
+  },
+  "aiButtonHelp": {
+    "message": "With an AI service, ScrapAI opens a tab in the background, sends the prompt, imports the answer when it is complete and closes the tab. With the Gemini API it imports without opening a tab."
+  },
+  "geminiTitle": {
+    "message": "Gemini API"
+  },
+  "geminiHelp": {
+    "message": "Enter a free-tier API key (from Google AI Studio) to summarize without opening a tab. The key stays on this device and is not included in sync or export."
+  },
+  "geminiKey": {
+    "message": "API key"
+  },
+  "geminiModel": {
+    "message": "Model name"
+  },
+  "geminiPrivacy": {
+    "message": "When you use the Gemini API, the text of the material is sent to Google's servers. You will be asked for access the first time."
+  },
+  "svcTitle": {
+    "message": "AI services"
+  },
+  "svcHelp": {
+    "message": "You can change the built-in AI services too. Leave the input box, send button and answer locations (CSS selectors) empty to find them automatically; set them only if it does not work."
+  },
+  "svcName": {
+    "message": "Name"
+  },
+  "svcUrl": {
+    "message": "URL to open"
+  },
+  "svcTempUrl": {
+    "message": "Temporary chat URL"
+  },
+  "svcComposer": {
+    "message": "Input box"
+  },
+  "svcSend": {
+    "message": "Send button"
+  },
+  "svcAnswer": {
+    "message": "Answer"
+  },
+  "svcAuto": {
+    "message": "Automatic"
+  },
+  "svcAutoSend": {
+    "message": "Send automatically after filling in"
+  },
+  "svcClose": {
+    "message": "Close the tab after the AI button imports the answer"
+  },
+  "svcAdd": {
+    "message": "Add an AI service"
+  },
+  "svcReset": {
+    "message": "Reset to default"
+  },
+  "svcRemove": {
+    "message": "Delete this AI service"
+  },
+  "svcNew": {
+    "message": "New AI service"
   }
 }

@@ -19,20 +19,22 @@ import { Icon } from '@/ui/icons';
 import { formatBytes } from '@/ui/format';
 import { useCategories, useListData, useLive } from '@/ui/hooks';
 import { FaceToggle, ScrapList } from '@/ui/ListBrowser';
+import { AiSettings } from '@/ui/AiSettings';
 import { BulkBar } from '@/ui/BulkBar';
 import { Pager, pageSlice } from '@/ui/Pager';
 import { SiteSettings } from '@/ui/SiteSettings';
 import { SyncSettings, useAutoSync } from '@/ui/SyncSettings';
 import { TemplateSettings } from '@/ui/TemplateSettings';
 
-type Section = 'library' | 'categories' | 'sites' | 'templates' | 'sync' | 'settings';
-const SECTIONS: Section[] = ['library', 'categories', 'sites', 'templates', 'sync', 'settings'];
+type Section = 'library' | 'categories' | 'sites' | 'templates' | 'ai' | 'sync' | 'settings';
+const SECTIONS: Section[] = ['library', 'categories', 'sites', 'templates', 'ai', 'sync', 'settings'];
 
 const NAV_LABEL: Record<Section, string> = {
   library: 'navLibrary',
   categories: 'navCategories',
   sites: 'navSites',
   templates: 'navTemplates',
+  ai: 'navAi',
   sync: 'navSync',
   settings: 'navSettings',
 };
@@ -187,6 +189,7 @@ export function App({ initial }: { initial: Settings }) {
         {section === 'categories' && <CategoryManager categories={categories} />}
         {section === 'sites' && <SiteSettings />}
         {section === 'templates' && <TemplateSettings />}
+        {section === 'ai' && <AiSettings settings={settings} onChange={updateSettings} />}
         {section === 'sync' && <SyncSettings />}
         {section === 'settings' && <SettingsPane settings={settings} onChange={updateSettings} />}
       </main>
@@ -528,56 +531,6 @@ function SettingsPane({
           />
         </label>
         <p class="help">{t('maxCharsHelp')}</p>
-      </div>
-
-      <div class="set-card">
-        <h3>✦ AI</h3>
-        <label class="set-row">
-          <span>{t('aiPromptLang')}</span>
-          <select
-            value={settings.aiPromptLang}
-            onChange={(e) => onChange({ aiPromptLang: (e.target as HTMLSelectElement).value as Settings['aiPromptLang'] })}
-          >
-            <option value="en">{t('setPromptEn')}</option>
-            <option value="native">{t('setPromptNative')}</option>
-          </select>
-        </label>
-        <label class="set-row check">
-          <input
-            type="checkbox"
-            checked={settings.aiTemporaryChat}
-            onChange={(e) => onChange({ aiTemporaryChat: (e.target as HTMLInputElement).checked })}
-          />
-          {t('setTemporaryChat')}
-        </label>
-        <p class="help">{t('setTemporaryChatHelp')}</p>
-        <label class="set-row check">
-          <input
-            type="checkbox"
-            checked={settings.aiDirect}
-            onChange={(e) => onChange({ aiDirect: (e.target as HTMLInputElement).checked })}
-          />
-          {t('setAiDirect')}
-        </label>
-        <p class="help">{t('setAiDirectHelp')}</p>
-        {settings.aiDirect && (
-          <label class="set-row check">
-            <input
-              type="checkbox"
-              checked={settings.aiAutoSend}
-              onChange={(e) => onChange({ aiAutoSend: (e.target as HTMLInputElement).checked })}
-            />
-            {t('setAiAutoSend')}
-          </label>
-        )}
-        <label class="set-row check">
-          <input
-            type="checkbox"
-            checked={settings.aiApplyHeadline}
-            onChange={(e) => onChange({ aiApplyHeadline: (e.target as HTMLInputElement).checked })}
-          />
-          {t('aiApplyHeadline')}
-        </label>
       </div>
 
       <div class="set-card shortcuts">

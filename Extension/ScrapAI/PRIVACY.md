@@ -7,7 +7,8 @@
 ScrapAI は、あなたが保存したページの情報を **お使いのブラウザの中（IndexedDB）にだけ** 保存します。開発者はサーバーを持たず、あなたのデータを受け取りません。
 
 - **外部への送信はありません。** アクセス解析・広告・トラッキングもありません。
-- **AIのAPIは呼びません。** AIに渡すときは、あなたが選んだAIサービス（ChatGPT・Claude・Gemini）の画面を開き、プロンプトを入力欄に入れます（設定でコピー＆貼り付けにもできます）。その後の扱いは各AIサービスの規約に従います。
+- **AIのAPIは、あなたがGeminiのAPIキーを入れたときだけ呼びます（任意）。** 既定では呼びません。AIに渡すときは、あなたが選んだAIサービス（ChatGPT・Claude・Gemini、または自分で追加したもの）の画面を開き、プロンプトを入力欄に入れます（設定でコピー＆貼り付けにもできます）。カードの「AI要約」ボタンは、そのAIサービスのタブを裏で開いて同じことを自動で行い、回答を取り込んだらタブを閉じます。
+- **Gemini APIを使う場合**は、プロンプトに含まれる資料の本文がGoogleのサーバー（generativelanguage.googleapis.com）に送られます。APIキーはこの端末にだけ保存し、同期ファイルや書き出しには含めません。その後の扱いは各サービスの規約に従います。
 - **同期はあなたのフォルダだけを使います。** 同期を使う場合、あなたが選んだPC上のフォルダにファイルを書き出し、読み込みます。そのフォルダをクラウドと同期するかどうかは、あなたが使うクラウドサービス（Google Drive など）の設定によります。
 - **保存するのは、あなたが保存を実行したページだけです。** 閲覧履歴を自動で集めることはありません。
 - **保存する内容:** ページのURL・タイトル、抽出した本文、あなたのメモ・星・カテゴリ、AIの回答、ページの一部の画像（スナップショット）、サイトのアイコン（保存したページ自身が読み込むもの）、サイト設定、プロンプト、表示設定。
@@ -23,7 +24,7 @@ ScrapAI は、あなたが保存したページの情報を **お使いのブラ
 | unlimitedStorage | 保存した項目や画像が多くなっても保存できるようにする |
 | sidePanel | サイドパネルで一覧を表示する |
 | contextMenus（任意） | 設定でオンにしたときだけ、右クリックメニューに「ScrapAIに保存」を出す |
-| chatgpt.com / claude.ai / gemini.google.com へのアクセス（任意） | 「ボタン一つでAIに渡す」を初めて使うときだけ許可を求める。ScrapAIから開いたそのタブでだけ、入力欄にプロンプトを入れ、あなたが「取り込む」を押したときに回答を読み取る |
+| 選んだAIサービス（ChatGPT・Claude・Gemini・自分で追加したもの）と generativelanguage.googleapis.com へのアクセス（任意） | 「AI要約」ボタンや「ボタン一つでAIに渡す」を初めて使うサービスごとに許可を求める（Gemini APIは、キーを入れて初めて使うとき）。ScrapAIから開いたそのタブでだけ、入力欄にプロンプトを入れ、回答を読み取る（ボタンでは回答が出そろったとき、手動では「取り込む」を押したとき）。他のサイトには何もしない |
 
 すべてのサイトへのアクセス権（全サイトの host_permissions）は要求しません。
 
@@ -32,7 +33,8 @@ ScrapAI は、あなたが保存したページの情報を **お使いのブラ
 ScrapAI stores the pages you save **only inside your browser (IndexedDB)**. The developer runs no server and never receives your data.
 
 - **Nothing is sent to the developer or any third party.** No analytics, ads or tracking.
-- **No AI API is called.** To use an AI, ScrapAI opens the AI service you choose (ChatGPT, Claude or Gemini) and fills in the prompt (or you can copy and paste). What happens next is governed by that service’s terms.
+- **The AI API is called only if you enter a Gemini API key (optional).** By default it is not called. To use an AI, ScrapAI opens the AI service you choose (ChatGPT, Claude, Gemini or one you added) and fills in the prompt (or you can copy and paste). The card's “Summarize” button does the same automatically in a background tab and closes it after importing the answer.
+- **If you use the Gemini API,** the text of the material in the prompt is sent to Google's servers (generativelanguage.googleapis.com). The API key is stored only on this device and is not included in sync files or exports. What happens next is governed by that service’s terms.
 - **Sync uses only your own folder.** If you use sync, ScrapAI writes and reads a file in a folder on your computer that you choose. Whether that folder is synced to the cloud depends on your own cloud app (such as Google Drive).
 - **Only pages you explicitly save are stored.** Browsing history is never collected.
 - **Stored:** page URL and title, extracted text, your notes, stars and categories, AI answers, images of part of a page (snapshots), site icons (the ones the saved page itself loads), site settings, prompts and display settings.
@@ -48,6 +50,6 @@ ScrapAI stores the pages you save **only inside your browser (IndexedDB)**. The 
 | unlimitedStorage | Keep saving when items and images grow |
 | sidePanel | Show the list in the side panel |
 | contextMenus (optional) | Only if you turn it on, add “Save to ScrapAI” to the right-click menu |
-| chatgpt.com / claude.ai / gemini.google.com (optional) | Requested the first time you use one-click handoff. Only in the tab ScrapAI opened, it fills in the prompt and reads the answer when you click “Save to ScrapAI” |
+| The AI service you choose (ChatGPT, Claude, Gemini or one you added) and generativelanguage.googleapis.com (optional) | Requested per service the first time you use the “Summarize” button or one-click handoff (for the Gemini API, the first time you use it with a key). Only in the tab ScrapAI opened, it fills in the prompt and reads the answer (when it is complete for the button, or when you click “Import” for manual use). Nothing is done on other sites |
 
 ScrapAI does not request access to all websites.

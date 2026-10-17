@@ -1123,5 +1123,110 @@
   },
   "bulkHint": {
     "message": "項目を選ぶと操作できます"
+  },
+  "aiRun": {
+    "message": "AI要約"
+  },
+  "aiRunning": {
+    "message": "処理中…"
+  },
+  "aiRunDone": {
+    "message": "完了"
+  },
+  "aiRunFailed": {
+    "message": "失敗"
+  },
+  "aiRunHelp": {
+    "message": "AIのタブを裏で開き、要約を頼んで取り込みます（成功したらタブを閉じます）"
+  },
+  "aiRunFailedHelp": {
+    "message": "自動で取り込めませんでした。もう一度押すか、開いたタブの「ScrapAIに取り込む」を使ってください"
+  },
+  "bridgeAuto": {
+    "message": "ScrapAIが自動で進めています。回答が出そろうと取り込みます"
+  },
+  "navAi": {
+    "message": "AI連携"
+  },
+  "aiGeneral": {
+    "message": "共通の設定"
+  },
+  "aiIntro": {
+    "message": "カードの「AI要約」ボタンや、詳細画面の「聞く」で使うAIの設定です。"
+  },
+  "aiButtonTitle": {
+    "message": "AIボタン"
+  },
+  "aiButtonService": {
+    "message": "送り先"
+  },
+  "aiButtonPrompt": {
+    "message": "使うプロンプト"
+  },
+  "geminiApiName": {
+    "message": "Gemini API（タブを開かない）"
+  },
+  "aiButtonHelp": {
+    "message": "AIサービスを選ぶと、裏でタブを開いて送信し、回答が出そろったら取り込んでタブを閉じます。Gemini APIを選ぶと、タブを開かずに取り込みます。"
+  },
+  "geminiTitle": {
+    "message": "Gemini API"
+  },
+  "geminiHelp": {
+    "message": "無料枠のAPIキー（Google AI Studioで発行）を入れると、タブを開かずに要約できます。キーはこの端末にだけ保存され、同期や書き出しには含まれません。"
+  },
+  "geminiKey": {
+    "message": "APIキー"
+  },
+  "geminiModel": {
+    "message": "モデル名"
+  },
+  "geminiPrivacy": {
+    "message": "Gemini APIを使うとき、資料の本文がGoogleのサーバーに送られます。初めて使うときにアクセスの許可を求めます。"
+  },
+  "svcTitle": {
+    "message": "AIサービス"
+  },
+  "svcHelp": {
+    "message": "標準のAIサービスも設定を変えられます。入力欄・送信ボタン・回答の場所（CSSセレクター）は、空なら自動で探します。うまく動かないときだけ指定してください。"
+  },
+  "svcName": {
+    "message": "名前"
+  },
+  "svcUrl": {
+    "message": "開くURL"
+  },
+  "svcTempUrl": {
+    "message": "一時チャットのURL"
+  },
+  "svcComposer": {
+    "message": "入力欄"
+  },
+  "svcSend": {
+    "message": "送信ボタン"
+  },
+  "svcAnswer": {
+    "message": "回答の場所"
+  },
+  "svcAuto": {
+    "message": "自動"
+  },
+  "svcAutoSend": {
+    "message": "入力したあと自動で送信する"
+  },
+  "svcClose": {
+    "message": "AIボタンで取り込めたらタブを閉じる"
+  },
+  "svcAdd": {
+    "message": "AIサービスを追加"
+  },
+  "svcReset": {
+    "message": "初期値に戻す"
+  },
+  "svcRemove": {
+    "message": "このAIサービスを削除"
+  },
+  "svcNew": {
+    "message": "新しいAIサービス"
   }
 }

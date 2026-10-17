@@ -22,7 +22,8 @@ Save pages and posts with one click, summarize them with the AI you already use 
 ・「要約」「要点抽出」「情報の精査」「手順確認」「導入判断」から選ぶだけで、最適なプロンプトを作ります。
 ・ボタン1つで ChatGPT・Claude・Gemini を開いて入力し、回答もボタン1つで取り込みます（一時チャットにも対応）。
 ・回答は見出しごとに保存され、一覧のカードがAIの見出しと要点に置き換わります。「原文」に切り替えればいつでも元の内容へ。
-・APIキーも追加料金も不要。いつも使っているAIをそのまま使います。
+・カードの「AI要約」ボタンで、裏でAIのタブを開いて要約を取り込み、タブを閉じます。AIサービスは自分で追加もできます。
+・APIキーも追加料金も不要。いつも使っているAIをそのまま使います（無料枠のGemini APIキーを入れれば、タブを開かずに要約することもできます）。
 
 ■ 探しやすい
 ・検索、星、カテゴリ、ピン留め、絞り込み、カード表示（列数・大きさを選べる）。
@@ -49,7 +50,8 @@ Do your saved articles and posts pile up until you forget why you saved them? Sc
 - Pick Summarize, Key points, Fact-check, Steps to try or Decide, and ScrapAI writes the prompt.
 - One click opens ChatGPT, Claude or Gemini with the prompt filled in; one more click brings the answer back (temporary chats supported).
 - Answers are saved by heading, and your cards show the AI headline and key points. Switch to “Original” at any time.
-- No API key, no extra fees.
+- A “Summarize” button on each card opens the AI tab in the background, imports the summary and closes the tab. You can add your own AI services.
+- No API key and no extra fees needed; use the AI you already use (or add a free-tier Gemini API key to summarize without opening a tab).
 
 ■ Easy to find
 - Search, stars, categories, pins, filters, and card layouts with adjustable columns and size.
@@ -72,10 +74,10 @@ Do your saved articles and posts pile up until you forget why you saved them? Sc
 - storage / unlimitedStorage: 設定と、保存した項目・画像を端末内に保存するため。
 - sidePanel: サイドパネルで一覧を表示するため。
 - contextMenus（任意）: 設定でオンにしたときだけ右クリックメニューを出すため。
-- optional_host_permissions（chatgpt.com / claude.ai / gemini.google.com）: ユーザーが「ボタン一つでAIに渡す」を使うときだけ、ScrapAIが開いたタブで入力欄にプロンプトを入れ、ユーザーが取り込みを押したときに回答を読むため。
+- optional_host_permissions（https://*/*。実際に許可を求めるのは、ユーザーが選んだAIサービスと generativelanguage.googleapis.com だけ）: 「AI要約」ボタン・「ボタン一つでAIに渡す」で、ScrapAIが開いたタブの入力欄にプロンプトを入れ、回答を読み取るため。Gemini APIは、ユーザーがキーを入れたときだけ本文を送るため。使うサービスごとにその都度許可を求める。
 
 ## データの扱い（ストアの申告）
-- 収集するユーザーデータ: なし（すべて端末内。開発者のサーバーへの送信なし）
+- 収集するユーザーデータ: なし（すべて端末内。開発者のサーバーへの送信なし。ユーザーがGemini APIキーを入れた場合のみ、本文がGoogleに送られる）
 - 販売・第三者への提供: なし
 
 ## 申請前に必要な素材

@@ -35,9 +35,14 @@ function editable(el: Element): boolean {
 }
 
 /** 入力欄: 分かっている場所 → なければ「画面の下のほうにある、いちばん大きな書き込める欄」 */
-export function findComposer(doc: Document = document): HTMLElement | null {
-  for (const sel of KNOWN.composer) {
-    const el = doc.querySelector(sel);
+export function findComposer(doc: Document = document, extra?: string): HTMLElement | null {
+  for (const sel of [...(extra?.trim() ? [extra.trim()] : []), ...KNOWN.composer]) {
+    let el: Element | null = null;
+    try {
+      el = doc.querySelector(sel);
+    } catch {
+      continue; // セレクタの書き間違い
+    }
     if (el && visible(el) && editable(el)) return el as HTMLElement;
   }
   const cands = [...doc.querySelectorAll('textarea, [contenteditable="true"], [contenteditable=""], [role="textbox"]')].filter(
@@ -82,10 +87,15 @@ export function fillComposer(el: HTMLElement, text: string): boolean {
 }
 
 /** 送信ボタン: 分かっている場所 → なければ入力欄の近くの「送信らしい」ボタン */
-export function findSend(composer: HTMLElement): HTMLButtonElement | null {
+export function findSend(composer: HTMLElement, extra?: string): HTMLButtonElement | null {
   const doc = composer.ownerDocument;
-  for (const sel of KNOWN.send) {
-    const b = doc.querySelector<HTMLButtonElement>(sel);
+  for (const sel of [...(extra?.trim() ? [extra.trim()] : []), ...KNOWN.send]) {
+    let b: HTMLButtonElement | null = null;
+    try {
+      b = doc.querySelector<HTMLButtonElement>(sel);
+    } catch {
+      continue;
+    }
     if (b && visible(b)) return b;
   }
   const label = /send|送信|submit|提出/i;
@@ -105,7 +115,7 @@ export function findSend(composer: HTMLElement): HTMLButtonElement | null {
  * 見出し（## ）を2つ以上含む最後のコードブロックを回答とみなす。プロンプト自身の見本は除く。
  * 見つからなければ、最後のAIの発言の文章を返す。
  */
-export function findAnswer(doc: Document, prompt: string): string | null {
+export function findAnswer(doc: Document, prompt: string, extra?: string): string | null {
   const isHeadings = (t: string) => (t.match(/^\s*#{1,3}\s+\S/gm) ?? []).length >= 2;
   // 入力欄や表示で改行・空白が変わっても比べられるように、空白をそろえて比べる
   const squash = (t: string) => t.replace(/\s+/g, ' ').trim();
@@ -122,8 +132,13 @@ export function findAnswer(doc: Document, prompt: string): string | null {
     if (sentPrompt.includes(squash(norm).slice(0, 200))) continue; // 送ったプロンプト（またはその中の見本）
     return norm;
   }
-  for (const sel of KNOWN.assistant) {
-    const all = doc.querySelectorAll<HTMLElement>(sel);
+  for (const sel of [...(extra?.trim() ? [extra.trim()] : []), ...KNOWN.assistant]) {
+    let all: NodeListOf<HTMLElement>;
+    try {
+      all = doc.querySelectorAll<HTMLElement>(sel);
+    } catch {
+      continue;
+    }
     const last = all[all.length - 1];
     const text = last?.innerText?.trim();
     if (text) return text;

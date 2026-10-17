@@ -1,4 +1,6 @@
 import { liveQuery } from 'dexie';
+import { browser } from 'wxt/browser';
+import { JOBS_KEY, type Jobs } from '@/lib/ai-run';
 import { useEffect, useState } from 'preact/hooks';
 import { db } from '@/lib/db';
 import { loadList, type ListData } from '@/lib/list';
@@ -78,6 +80,20 @@ export function useThumbs(ids: string): Map<string, Thumb> {
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [snaps]);
   return map;
+}
+
+/** AIボタンの処理状況（背景ページが storage.session に書く）。カードごとの「処理中・完了・失敗」の表示に使う */
+export function useAiJobs(): Jobs {
+  const [jobs, setJobs] = useState<Jobs>({});
+  useEffect(() => {
+    void browser.storage.session.get(JOBS_KEY).then((r) => setJobs((r[JOBS_KEY] as Jobs | undefined) ?? {}));
+    const on = (c: Record<string, { newValue?: unknown }>, area: string) => {
+      if (area === 'session' && c[JOBS_KEY]) setJobs((c[JOBS_KEY].newValue as Jobs | undefined) ?? {});
+    };
+    browser.storage.onChanged.addListener(on);
+    return () => browser.storage.onChanged.removeListener(on);
+  }, []);
+  return jobs;
 }
 
 export function useCategories(): Category[] {

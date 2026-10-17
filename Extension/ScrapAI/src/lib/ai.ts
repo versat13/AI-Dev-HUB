@@ -1,8 +1,9 @@
 import { makeExcerpt } from './text';
-import type { AiAnswer, Fragment, PromptTemplate, Scrap } from './types';
+import type { AiAnswer, AiServiceCfg, Fragment, PromptTemplate, Scrap } from './types';
 
 // P4: AIに渡すプロンプトの生成と、AIの回答（固定Markdown形式）の読み取り。
-// AIのAPIは呼ばない。プロンプトはコピーして、ユーザーが各AIサービスのWeb画面に貼る。
+// AIのAPIを呼ぶのは、利用者が Gemini API のキーを入れて「AIボタン」を使ったときだけ（ai-run.ts）。
+// それ以外はプロンプトをコピーして、ユーザーが各AIサービスのWeb画面に貼る（または拡張が入力する）。
 
 export type Lang = 'ja' | 'en';
 
@@ -564,17 +565,24 @@ export function answerExcerpt(a: Pick<AiAnswer, 'sections' | 'raw'>): string {
 
 // ---- AIサービス ----
 
-export const AI_SERVICES = [
-  // tempUrl: 一時チャット（履歴に残らない・過去の会話や記憶の影響を受けにくい）で開くURL。
-  // Gemini はURLで一時チャットを指定する方法が見つからないため通常のチャットで開く
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', tempUrl: 'https://chatgpt.com/?temporary-chat=true' },
-  { id: 'claude', name: 'Claude', url: 'https://claude.ai/new', tempUrl: 'https://claude.ai/new?incognito' },
-  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app', tempUrl: undefined as string | undefined },
-] as const;
+// tempUrl: 一時チャット（履歴に残らない・過去の会話や記憶の影響を受けにくい）で開くURL。
+// Gemini はURLで一時チャットを指定する方法が見つからないため通常のチャットで開く
+export const AI_SERVICES: AiServiceCfg[] = [
+  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', tempUrl: 'https://chatgpt.com/?temporary-chat=true', builtIn: true, autoSend: false, closeOnDone: true },
+  { id: 'claude', name: 'Claude', url: 'https://claude.ai/new', tempUrl: 'https://claude.ai/new?incognito', builtIn: true, autoSend: false, closeOnDone: true },
+  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app', builtIn: true, autoSend: false, closeOnDone: true },
+];
 
-export type AiServiceId = (typeof AI_SERVICES)[number]['id'] | 'other';
+export type AiServiceId = string;
+
+/** 設定のAIサービス一覧。未設定なら標準の3つ。標準のものが消えていれば補う */
+export function getServices(list: AiServiceCfg[] | null | undefined): AiServiceCfg[] {
+  if (!list) return AI_SERVICES.map((s) => ({ ...s }));
+  const missing = AI_SERVICES.filter((d) => !list.some((s) => s.id === d.id)).map((s) => ({ ...s }));
+  return [...list, ...missing];
+}
 
 /** AIサービスを開くURL。一時チャットを選んでいて、そのサービスが対応していれば一時チャットのURL */
-export function serviceUrl(s: (typeof AI_SERVICES)[number], temporary: boolean): string {
+export function serviceUrl(s: Pick<AiServiceCfg, 'url' | 'tempUrl'>, temporary: boolean): string {
   return (temporary && s.tempUrl) || s.url;
 }

@@ -18,13 +18,13 @@ export default defineConfig({
     name: '__MSG_extName__',
     description: '__MSG_extDescription__',
     default_locale: 'en',
-    version: '1.2.0',
+    version: '1.3.0',
     // 仕様書2章の権限表に従う。host_permissions は宣言しない。
     permissions: ['activeTab', 'scripting', 'storage', 'unlimitedStorage', 'sidePanel'],
     // 右クリックメニューは設定でオンにしたときだけ許可を求める（既定では要求しない）
     optional_permissions: ['contextMenus'],
-    // AIへの受け渡し（ボタン一つ）を使うときだけ、その3サイトへのアクセスを求める
-    optional_host_permissions: ['https://chatgpt.com/*', 'https://claude.ai/*', 'https://gemini.google.com/*'],
+    // AIへの受け渡し（AIボタン・自動入力）を使うときだけ、選んだAIサービス（自作も可）や Gemini API のサイトへのアクセスをその都度求める
+    optional_host_permissions: ['https://*/*'],
     // ショートカットは登録だけして、キーは割り当てない（chrome://extensions/shortcuts でユーザーが設定する）
     commands: {
       'save-page': { description: '__MSG_cmdSavePage__' },

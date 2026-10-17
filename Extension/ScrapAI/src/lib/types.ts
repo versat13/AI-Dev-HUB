@@ -63,7 +63,7 @@ export interface AiAnswer {
   id: string;
   scrapId: string;
   fragmentIds?: string[];
-  service?: 'chatgpt' | 'claude' | 'gemini' | 'other';
+  service?: string; // AIサービスのID（'chatgpt' など。自作サービスや 'gemini-api' も入る）
   templateId?: string;
   raw: string; // 貼り付け原文（常に保存）
   sections: { key: string; body: string }[];
@@ -149,6 +149,23 @@ export interface PromptTemplate {
   updatedAt: number;
 }
 
+/** 「聞く」相手のAIサービス。標準のものも設定から変えられる（入力欄などの場所は空なら自動で探す） */
+export interface AiServiceCfg {
+  id: string;
+  name: string;
+  url: string;
+  tempUrl?: string; // 一時チャットで開くURL（あれば）
+  builtIn: boolean;
+  composerSel?: string; // 入力欄のCSSセレクタ（空 = 自動）
+  sendSel?: string; // 送信ボタン（空 = 自動）
+  answerSel?: string; // 回答の場所（空 = 自動）
+  autoSend: boolean; // 入れたあと自動で送信する（AIボタンでは常に送信する）
+  closeOnDone: boolean; // AIボタンで取り込みに成功したらタブを閉じる
+}
+
+/** AIボタンの送り先: AIサービスのID、または Gemini API（タブを開かない） */
+export const GEMINI_API = 'gemini-api';
+
 /** 一覧の表示: コンパクト（1行）/ カード（3行）/ カード（大、10行まで） */
 export type Density = 'compact' | 'card' | 'large';
 
@@ -169,6 +186,10 @@ export interface Settings {
   listFace: 'ai' | 'original'; // 一覧の表示: AI要約を主役にするか、元の内容か
   cardColumns: number; // カード表示の列数（0 = 自動、1〜6）
   aiTemplateId: string; // 最後に使ったAIテンプレート（P4）
+  aiServices: AiServiceCfg[] | null; // 設定したAIサービス（null = 標準の3つ）
+  aiButtonService: string; // AIボタンの送り先（サービスID または 'gemini-api'）
+  aiButtonTemplateId: string; // AIボタンで使うプロンプト
+  geminiModel: string; // Gemini API のモデル名
   aiPromptLang: 'en' | 'native'; // プロンプトの指示文: 英語（回答は表示言語）か、表示言語そのまま
   aiApplyHeadline: boolean; // 回答を保存したとき、見出しでタイトルを置き換える（既定オン）
 }
@@ -191,6 +212,10 @@ export const DEFAULT_SETTINGS: Settings = {
   aiTemplateId: 'builtin-summary',
   aiApplyHeadline: true,
   aiPromptLang: 'en',
+  aiServices: null,
+  aiButtonService: 'chatgpt',
+  aiButtonTemplateId: 'builtin-summary',
+  geminiModel: 'gemini-2.5-flash',
 };
 
 // 保存処理の結果（背景ページ → ポップアップ）
