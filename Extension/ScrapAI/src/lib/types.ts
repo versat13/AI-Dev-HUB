@@ -216,7 +216,7 @@ export const DEFAULT_SETTINGS: Settings = {
   aiServices: null,
   aiButtonService: 'chatgpt',
   aiButtonTemplateId: 'builtin-summary',
-  geminiModel: 'gemini-2.5-flash',
+  geminiModel: 'gemini-3.8',
 };
 
 // 保存処理の結果（背景ページ → ポップアップ）

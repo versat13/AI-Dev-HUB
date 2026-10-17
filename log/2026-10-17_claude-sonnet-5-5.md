@@ -4,3 +4,4 @@
 - v1.3.2: 並び順を項目+昇降順に、管理ツールバー整理（列を選択式・画像ボタン常時）、カード大、一括バー折り返し解消
 - AIサービス: Grok/Perplexity追加、並び=標準→Gemini API→自作。Gemini APIキー欄の案内と注意、?key=での再試行
 - 未確認: AQ.キーの実動作、Grok/Perplexity自動入力、「Gemini API→Claude」は再現せず
+- v1.3.3: Gemini既定モデルを gemini-3.8 に（2.5-flashは新規利用者に提供終了、旧既定は読込時に置換）

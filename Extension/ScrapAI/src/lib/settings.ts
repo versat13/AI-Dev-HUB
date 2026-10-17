@@ -5,7 +5,9 @@ const KEY = 'settings';
 
 export async function getSettings(): Promise<Settings> {
   const stored = await browser.storage.local.get(KEY);
-  return { ...DEFAULT_SETTINGS, ...((stored[KEY] as Partial<Settings> | undefined) ?? {}) };
+  const merged = { ...DEFAULT_SETTINGS, ...((stored[KEY] as Partial<Settings> | undefined) ?? {}) };
+  if (merged.geminiModel === 'gemini-2.5-flash') merged.geminiModel = DEFAULT_SETTINGS.geminiModel; // 旧い既定（新規利用者には提供終了）
+  return merged;
 }
 
 export async function setSettings(patch: Partial<Settings>): Promise<Settings> {
