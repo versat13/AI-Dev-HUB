@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { browser } from 'wxt/browser';
 import { AI_SERVICES, getServices, resolveTemplates } from '@/lib/ai';
 import { listCustomTemplates } from '@/lib/ai-db';
-import { geminiKeyLooksWrong, getGeminiKey, setGeminiKey } from '@/lib/ai-run';
+import { GEMINI_ORIGIN, geminiKeyLooksWrong, getGeminiKey, listGeminiModels, setGeminiKey } from '@/lib/ai-run';
 import { getLocale, t } from '@/lib/i18n';
 import { getSettings } from '@/lib/settings';
 import { GEMINI_API, type AiServiceCfg, type Settings } from '@/lib/types';
@@ -143,6 +143,22 @@ function GeminiCard({ settings, onChange }: { settings: Settings; onChange: (pat
   const shown = key ?? stored ?? '';
   const bad = geminiKeyLooksWrong(shown);
   const [model, setModel] = useState(settings.geminiModel);
+  const [models, setModels] = useState<string[]>([]);
+  const [modelNote, setModelNote] = useState('');
+  async function fetchModels() {
+    const k = (key ?? stored ?? '').trim();
+    if (!k) return setModelNote(t('geminiNoKey'));
+    setModelNote(t('geminiModelsLoading'));
+    try {
+      const ok = (await browser.permissions.contains({ origins: [GEMINI_ORIGIN] })) || (await browser.permissions.request({ origins: [GEMINI_ORIGIN] }));
+      if (!ok) return setModelNote(t('aiRunFailed') + ': permission');
+      const list = await listGeminiModels(k);
+      setModels(list);
+      setModelNote(t('geminiModelsCount', list.length));
+    } catch (e) {
+      setModelNote(`${t('aiRunFailed')}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
   return (
     <div class="set-card">
       <h3>{t('geminiTitle')}</h3>
@@ -168,11 +184,19 @@ function GeminiCard({ settings, onChange }: { settings: Settings; onChange: (pat
       <label class="set-row">
         <span>{t('geminiModel')}</span>
         <input
+          list="gemini-models"
           value={model}
           onInput={(e) => setModel(input(e))}
           onBlur={() => model.trim() && model.trim() !== settings.geminiModel && onChange({ geminiModel: model.trim() })}
         />
+        <datalist id="gemini-models">
+          {models.map((m) => (
+            <option key={m} value={m} />
+          ))}
+        </datalist>
+        <button onClick={() => void fetchModels()}>{t('geminiModelsFetch')}</button>
       </label>
+      {modelNote && <p class="help" role="status">{modelNote}</p>}
       <p class="help">{t('geminiPrivacy')}</p>
     </div>
   );

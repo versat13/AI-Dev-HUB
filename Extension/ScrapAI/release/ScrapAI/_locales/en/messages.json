@@ -1255,5 +1255,14 @@
   },
   "geminiKeyBad": {
     "message": "This does not look like an API key. Check for spaces or line breaks and that you copied all of it."
+  },
+  "geminiModelsFetch": {
+    "message": "Get list"
+  },
+  "geminiModelsLoading": {
+    "message": "Loading…"
+  },
+  "geminiModelsCount": {
+    "message": "{0} models available. Click the field to choose"
   }
 }

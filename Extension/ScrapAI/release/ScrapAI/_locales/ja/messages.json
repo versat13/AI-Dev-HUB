@@ -1255,5 +1255,14 @@
   },
   "geminiKeyBad": {
     "message": "APIキーではないようです。空白や改行が入っていないか、全体をコピーできているか確認してください。"
+  },
+  "geminiModelsFetch": {
+    "message": "一覧を取得"
+  },
+  "geminiModelsLoading": {
+    "message": "取得中…"
+  },
+  "geminiModelsCount": {
+    "message": "使えるモデル {0}件。欄をクリックして選べます"
   }
 }

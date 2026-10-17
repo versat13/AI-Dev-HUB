@@ -90,6 +90,22 @@ export async function callGemini(
   return text;
 }
 
+/** 使えるモデル名の一覧（generateContent に対応したもの）。失敗は Error（HTTP <状態>） */
+export async function listGeminiModels(key: string, doFetch: typeof fetch = fetch): Promise<string[]> {
+  const base = 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200';
+  const k = key.trim();
+  let res = await doFetch(base, { headers: { 'x-goog-api-key': k } });
+  if (!res.ok && (res.status === 400 || res.status === 401 || res.status === 403)) {
+    const retry = await doFetch(`${base}&key=${encodeURIComponent(k)}`);
+    if (retry.ok) res = retry;
+  }
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = (await res.json()) as { models?: { name?: string; supportedGenerationMethods?: string[] }[] };
+  return (data.models ?? [])
+    .filter((m) => m.name && m.supportedGenerationMethods?.includes('generateContent'))
+    .map((m) => m.name!.replace(/^models\//, ''));
+}
+
 /** AIボタンの送り先のサービス（設定から。なければ先頭） */
 export function pickService(settings: Pick<Settings, 'aiServices' | 'aiButtonService'>): AiServiceCfg | undefined {
   const list = getServices(settings.aiServices);

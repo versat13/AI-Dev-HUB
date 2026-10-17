@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AI_SERVICES, getServices } from './ai';
-import { callGemini, geminiKeyLooksWrong } from './ai-run';
+import { callGemini, geminiKeyLooksWrong, listGeminiModels } from './ai-run';
 
 const reply = (body: unknown, ok = true, status = 200) => (async () => ({ ok, status, json: async () => body }) as Response) as unknown as typeof fetch;
 
@@ -23,6 +23,14 @@ describe('Gemini API', () => {
     await expect(callGemini('p', 'm', 'SECRET', reply({ candidates: [] }))).rejects.toThrow('empty');
     await expect(callGemini('p', 'm', 'SECRET', reply({ error: { message: 'API key not valid' } }, false, 400))).rejects.toThrow('HTTP 400: API key not valid');
     await callGemini('p', 'm', 'SECRET', reply({}, false, 400)).catch((e: Error) => expect(e.message).not.toContain('SECRET'));
+  });
+});
+
+describe('Gemini モデル一覧', () => {
+  it('generateContent に対応したものだけ、models/ を除いて返す', async () => {
+    const body = { models: [{ name: 'models/gemini-3.8', supportedGenerationMethods: ['generateContent'] }, { name: 'models/embed-1', supportedGenerationMethods: ['embedContent'] }] };
+    expect(await listGeminiModels(' K ', reply(body))).toEqual(['gemini-3.8']);
+    await expect(listGeminiModels('K', reply({}, false, 403))).rejects.toThrow('HTTP 403');
   });
 });
 
