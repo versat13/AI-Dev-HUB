@@ -1,0 +1,8 @@
+{
+  "name": "ScrapAI",
+  "description": "Local web clipping and AI structuring dashboard for articles, social posts, and repositories.",
+  "prompt": "ScrapAI web dashboard and extension preview",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
