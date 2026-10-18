@@ -131,6 +131,14 @@ export async function saveFromPage(
 ): Promise<SaveOutcome> {
   const url = tab.url?.trim();
   if (!url) return { kind: 'failed', error: 'no-url' };
+  // 拡張機能自身のページ等（chrome-extension: など）は保存しない
+  let protocol = '';
+  try {
+    protocol = new URL(url).protocol;
+  } catch {
+    // 解釈できないURLは保存しない
+  }
+  if (!['http:', 'https:', 'file:'].includes(protocol)) return { kind: 'failed', error: 'no-url' };
 
   const normalizedUrl = normalizeUrl(url);
   const existing = mode === 'separate' ? undefined : await findScrapByNormalizedUrl(normalizedUrl);

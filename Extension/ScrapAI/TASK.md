@@ -1,29 +1,36 @@
 # ScrapAI 作業指示書（作成：Opus 5.5 / 2026-10-18）
-状態：完了（Opus 5.5 確認。e2e の実行は未確認）
+状態：完了（Opus 5.5 確認。e2e 再実行は未確認）
 <!-- Opusが書く。実装するAIは「状態」と「結果」だけを更新する。 -->
 
-## やること（e2e を Windows でも動かす。拡張本体の版は上げない）
-1. `e2e/*.mjs`（7ファイル）の `new URL(import.meta.url).pathname` を `fileURLToPath(import.meta.url)` に置き換える。
-   - 原因：Windows では pathname が `/C:/...` になり、`path.join` で `C:\C:\...` になって `.out` が作れない。
-   - 各ファイルの import 群に `import { fileURLToPath } from 'node:url';` を1行足す。9行目（HERE）と12行目（PROFILE）の2か所が対象。
-2. 他に Windows で動かない箇所が見つかったら、直さずに結果欄に書いて止まる。
+## やること（v1.3.8。e2e の失敗2件の修正）
+1. 拡張機能自身のページなどを保存しない。
+   - 原因：新しいChromeは自分の拡張ページ（`chrome-extension://...`）のURLも返すため、`src/lib/save.ts` の `saveFromPage` の「URLなし→failed」をすり抜け、「__MSG_actionTitle__」という項目ができる。
+   - 直し方：`saveFromPage` 冒頭で、URLのプロトコルが `http:`・`https:`・`file:` 以外（URLとして解釈できないものも）なら `{ kind: 'failed', error: 'no-url' }` を返し、DBに何も書かない。
+   - `src/lib/save.test.ts` に1件追加：`chrome-extension://abc/manager.html` で failed（error 'no-url'）になり、scraps が0件のまま。
+2. コンパクト表示（ポップアップ・サイドパネル・管理画面）で、翻訳ボタンが出る行だけ下段（星・カテゴリ）が左にずれるのを直す。
+   - 原因：`ScrapRow.tsx` の翻訳ボタン `.row-tr`（28px＋右余白6px）が行内の flex 要素なので、出る行だけ `.row-main` が狭くなる。
+   - 直し方：`ScrapRow.tsx` で、`showTranslate` が false でも `canTranslate()` が true なら、翻訳ボタンと同じ位置に空き枠 `<span class="row-tr-slot" aria-hidden="true" />` を出す。`ui.css` に `.row-tr-slot { flex: none; width: 28px; margin: 8px 6px 0 0; }` と `.rows.grid .row-tr-slot { display: none; }` を足す（`.row-tr` の近く）。
+3. 版を 1.3.8 に：`package.json`・`wxt.config.ts` の version。
 
 ## 触ってよいファイル
-- `e2e/ai.mjs`, `e2e/bridge.mjs`, `e2e/data.mjs`, `e2e/profiles.mjs`, `e2e/snapshot.mjs`, `e2e/sync.mjs`, `e2e/ui.mjs`（上記の置き換えだけ）
+- `src/lib/save.ts`、`src/lib/save.test.ts`（上記1）
+- `src/ui/ScrapRow.tsx`、`src/ui/ui.css`（上記2。既存の行は変えずに追記）
+- `package.json`、`wxt.config.ts`（version のみ）
 
 ## 触ってはいけないもの
-- 設計ファイル（AGENTS.md の権限表を参照）、`src/`、`release/`、`package.json`
+- 設計ファイル（AGENTS.md の権限表を参照）、`release/`、`e2e/`、HANDOFF.md、log/
 
 ## 完了条件
-- [x] 7ファイルとも `node --check e2e/<名前>.mjs` が通る
-- [x] `grep -n "import.meta.url).pathname" e2e/*.mjs` が0件
-- [ ] e2e 一式が Windows で通る（Chromium 導入後に Opus が実行）
+- [ ] `npx tsc --noEmit` が通る
+- [ ] `npx vitest run` が全件通る（164件以上）
+- [ ] `npx wxt build` が通る
+- [ ] e2e（`npm run test:e2e`）が全件通る（利用者のターミナルで実行）
 
 ## 結果（実装したAIが書く）
-- 変更したファイル：e2e/ai.mjs, bridge.mjs, data.mjs, profiles.mjs, snapshot.mjs, sync.mjs, ui.mjs（各ファイルで import 1行追加と HERE・PROFILE の2か所を置き換え）
-- 確認したこと：7ファイルとも node --check 通過。grep "import.meta.url).pathname" は0件。他にWindowsで動かない箇所は調べていない（コードを読んだだけで実行していない）
-- 未確認：e2e 一式の実行（Chromium 未導入のため未実行。Opusが実行）
-- Opus追記：パスは正しく解決するようになった（起動コマンドの .ext・.profile-ui が正しい絶対パスになる）。Chromium（chromium-1248）は導入済みだが、Claude Code のセッション内からは chrome.exe を起動できない（spawn UNKNOWN／サイドバイサイド構成エラー）。e2e は利用者のターミナルで `npm run test:e2e` を実行して確認する。
+- 変更したファイル：save.ts（http/https/file以外とURL解釈不能は no-url で failed）、save.test.ts（1件追加）、ScrapRow.tsx（空き枠span）、ui.css（.row-tr-slot 2行）、package.json・wxt.config.ts（1.3.8）
+- 確認したこと：tsc 通過、vitest 164/164 通過、wxt build 成功
+- 未確認：
 
 ## 履歴
+- e2e Windows対応（2026-10-18 完了）：e2e/*.mjs のパスを fileURLToPath に。利用者の環境で 98/100（失敗2件は本タスクで対応）。
 - v1.3.7（2026-10-18 完了）：カード表示の下段はみ出し修正、「Gemini API」に改名。Sonnet実装、Opusが `.meta-flags` の1行を追加して確認。

@@ -14,10 +14,10 @@
 - e2e：`e2e/*.mjs`（Playwright+Chromium、localhost用host_permissionsを足した複製で実行）。ai.mjsはclipboardを代役に差し替え。
 - Webプレビュー（AI Studio用）：リポジトリ直下で `npm run dev`（ポート3000）。`src/lib/browser-shim.ts` が chrome API を代役する。拡張のビルドには含まれない。
 
-## 現在の状態（v1.3.7）
-- P0〜P6 完了（ストア申請の素材を除く）。ユニットテスト163件・e2e全通過。
+## 現在の状態（v1.3.8）
+- P0〜P6 完了（ストア申請の素材を除く）。ユニットテスト164件。e2eはv1.3.7時点で98/100（失敗2件はv1.3.8で修正、再実行は未確認）。
 - AI連携：AIボタン（裏タブで入力・送信・回答取り込み）、Gemini API直接呼び出し（キーは storage.local、既定モデル gemini-3.8）、標準サービス ChatGPT/Claude/Gemini/Grok/Perplexity。
-- 直近：v1.3.7 カード表示で下段（出典・状態・星・カテゴリ）がはみ出していたのを修正（`.rows.grid` のときだけ折り返す。コンパクト表示は従来どおり位置をそろえる）。AIボタンの送り先名「Gemini API（タブを開かない）」→「Gemini API」。v1.3.6 回答の予備探索は100字以上のみ採用（Grokの「考え中」表示対策）。v1.3.5 Grok対応（取り込みは実機未確認）。
+- 直近：v1.3.8 保存は http/https/file のページだけ（新しいChromeは自分の拡張ページのURLも返し、「__MSG_actionTitle__」の項目ができていた）。翻訳が使える環境ではコンパクト表示の全行に翻訳ボタン幅の空き枠 `.row-tr-slot` を置き、下段の位置をそろえる（カード表示では出さない）。v1.3.7 カード表示で下段（出典・状態・星・カテゴリ）がはみ出していたのを修正（`.rows.grid` のときだけ折り返す。コンパクト表示は従来どおり位置をそろえる）。AIボタンの送り先名「Gemini API（タブを開かない）」→「Gemini API」。v1.3.6 回答の予備探索は100字以上のみ採用（Grokの「考え中」表示対策）。v1.3.5 Grok対応（取り込みは実機未確認）。
 
 ## 次にやること（優先順）
 1. 実機確認の結果を受けた修正（実際のAIサイトでの自動入力・取り込み、同期フォルダ、Gemini APIキー）。
@@ -38,7 +38,7 @@
 ## 未確認（主なもの。全件は PROGRESS.md）
 - 実際のAIサイトでの裏タブ送信・回答取り込み、実機のクリップボード、Gemini APIの実呼び出し。
 - 実機のactiveTab付与・sidePanel.open、右クリックメニュー、ショートカットキー、GitHubの既定セレクタ。
-- e2e（Windows）：パスを `fileURLToPath` に直した（以前は `C:\C:\` になり動かなかった）。Chromium は導入済みだが、Claude Code のセッション内では chrome.exe が起動できず未実行。利用者のターミナルで `npm run test:e2e` を実行して確認する。v1.3.7 のカード表示はWebプレビューで確認済み。
+- e2e（Windows）：パスを `fileURLToPath` に直し、利用者のターミナルで動く（v1.3.7で98/100）。Claude Code のセッション内では Chromium を起動できない（導入先も利用者の環境と別になる）ので、e2e は利用者に `npm run test:e2e` を頼む。v1.3.8 の e2e 再実行は未確認（下段の位置そろえはWebプレビューで確認済み）。
 
 ## 作品ルール
 ### 配布（GitHub）

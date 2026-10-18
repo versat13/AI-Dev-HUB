@@ -82,6 +82,12 @@ describe('saveFromPage: 新規保存', () => {
     const out = await saveFromPage({ url: '', title: '' }, throws, settings);
     expect(out.kind).toBe('failed');
   });
+
+  it('拡張機能のページは保存せず failed（no-url）', async () => {
+    const out = await saveFromPage({ url: 'chrome-extension://abc/manager.html', title: 'x' }, throws, settings);
+    expect(out).toEqual({ kind: 'failed', error: 'no-url' });
+    expect(await db.scraps.count()).toBe(0);
+  });
 });
 
 describe('saveFromPage: 同一URL', () => {

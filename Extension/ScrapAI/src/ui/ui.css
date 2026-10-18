@@ -556,6 +556,8 @@ button.danger.solid { background: var(--err); border-color: var(--err); color: #
 .row-tr { flex: none; margin: 8px 6px 0 0; opacity: 0.55; }
 .row:hover .row-tr, .row-tr:focus-visible, .row-tr.on { opacity: 1; }
 .row-tr.on { color: var(--accent); }
+.row-tr-slot { flex: none; width: 28px; margin: 8px 6px 0 0; }
+.rows.grid .row-tr-slot { display: none; }
 
 /* ---- 設定画面: 項目ごとのカード ---- */
 .settings { max-width: 760px; gap: 14px; }

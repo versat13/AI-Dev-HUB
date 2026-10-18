@@ -152,6 +152,7 @@ export function ScrapRow(p: ScrapRowProps) {
           <Icon name="translate" size={15} />
         </button>
       )}
+      {!showTranslate && canTranslate() && <span class="row-tr-slot" aria-hidden="true" />}
       {p.aiRun && <AiRunButton scrapId={s.id} job={p.aiRun.job} onRun={p.aiRun.onRun} />}
     </li>
   );
