@@ -19,7 +19,7 @@
 - **テスト用アバター(旧)での負荷**：（v0.3：5体の時点）Constraint 105個、複製SMR 10個、ポリゴン約3.2万。
 - **再生モード（Gesture Manager）で動作確認済み**：VelocityZ=4 で走らせ、Rigidbody で秒速4m移動すると、0.48m間隔で本人の走る姿勢が残り、崩れて消える。
 - Gesture Manager でのパラメータ操作：`GestureManager.Module.GetParam(name).Set(module, value, null)`。
-- ALYX（AlyxLiquidTests）はシーンのテスト用アバター(旧)から削除済み（素材のファイルは残してある）。
+- ALYX（AlyxLiquidTests、作品は `_archive/` へ移動済み）はシーンのテスト用アバター(旧)から削除済み（素材のファイルは残してある）。
 - 制限：表情などアニメーションするシェイプキーは残像に反映されない（ビルド時の値で固定）。
 
 ## 名称変更（2026-10-04）

@@ -36,3 +36,16 @@
   - FX レイヤーは 70（うち JS 50、AD 17）。
   - メニューは Sandevistan と Just シールド。
 - 未確認：テスト用アバター(別)の再生モードでの動作、VRChat実機。
+
+## 技術詳細（2026-10-18 HANDOFF.md から移動）
+### PC軽量化
+- パーティクル36→16、最大合計497、メッシュパーティクル1320ポリゴン、マテリアル `M_JS_FX_Add` / `M_JS_FX_Alpha`（アトラス `T_JS_FXAtlas.png` 4×4）。
+- 統合：バーストを時間差（最小0.03s）で並べ、start系を階段カーブ（TwoCurves、tangent=Infinity）、startColorはFixed Gradient（「t以上で最初のキー」）、startFrameも階段カーブ。**TSAのstartFrameはスクリプトでは正規化値（frame/16）、Constantは1でクランプ**。
+- `stripDebugOnUpload` オプション。
+
+### Quest Lite（ビルド対象Android/iOSで自動）
+- 判定表示・BodyFX・AudioSource・SoundFX削除、方向レシーバーはDir0_0のみ（コンタクト15）、パーティクルは JustFX/FX_Glow と BreakFX/FX_Rings、全て `VRChat/Mobile/Particles/Additive`（1マテリアル）。
+- シールド本体：メッシュ複製＋UVをアトラスのセル14（グラデーション）＋頂点カラー（**colors32必須**）。色は `defHue` 固定。アトラス512px、ASTC_6x6（エディタはDXT5）。
+- メニューから「シールド」「調整/音量」を除去。`JustShieldBuild.ForceLite = true` でPCのままテスト可。
+- 手順：VRChat SDK Builderでプラットフォームを Android に切替→Build & Publish（同じアバターID）。アバター本体のQuest対応は別途必要（READMEに追記済み）。
+- FullFX個人用プレハブでAndroidビルドするとLite対象のパーティクル名が無いため、エフェクト0になる（個人用はPC前提）。

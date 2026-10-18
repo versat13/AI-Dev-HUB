@@ -24,17 +24,8 @@
 ## バックアップ（Assets外、.meta込み）
 - `Backups/JustShieldParry_20261003_1040/`、`Backups/JustShieldParry_20261003_1045_beforeOptimize/`（PC軽量化直前）。旧 `Assets/JustShield/_Backup_20261003/` も残存。
 
-## PC軽量化
-- パーティクル36→16、最大合計497、メッシュパーティクル1320ポリゴン、マテリアル `M_JS_FX_Add` / `M_JS_FX_Alpha`（アトラス `T_JS_FXAtlas.png` 4×4）。
-- 統合：バーストを時間差（最小0.03s）で並べ、start系を階段カーブ（TwoCurves、tangent=Infinity）、startColorはFixed Gradient（「t以上で最初のキー」）、startFrameも階段カーブ。**TSAのstartFrameはスクリプトでは正規化値（frame/16）、Constantは1でクランプ**。
-- `stripDebugOnUpload` オプション。
-
-## Quest Lite（ビルド対象Android/iOSで自動）
-- 判定表示・BodyFX・AudioSource・SoundFX削除、方向レシーバーはDir0_0のみ（コンタクト15）、パーティクルは JustFX/FX_Glow と BreakFX/FX_Rings、全て `VRChat/Mobile/Particles/Additive`（1マテリアル）。
-- シールド本体：メッシュ複製＋UVをアトラスのセル14（グラデーション）＋頂点カラー（**colors32必須**）。色は `defHue` 固定。アトラス512px、ASTC_6x6（エディタはDXT5）。
-- メニューから「シールド」「調整/音量」を除去。`JustShieldBuild.ForceLite = true` でPCのままテスト可。
-- 手順：VRChat SDK Builderでプラットフォームを Android に切替→Build & Publish（同じアバターID）。アバター本体のQuest対応は別途必要（READMEに追記済み）。
-- FullFX個人用プレハブでAndroidビルドするとLite対象のパーティクル名が無いため、エフェクト0になる（個人用はPC前提）。
+## 軽量化・Quest Lite
+- PC軽量化（パーティクル36→16、アトラス統合）と Quest Lite（Android/iOSビルドで自動切替）の詳細は PROGRESS.md「技術詳細」。`JustShieldBuild.ForceLite = true` でPCのままLiteをテストできる。
 
 ## 同期パラメータ（41bit）
 - 同期：JS_Self_On / JS_View_On / JS_Auto / JS_Self_Evt / JS_BreakOn / JS_Self_HP / JS_Self_Brk / JS_On / JS_Mode / JS_Hemi / JS_Win / JS_MxI / JS_MxV。見た目調整7つは時分割同期（最大約2秒遅れ）。
