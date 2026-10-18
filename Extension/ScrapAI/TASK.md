@@ -21,9 +21,9 @@
 - 設計ファイル（AGENTS.md の権限表を参照）、`release/`、`e2e/`、HANDOFF.md、log/
 
 ## 完了条件
-- [ ] `npx tsc --noEmit` が通る
-- [ ] `npx vitest run` が全件通る（164件以上）
-- [ ] `npx wxt build` が通る
+- [x] `npx tsc --noEmit` が通る
+- [x] `npx vitest run` が全件通る（164件以上）
+- [x] `npx wxt build` が通る
 - [x] e2e（`npm run test:e2e`）が全件通る（利用者のターミナルで実行）
 
 ## 結果（実装したAIが書く）
