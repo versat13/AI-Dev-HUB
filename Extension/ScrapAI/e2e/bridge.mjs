@@ -4,12 +4,13 @@
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
-const HERE = path.dirname(new URL(import.meta.url).pathname);
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 const EXT = path.join(HERE, '.ext');
 const OUT = path.join(HERE, '.out'); // スクリーンショット
-const PROFILE = path.join(HERE, '.profile-' + path.basename(new URL(import.meta.url).pathname, '.mjs'));
+const PROFILE = path.join(HERE, '.profile-' + path.basename(fileURLToPath(import.meta.url), '.mjs'));
 fs.rmSync(EXT, { recursive: true, force: true });
 fs.rmSync(PROFILE, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });

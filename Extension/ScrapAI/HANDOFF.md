@@ -38,7 +38,7 @@
 ## 未確認（主なもの。全件は PROGRESS.md）
 - 実際のAIサイトでの裏タブ送信・回答取り込み、実機のクリップボード、Gemini APIの実呼び出し。
 - 実機のactiveTab付与・sidePanel.open、右クリックメニュー、ショートカットキー、GitHubの既定セレクタ。
-- v1.3.7：e2e未実行（WindowsではPlaywrightのChromium未導入。e2eの `new URL(import.meta.url).pathname` はWindowsで `C:\C:\` になり動かない）。カードの見た目はWebプレビューで確認済み。
+- e2e（Windows）：パスを `fileURLToPath` に直した（以前は `C:\C:\` になり動かなかった）。Chromium は導入済みだが、Claude Code のセッション内では chrome.exe が起動できず未実行。利用者のターミナルで `npm run test:e2e` を実行して確認する。v1.3.7 のカード表示はWebプレビューで確認済み。
 
 ## 作品ルール
 ### 配布（GitHub）
