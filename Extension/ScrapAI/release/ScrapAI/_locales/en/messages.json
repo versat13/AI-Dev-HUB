@@ -1155,7 +1155,7 @@
     "message": "Prompt to use"
   },
   "geminiApiName": {
-    "message": "Gemini API (no tab)"
+    "message": "Gemini API"
   },
   "aiButtonHelp": {
     "message": "With an AI service, ScrapAI opens a tab in the background, sends the prompt, imports the answer when it is complete and closes the tab. With the Gemini API it imports without opening a tab."

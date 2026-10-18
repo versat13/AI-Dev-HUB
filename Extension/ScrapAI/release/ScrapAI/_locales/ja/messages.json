@@ -1155,7 +1155,7 @@
     "message": "使うプロンプト"
   },
   "geminiApiName": {
-    "message": "Gemini API（タブを開かない）"
+    "message": "Gemini API"
   },
   "aiButtonHelp": {
     "message": "AIサービスを選ぶと、裏でタブを開いて送信し、回答が出そろったら取り込んでタブを閉じます。Gemini APIを選ぶと、タブを開かずに取り込みます。"
