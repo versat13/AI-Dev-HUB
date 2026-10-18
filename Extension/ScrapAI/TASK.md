@@ -1,5 +1,5 @@
 # ScrapAI 作業指示書（作成：Opus 5.5 / 2026-10-18）
-状態：完了（Opus 5.5 確認。e2e 再実行は未確認）
+状態：完了（Opus 5.5 確認。e2e は利用者の環境で全通過：226件）
 <!-- Opusが書く。実装するAIは「状態」と「結果」だけを更新する。 -->
 
 ## やること（v1.3.8。e2e の失敗2件の修正）
@@ -24,7 +24,7 @@
 - [ ] `npx tsc --noEmit` が通る
 - [ ] `npx vitest run` が全件通る（164件以上）
 - [ ] `npx wxt build` が通る
-- [ ] e2e（`npm run test:e2e`）が全件通る（利用者のターミナルで実行）
+- [x] e2e（`npm run test:e2e`）が全件通る（利用者のターミナルで実行）
 
 ## 結果（実装したAIが書く）
 - 変更したファイル：save.ts（http/https/file以外とURL解釈不能は no-url で failed）、save.test.ts（1件追加）、ScrapRow.tsx（空き枠span）、ui.css（.row-tr-slot 2行）、package.json・wxt.config.ts（1.3.8）
