@@ -5,7 +5,7 @@
 import { ensureBuiltInProfiles } from './builtin-profiles';
 import { seedSamples } from './samples';
 import { db } from './db';
-import type { SaveOutcome } from './types';
+import type { Fragment, SaveOutcome, Scrap } from './types';
 
 const storageListeners = new Set<(changes: Record<string, { oldValue?: unknown; newValue?: unknown }>, area: string) => void>();
 
@@ -131,26 +131,35 @@ export const mockChrome = {
           { url: 'https://zenn.dev/topics/ai', title: 'AIに関する技術情報とプログラミングまとめ - Zenn', text: '最新の生成AIツールとLLM活用方法についてまとめた記事一覧です。' },
           { url: 'https://github.com/versat13/AI-Dev-HUB', title: 'versat13/AI-Dev-HUB: AI開発共有ハブ', text: '複数のAIを切り替えながら開発するための私的な共有ハブ。ScrapAI などの拡張機能を含む。' },
         ];
-        const item = demoUrls[(mockScrapCounter - 2) % demoUrls.length];
-        const scrap = {
+        const item = demoUrls[(mockScrapCounter - 2) % demoUrls.length]!;
+        const scrap: Scrap = {
           id,
           url: item.url,
           normalizedUrl: item.url.replace(/#.*$/, ''),
           domain: new URL(item.url).hostname,
           title: item.title,
+          siteName: '',
+          extractStatus: 'ok',
+          stars: null,
+          pinned: false,
+          archivedAt: null,
+          categoryIds: [],
+          memo: '',
+          excerpt: item.text.slice(0, 120),
+          aiAnswerCount: 0,
           createdAt: now,
           updatedAt: now,
-          categoryIds: [],
-          stars: 0,
-          format: 'article' as const,
         };
-        const fragment = {
+        const fragment: Fragment = {
           id: `frag-${id}`,
           scrapId: id,
           order: 0,
+          source: 'selection',
+          fieldLabel: 'selection',
+          role: 'body',
           text: item.text,
+          truncated: false,
           createdAt: now,
-          source: 'selection' as const,
         };
         await db.scraps.put(scrap);
         await db.fragments.put(fragment);
@@ -158,10 +167,9 @@ export const mockChrome = {
           kind: 'created',
           scrapId: id,
           title: item.title,
-          url: item.url,
           fragmentCount: 1,
+          addedFragmentIds: [fragment.id],
           extractStatus: 'ok',
-          snapshot: 'none',
         };
         return outcome;
       }
@@ -266,7 +274,7 @@ export function initBrowserShim() {
   // Pre-seed built-in profiles and samples into IndexedDB
   if (typeof window !== 'undefined') {
     ensureBuiltInProfiles().catch(console.error);
-    seedSamples().catch(console.error);
+    seedSamples('ja').catch(console.error);
   }
 }
 
